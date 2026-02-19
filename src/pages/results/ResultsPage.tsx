@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Card, Badge } from "../../components";
+import { Card } from "../../components";
+import { Trophy, Flame } from "lucide-react";
 
 interface DrawResult {
   id: string;
@@ -90,20 +91,25 @@ export default function ResultsPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-bold text-white">Draw Results</h1>
-        <p className="text-gray-400 text-sm">Latest winning numbers</p>
+        <h1 className="text-xl font-extrabold text-white chinese-header">
+          Draw Results
+        </h1>
+        <p className="text-gray-500 text-sm mt-1">
+          <Trophy className="w-3.5 h-3.5 inline mr-1" />
+          Latest winning numbers
+        </p>
       </div>
 
-      {/* Filter Tabs */}
+      {/* Filter Tabs — Chinese-styled */}
       <div className="flex gap-2 overflow-x-auto pb-1">
         {TABS.map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+            className={`px-4 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all border ${
               activeTab === tab
-                ? "bg-brand-red text-white"
-                : "bg-surface-elevated text-gray-400 hover:text-white"
+                ? "bg-brand-red text-white border-brand-gold/40 shadow-[0_0_10px_rgba(220,38,38,0.2)]"
+                : "bg-surface-card text-gray-500 border-brand-gold/10 hover:text-white hover:border-brand-gold/25"
             }`}
           >
             {tab}
@@ -111,62 +117,83 @@ export default function ResultsPage() {
         ))}
       </div>
 
-      {/* Latest Result Highlight */}
+      {/* Latest Result Highlight — Grand announcement */}
       {filteredResults.length > 0 && (
-        <Card className="bg-gradient-to-br from-brand-red/20 to-brand-gold/10 border border-brand-gold/30">
+        <Card
+          className="auspicious-bg overflow-hidden"
+          ornate
+          style={
+            {
+              background:
+                "linear-gradient(135deg, rgba(139,0,0,0.15) 0%, rgba(217,119,6,0.08) 100%)",
+            } as React.CSSProperties
+          }
+        >
           <div className="flex items-center justify-between mb-2">
-            <Badge variant="gold">Latest</Badge>
-            <span className="text-xs text-gray-400">
+            <span className="fortune-badge">
+              <Flame className="w-3 h-3 inline mr-1" />
+              Latest Draw
+            </span>
+            <span className="text-xs text-gray-500">
               {filteredResults[0].date} · {filteredResults[0].drawTime}
             </span>
           </div>
-          <div className="flex items-center justify-center gap-4 py-4">
+          <div className="flex items-center justify-center gap-6 py-5">
             {filteredResults[0].winningNumbers.map((num) => (
               <div
                 key={num}
-                className="w-16 h-16 rounded-full bg-brand-red text-white text-2xl font-bold flex items-center justify-center border-4 border-brand-gold shadow-lg shadow-brand-red/30"
+                className="lottery-ball lottery-ball-selected w-16 h-16 text-2xl"
               >
                 {num}
               </div>
             ))}
           </div>
-          <div className="grid grid-cols-3 gap-2 text-center text-xs mt-2">
+          <div className="grid grid-cols-3 gap-2 text-center text-xs mt-2 border-t border-brand-gold/15 pt-3">
             <div>
-              <p className="text-brand-gold font-bold">
+              <p className="text-brand-gold font-extrabold">
                 ₱{filteredResults[0].prize.toLocaleString()}
               </p>
-              <p className="text-gray-500">Prize Pool</p>
+              <p className="text-gray-600 text-[10px] uppercase tracking-wider">
+                Prize Pool
+              </p>
             </div>
             <div>
               <p className="text-white font-bold">
                 {filteredResults[0].totalBets.toLocaleString()}
               </p>
-              <p className="text-gray-500">Total Bets</p>
+              <p className="text-gray-600 text-[10px] uppercase tracking-wider">
+                Total Bets
+              </p>
             </div>
             <div>
               <p className="text-brand-green font-bold">
                 {filteredResults[0].winners}
               </p>
-              <p className="text-gray-500">Winners</p>
+              <p className="text-gray-600 text-[10px] uppercase tracking-wider">
+                Winners
+              </p>
             </div>
           </div>
         </Card>
       )}
 
+      {/* Cloud Divider */}
+      <div className="cloud-divider" />
+
       {/* Previous Results */}
       <div>
-        <h2 className="text-sm font-semibold text-gray-300 mb-2">
+        <h2 className="text-sm font-semibold text-gray-400 mb-2 chinese-header">
           Previous Results
         </h2>
         <div className="space-y-2">
           {filteredResults.slice(1).map((result) => (
-            <Card key={result.id} className="flex items-center gap-3">
+            <Card
+              key={result.id}
+              className="flex items-center gap-3 lantern-card"
+            >
               <div className="flex gap-1.5">
                 {result.winningNumbers.map((num) => (
-                  <span
-                    key={num}
-                    className="w-10 h-10 rounded-full bg-brand-red text-white text-sm font-bold flex items-center justify-center border-2 border-brand-gold"
-                  >
+                  <span key={num} className="lottery-ball w-10 h-10 text-sm">
                     {num}
                   </span>
                 ))}
@@ -175,13 +202,13 @@ export default function ResultsPage() {
                 <p className="text-sm font-medium text-white">
                   {result.drawTime} Draw
                 </p>
-                <p className="text-xs text-gray-400">{result.date}</p>
+                <p className="text-xs text-gray-500">{result.date}</p>
               </div>
               <div className="text-right">
                 <p className="text-sm font-bold text-brand-gold">
                   ₱{result.prize.toLocaleString()}
                 </p>
-                <p className="text-[10px] text-gray-500">
+                <p className="text-[10px] text-gray-600">
                   {result.winners} winner{result.winners > 1 ? "s" : ""}
                 </p>
               </div>

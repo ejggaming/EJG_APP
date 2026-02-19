@@ -16,7 +16,7 @@ export default function NumberBall({
   onClick,
 }: NumberBallProps) {
   const sizeStyles = {
-    sm: "w-8 h-8 text-xs",
+    sm: "w-8 h-8 text-[10px]",
     md: "w-11 h-11 text-sm",
     lg: "w-14 h-14 text-lg",
   };
@@ -27,15 +27,23 @@ export default function NumberBall({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "rounded-full font-bold flex items-center justify-center transition-all duration-200 border-2 cursor-pointer",
+        "rounded-full font-extrabold flex items-center justify-center transition-all duration-200 cursor-pointer relative",
         sizeStyles[size],
         selected
-          ? "bg-brand-red border-brand-gold text-white shadow-lg shadow-brand-red/30 scale-110"
-          : "bg-surface-elevated border-gray-600 text-gray-300 hover:border-brand-gold hover:text-white",
+          ? "lottery-ball lottery-ball-selected scale-110"
+          : "bg-surface-elevated border-2 border-brand-gold/30 text-gray-300 hover:border-brand-gold hover:text-white hover:bg-surface-elevated/80",
         disabled &&
           !selected &&
-          "opacity-40 cursor-not-allowed hover:border-gray-600 hover:text-gray-300",
+          "opacity-40 cursor-not-allowed hover:border-brand-gold/30 hover:text-gray-300",
       )}
+      style={
+        selected
+          ? undefined
+          : {
+              boxShadow:
+                "inset 0 -2px 4px rgba(0,0,0,0.2), 0 1px 3px rgba(0,0,0,0.2)",
+            }
+      }
     >
       {number}
     </button>

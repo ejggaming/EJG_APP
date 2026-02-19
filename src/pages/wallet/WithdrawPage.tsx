@@ -4,14 +4,21 @@ import { Card, Button, Input } from "../../components";
 import { useAppStore } from "../../store/useAppStore";
 import { formatCurrency } from "../../utils";
 import toast from "react-hot-toast";
+import {
+  Smartphone,
+  CreditCard,
+  Landmark,
+  Check,
+  ArrowUpRight,
+} from "lucide-react";
 
 const WITHDRAW_METHODS = [
-  { id: "gcash", name: "GCash", icon: "📱", description: "Instant" },
-  { id: "maya", name: "Maya", icon: "💳", description: "Instant" },
+  { id: "gcash", name: "GCash", Icon: Smartphone, description: "Instant" },
+  { id: "maya", name: "Maya", Icon: CreditCard, description: "Instant" },
   {
     id: "bank",
     name: "Bank Transfer",
-    icon: "🏦",
+    Icon: Landmark,
     description: "1-3 business days",
   },
 ];
@@ -60,10 +67,12 @@ export default function WithdrawPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-bold text-white">Withdraw Funds</h1>
-        <p className="text-gray-400 text-sm">
+        <h1 className="text-xl font-extrabold text-white chinese-header">
+          Withdraw Funds
+        </h1>
+        <p className="text-gray-500 text-sm mt-1">
           Available balance:{" "}
-          <span className="text-brand-gold font-semibold">
+          <span className="gold-shimmer font-semibold">
             {formatCurrency(balance)}
           </span>
         </p>
@@ -71,46 +80,34 @@ export default function WithdrawPage() {
 
       {/* Withdrawal Method */}
       <div>
-        <h2 className="text-sm font-semibold text-gray-300 mb-2">
-          Withdrawal Method
+        <h2 className="text-sm font-semibold text-gray-400 mb-2">
+          ✦ Withdrawal Method
         </h2>
         <div className="space-y-2">
           {WITHDRAW_METHODS.map((method) => (
             <Card
               key={method.id}
-              className={`flex items-center gap-3 cursor-pointer transition-all ${
+              className={`flex items-center gap-3 cursor-pointer transition-all lantern-card ${
                 selectedMethod === method.id
-                  ? "ring-2 ring-brand-red border-brand-red"
-                  : "hover:bg-surface-elevated"
+                  ? "ring-2 ring-brand-gold border-brand-gold/50"
+                  : "hover:border-brand-gold/20"
               }`}
               onClick={() => setSelectedMethod(method.id)}
             >
-              <span className="text-2xl">{method.icon}</span>
+              <method.Icon className="w-6 h-6 text-brand-gold" />
               <div className="flex-1">
                 <p className="text-white font-medium">{method.name}</p>
-                <p className="text-xs text-gray-400">{method.description}</p>
+                <p className="text-xs text-gray-500">{method.description}</p>
               </div>
               <div
                 className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                   selectedMethod === method.id
-                    ? "border-brand-red bg-brand-red"
-                    : "border-gray-500"
+                    ? "border-brand-gold bg-brand-gold"
+                    : "border-gray-600"
                 }`}
               >
                 {selectedMethod === method.id && (
-                  <svg
-                    className="w-3 h-3 text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={3}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
+                  <Check className="w-3 h-3 text-white" />
                 )}
               </div>
             </Card>
@@ -121,8 +118,8 @@ export default function WithdrawPage() {
       {/* Account Details */}
       {selectedMethod && (
         <div className="space-y-2">
-          <h2 className="text-sm font-semibold text-gray-300">
-            Account Details
+          <h2 className="text-sm font-semibold text-gray-400">
+            ✦ Account Details
           </h2>
           <Input
             label="Account Number / Mobile"
@@ -145,7 +142,7 @@ export default function WithdrawPage() {
 
       {/* Amount */}
       <div>
-        <h2 className="text-sm font-semibold text-gray-300 mb-2">Amount</h2>
+        <h2 className="text-sm font-semibold text-gray-400 mb-2">✦ Amount</h2>
         <Input
           label=""
           type="number"
@@ -163,23 +160,23 @@ export default function WithdrawPage() {
 
       {/* Summary */}
       {numAmount >= 100 && selectedMethod && (
-        <Card className="border border-brand-gold/30">
-          <h3 className="text-sm font-semibold text-gray-300 mb-2">Summary</h3>
+        <Card ornate className="lantern-card">
+          <h3 className="text-sm font-semibold text-gray-400 mb-2">
+            ✦ Summary
+          </h3>
           <div className="space-y-1 text-sm">
             <div className="flex justify-between">
-              <span className="text-gray-400">Withdraw Amount</span>
+              <span className="text-gray-500">Withdraw Amount</span>
               <span className="text-white">{formatCurrency(numAmount)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-400">Processing Fee</span>
+              <span className="text-gray-500">Processing Fee</span>
               <span className="text-brand-green">FREE</span>
             </div>
-            <hr className="border-gray-700 my-1" />
+            <hr className="border-brand-gold/15 my-1" />
             <div className="flex justify-between font-bold">
               <span className="text-white">You will receive</span>
-              <span className="text-brand-gold">
-                {formatCurrency(numAmount)}
-              </span>
+              <span className="gold-shimmer">{formatCurrency(numAmount)}</span>
             </div>
           </div>
         </Card>
@@ -192,7 +189,8 @@ export default function WithdrawPage() {
         isLoading={isProcessing}
         onClick={handleWithdraw}
       >
-        Withdraw {numAmount >= 100 ? formatCurrency(numAmount) : ""}
+        <ArrowUpRight className="w-4 h-4 inline mr-1" /> Withdraw{" "}
+        {numAmount >= 100 ? formatCurrency(numAmount) : ""}
       </Button>
     </div>
   );

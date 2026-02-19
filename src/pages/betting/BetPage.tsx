@@ -1,8 +1,17 @@
 import { useState } from "react";
-import { Button, Card, NumberBall, Modal, Badge } from "../../components";
+import { Button, Card, NumberBall, Modal } from "../../components";
 import { useAppStore } from "../../store/useAppStore";
 import { formatCurrency } from "../../utils";
 import toast from "react-hot-toast";
+import {
+  Target,
+  CircleDot,
+  Coins,
+  Dices,
+  Sparkles,
+  X,
+  Check,
+} from "lucide-react";
 
 const DRAW_SCHEDULES = [
   { id: "draw-11am", label: "11:00 AM Draw", time: "11:00 AM", status: "open" },
@@ -99,12 +108,11 @@ export default function BetPage() {
 
     setSubmitting(true);
     try {
-      // Simulated API call
       await new Promise((r) => setTimeout(r, 1500));
       setBalance(balance - totalBet);
       clearBetSlip();
       setShowConfirm(false);
-      toast.success("Bets placed successfully! Good luck! 🍀");
+      toast.success("Bets placed successfully! Good luck! 🎊");
     } catch {
       toast.error("Failed to place bets");
     } finally {
@@ -116,29 +124,44 @@ export default function BetPage() {
     <div className="space-y-5">
       {/* Header */}
       <div>
-        <h1 className="text-xl font-bold text-white">Place Your Bet</h1>
-        <p className="text-gray-400 text-sm">
+        <h1 className="text-xl font-extrabold text-white chinese-header">
+          Place Your Bet
+        </h1>
+        <p className="text-gray-500 text-sm mt-1">
+          <Target className="w-3.5 h-3.5 inline mr-1" />
           Pick 2 numbers from 1-37, min ₱5
         </p>
       </div>
 
       {/* Balance Bar */}
-      <Card className="flex items-center justify-between bg-gradient-to-r from-surface-card to-surface-elevated">
+      <Card className="flex items-center justify-between lantern-card">
         <div>
-          <p className="text-xs text-gray-400">Available Balance</p>
-          <p className="text-lg font-bold text-brand-gold">
+          <p className="text-[10px] text-gray-500 uppercase tracking-wider">
+            Available Balance
+          </p>
+          <p className="text-lg font-extrabold gold-shimmer">
             {formatCurrency(balance)}
           </p>
         </div>
-        <Badge variant={balance >= 5 ? "green" : "red"}>
-          {balance >= 5 ? "Ready to Bet" : "Low Balance"}
-        </Badge>
+        <span className="fortune-badge">
+          {balance >= 5 ? (
+            <>
+              <Sparkles className="w-3 h-3 inline mr-1" />
+              Ready to Bet
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-3 h-3 inline mr-1" />
+              Low Balance
+            </>
+          )}
+        </span>
       </Card>
 
       {/* Draw Selection */}
       <section>
         <h3 className="text-sm font-semibold text-gray-300 mb-2">
-          Select Draw
+          ✦ Select Draw
         </h3>
         <div className="grid grid-cols-3 gap-2">
           {DRAW_SCHEDULES.map((draw) => (
@@ -147,17 +170,17 @@ export default function BetPage() {
               type="button"
               onClick={() => setSelectedDraw(draw.id)}
               disabled={draw.status !== "open"}
-              className={`rounded-lg p-3 border text-center transition-all cursor-pointer ${
+              className={`rounded-xl p-3 border-2 text-center transition-all cursor-pointer ${
                 selectedDraw === draw.id
-                  ? "border-brand-gold bg-brand-gold/10 text-brand-gold"
+                  ? "border-brand-gold bg-brand-gold/10 text-brand-gold shadow-[0_0_12px_rgba(217,119,6,0.15)]"
                   : draw.status === "open"
-                    ? "border-gray-600 bg-surface-elevated text-gray-300 hover:border-gray-500"
-                    : "border-gray-700 bg-surface-card text-gray-500 opacity-50 cursor-not-allowed"
+                    ? "border-brand-gold/20 bg-surface-card text-gray-400 hover:border-brand-gold/40"
+                    : "border-gray-800 bg-surface-card text-gray-600 opacity-50 cursor-not-allowed"
               }`}
             >
               <p className="text-xs font-bold">{draw.time}</p>
               <p className="text-[10px] mt-0.5">
-                {draw.status === "open" ? "Open" : "Soon"}
+                {draw.status === "open" ? "● Open" : "○ Soon"}
               </p>
             </button>
           ))}
@@ -168,32 +191,33 @@ export default function BetPage() {
       <section>
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-sm font-semibold text-gray-300">
+            <CircleDot className="w-3.5 h-3.5 inline mr-1" />
             Pick 2 Numbers{" "}
             <span className="text-brand-red">({selectedNumbers.length}/2)</span>
           </h3>
           <Button size="sm" variant="secondary" onClick={handleQuickPick}>
-            🎲 Quick Pick
+            <Dices className="w-3.5 h-3.5 inline mr-1" /> Quick Pick
           </Button>
         </div>
 
-        {/* Selected Number Display */}
-        <Card className="mb-3 flex items-center justify-center gap-4 py-5">
-          <div className="flex items-center gap-3">
+        {/* Selected Number Display — Grand lottery display */}
+        <Card className="mb-3 py-5 chinese-frame" ornate>
+          <div className="flex items-center justify-center gap-6">
             <div
-              className={`w-16 h-16 rounded-full border-3 flex items-center justify-center text-2xl font-bold transition-all ${
+              className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl font-extrabold transition-all ${
                 selectedNumbers[0]
-                  ? "bg-brand-red border-brand-gold text-white shadow-lg shadow-brand-red/30"
-                  : "bg-surface-elevated border-gray-600 border-dashed text-gray-500"
+                  ? "lottery-ball lottery-ball-selected"
+                  : "bg-surface-elevated border-2 border-dashed border-brand-gold/30 text-gray-600"
               }`}
             >
               {selectedNumbers[0] || "?"}
             </div>
-            <span className="text-2xl font-bold text-brand-gold">—</span>
+            <span className="text-2xl font-extrabold gold-shimmer">—</span>
             <div
-              className={`w-16 h-16 rounded-full border-3 flex items-center justify-center text-2xl font-bold transition-all ${
+              className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl font-extrabold transition-all ${
                 selectedNumbers[1]
-                  ? "bg-brand-red border-brand-gold text-white shadow-lg shadow-brand-red/30"
-                  : "bg-surface-elevated border-gray-600 border-dashed text-gray-500"
+                  ? "lottery-ball lottery-ball-selected"
+                  : "bg-surface-elevated border-2 border-dashed border-brand-gold/30 text-gray-600"
               }`}
             >
               {selectedNumbers[1] || "?"}
@@ -219,17 +243,20 @@ export default function BetPage() {
 
       {/* Bet Amount */}
       <section>
-        <h3 className="text-sm font-semibold text-gray-300 mb-2">Bet Amount</h3>
+        <h3 className="text-sm font-semibold text-gray-300 mb-2">
+          <Coins className="w-3.5 h-3.5 inline mr-1" />
+          Bet Amount
+        </h3>
         <div className="grid grid-cols-3 gap-2 mb-2">
           {QUICK_AMOUNTS.map((amt) => (
             <button
               key={amt}
               type="button"
               onClick={() => handleAmountSelect(amt)}
-              className={`rounded-lg py-2.5 border font-bold text-sm transition-all cursor-pointer ${
+              className={`rounded-xl py-2.5 border-2 font-bold text-sm transition-all cursor-pointer ${
                 amount === amt && !customAmount
-                  ? "border-brand-green bg-brand-green/10 text-brand-green"
-                  : "border-gray-600 bg-surface-elevated text-gray-300 hover:border-gray-500"
+                  ? "border-brand-green bg-brand-green/10 text-brand-green shadow-[0_0_10px_rgba(22,163,74,0.15)]"
+                  : "border-brand-gold/15 bg-surface-card text-gray-400 hover:border-brand-gold/30"
               }`}
             >
               ₱{amt}
@@ -237,7 +264,7 @@ export default function BetPage() {
           ))}
         </div>
         <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-gold font-bold">
             ₱
           </span>
           <input
@@ -246,7 +273,7 @@ export default function BetPage() {
             value={customAmount}
             onChange={(e) => handleCustomAmount(e.target.value)}
             min={5}
-            className="w-full rounded-lg border border-gray-600 bg-surface-elevated pl-8 pr-4 py-2.5 text-white placeholder-gray-500 focus:border-brand-gold focus:ring-2 focus:ring-brand-gold focus:outline-none"
+            className="w-full rounded-xl border-2 border-brand-gold/20 bg-surface-card pl-8 pr-4 py-2.5 text-white placeholder-gray-600 focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/20 focus:outline-none"
           />
         </div>
       </section>
@@ -259,14 +286,15 @@ export default function BetPage() {
         onClick={handleAddToBetSlip}
         disabled={selectedNumbers.length !== 2 || amount < 5}
       >
-        Add to Bet Slip — {formatCurrency(amount)}
+        <Target className="w-4 h-4 inline mr-1" /> Add to Bet Slip —{" "}
+        {formatCurrency(amount)}
       </Button>
 
       {/* Bet Slip */}
       {betSlip.length > 0 && (
         <section>
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold text-white">
+            <h3 className="text-sm font-semibold text-white chinese-header">
               Bet Slip ({betSlip.length})
             </h3>
             <button
@@ -280,14 +308,14 @@ export default function BetPage() {
 
           <div className="space-y-2">
             {betSlip.map((bet) => (
-              <Card key={bet.id} className="flex items-center justify-between">
+              <Card
+                key={bet.id}
+                className="flex items-center justify-between lantern-card"
+              >
                 <div className="flex items-center gap-3">
                   <div className="flex gap-1">
                     {bet.numbers.map((num) => (
-                      <span
-                        key={num}
-                        className="w-8 h-8 rounded-full bg-brand-red text-white text-xs font-bold flex items-center justify-center border border-brand-gold"
-                      >
+                      <span key={num} className="lottery-ball w-8 h-8 text-xs">
                         {num}
                       </span>
                     ))}
@@ -296,7 +324,7 @@ export default function BetPage() {
                     <p className="text-sm font-semibold text-white">
                       {bet.numbers[0]} - {bet.numbers[1]}
                     </p>
-                    <p className="text-[10px] text-gray-400">
+                    <p className="text-[10px] text-gray-500">
                       {bet.drawScheduleLabel}
                     </p>
                   </div>
@@ -308,21 +336,9 @@ export default function BetPage() {
                   <button
                     type="button"
                     onClick={() => removeFromBetSlip(bet.id)}
-                    className="text-gray-500 hover:text-red-400 cursor-pointer"
+                    className="text-gray-600 hover:text-red-400 cursor-pointer"
                   >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
               </Card>
@@ -330,16 +346,16 @@ export default function BetPage() {
           </div>
 
           {/* Total & Submit */}
-          <Card className="mt-3 bg-surface-elevated">
+          <Card className="mt-3 lantern-card" ornate>
             <div className="flex items-center justify-between mb-3">
-              <span className="text-gray-400 text-sm">Total Bets</span>
+              <span className="text-gray-500 text-sm">Total Bets</span>
               <span className="text-white font-bold">
                 {betSlip.length} bet(s)
               </span>
             </div>
             <div className="flex items-center justify-between mb-4">
-              <span className="text-gray-400 text-sm">Total Amount</span>
-              <span className="text-brand-gold font-bold text-lg">
+              <span className="text-gray-500 text-sm">Total Amount</span>
+              <span className="font-extrabold text-lg gold-shimmer">
                 {formatCurrency(totalBet)}
               </span>
             </div>
@@ -368,20 +384,17 @@ export default function BetPage() {
           {betSlip.map((bet) => (
             <div
               key={bet.id}
-              className="flex items-center justify-between bg-surface-elevated rounded-lg p-3"
+              className="flex items-center justify-between bg-surface-elevated rounded-xl p-3 border border-brand-gold/10"
             >
               <div className="flex items-center gap-2">
                 <div className="flex gap-1">
                   {bet.numbers.map((num) => (
-                    <span
-                      key={num}
-                      className="w-7 h-7 rounded-full bg-brand-red text-white text-xs font-bold flex items-center justify-center"
-                    >
+                    <span key={num} className="lottery-ball w-7 h-7 text-xs">
                       {num}
                     </span>
                   ))}
                 </div>
-                <span className="text-xs text-gray-400">
+                <span className="text-xs text-gray-500">
                   {bet.drawScheduleLabel}
                 </span>
               </div>
@@ -391,14 +404,14 @@ export default function BetPage() {
             </div>
           ))}
 
-          <div className="border-t border-gray-700 pt-3 flex items-center justify-between">
+          <div className="border-t border-brand-gold/20 pt-3 flex items-center justify-between">
             <span className="text-white font-semibold">Total</span>
-            <span className="text-brand-gold font-bold text-xl">
+            <span className="font-extrabold text-xl gold-shimmer">
               {formatCurrency(totalBet)}
             </span>
           </div>
 
-          <p className="text-xs text-gray-400 text-center">
+          <p className="text-xs text-gray-500 text-center">
             By confirming, the amount will be deducted from your wallet. Bets
             cannot be cancelled after placement.
           </p>
@@ -417,7 +430,7 @@ export default function BetPage() {
               isLoading={submitting}
               onClick={handleConfirmAll}
             >
-              Confirm
+              <Check className="w-4 h-4 inline mr-1" /> Confirm
             </Button>
           </div>
         </div>
