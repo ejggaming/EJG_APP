@@ -118,8 +118,10 @@ export default function UserManagement() {
     <div className="space-y-4">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-white">User Management</h1>
-          <p className="text-gray-400 text-sm">
+          <h1 className="text-2xl font-bold text-text-primary">
+            User Management
+          </h1>
+          <p className="text-text-muted text-sm">
             {MOCK_USERS.length} total users
           </p>
         </div>
@@ -146,7 +148,7 @@ export default function UserManagement() {
               className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                 filter === f.key
                   ? "bg-brand-red text-white"
-                  : "bg-surface-elevated text-gray-400"
+                  : "bg-surface-elevated text-text-muted"
               }`}
             >
               {f.label}
@@ -160,7 +162,7 @@ export default function UserManagement() {
         <Card className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-[10px] text-gray-500 uppercase border-b border-gray-700/50">
+              <tr className="text-left text-[10px] text-text-muted uppercase border-b border-border-default">
                 <th className="pb-3 pr-4">User</th>
                 <th className="pb-3 pr-4">Mobile</th>
                 <th className="pb-3 pr-4">KYC</th>
@@ -175,27 +177,35 @@ export default function UserManagement() {
                 const kyc = kycBadge[u.kycStatus];
                 const status = statusBadge[u.status];
                 return (
-                  <tr key={u.id} className="border-b border-gray-700/30">
+                  <tr key={u.id} className="border-b border-border-default/30">
                     <td className="py-3 pr-4">
                       <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-full bg-brand-red/20 flex items-center justify-center text-brand-red font-bold text-xs">
                           {u.name[0]}
                         </div>
                         <div>
-                          <p className="text-white font-medium">{u.name}</p>
-                          <p className="text-[10px] text-gray-500">{u.email}</p>
+                          <p className="text-text-primary font-medium">
+                            {u.name}
+                          </p>
+                          <p className="text-[10px] text-text-muted">
+                            {u.email}
+                          </p>
                         </div>
                       </div>
                     </td>
-                    <td className="py-3 pr-4 text-gray-300">{u.mobile}</td>
+                    <td className="py-3 pr-4 text-text-secondary">
+                      {u.mobile}
+                    </td>
                     <td className="py-3 pr-4">
                       <Badge variant={kyc.variant}>{kyc.label}</Badge>
                     </td>
                     <td className="py-3 pr-4">
                       <Badge variant={status.variant}>{status.label}</Badge>
                     </td>
-                    <td className="py-3 pr-4 text-gray-300">{u.totalBets}</td>
-                    <td className="py-3 pr-4 text-gray-400 text-xs">
+                    <td className="py-3 pr-4 text-text-secondary">
+                      {u.totalBets}
+                    </td>
+                    <td className="py-3 pr-4 text-text-muted text-xs">
                       {u.joined}
                     </td>
                     <td className="py-3">
@@ -248,8 +258,10 @@ export default function UserManagement() {
                   {u.name[0]}
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-white">{u.name}</p>
-                  <p className="text-xs text-gray-400">{u.mobile}</p>
+                  <p className="text-sm font-medium text-text-primary">
+                    {u.name}
+                  </p>
+                  <p className="text-xs text-text-muted">{u.mobile}</p>
                 </div>
                 <div className="flex flex-col items-end gap-1">
                   <Badge variant={kyc.variant}>{kyc.label}</Badge>

@@ -98,8 +98,10 @@ export default function AgentCommissions() {
   return (
     <div className="space-y-4 pb-20 md:pb-4">
       <div>
-        <h1 className="text-xl font-bold text-white">Commission Reports</h1>
-        <p className="text-gray-400 text-sm">
+        <h1 className="text-xl font-bold text-text-primary">
+          Commission Reports
+        </h1>
+        <p className="text-text-muted text-sm">
           Your earnings from bet collections
         </p>
       </div>
@@ -111,17 +113,17 @@ export default function AgentCommissions() {
             <p className="text-xl font-bold text-brand-green">
               {formatCurrency(totalCommission)}
             </p>
-            <p className="text-[10px] text-gray-400">Total Commission</p>
+            <p className="text-[10px] text-text-muted">Total Commission</p>
           </div>
           <div>
             <p className="text-xl font-bold text-brand-gold">
               {formatCurrency(totalCollected)}
             </p>
-            <p className="text-[10px] text-gray-400">Total Collected</p>
+            <p className="text-[10px] text-text-muted">Total Collected</p>
           </div>
           <div>
-            <p className="text-xl font-bold text-white">15%</p>
-            <p className="text-[10px] text-gray-400">Rate</p>
+            <p className="text-xl font-bold text-text-primary">15%</p>
+            <p className="text-[10px] text-text-muted">Rate</p>
           </div>
         </div>
       </Card>
@@ -135,7 +137,7 @@ export default function AgentCommissions() {
             className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
               activeTab === tab
                 ? "bg-brand-gold text-white"
-                : "bg-surface-elevated text-gray-400 hover:text-white"
+                : "bg-surface-elevated text-text-muted hover:text-text-primary"
             }`}
           >
             {tab}
@@ -149,7 +151,7 @@ export default function AgentCommissions() {
           <Card key={c.id}>
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-2">
-                <p className="text-sm font-medium text-white">
+                <p className="text-sm font-medium text-text-primary">
                   {c.drawTime} Draw
                 </p>
                 <Badge variant={c.status === "credited" ? "green" : "gold"}>
@@ -160,7 +162,7 @@ export default function AgentCommissions() {
                 {formatCurrency(c.commission)}
               </p>
             </div>
-            <div className="flex items-center justify-between text-xs text-gray-400">
+            <div className="flex items-center justify-between text-xs text-text-muted">
               <span>{c.date}</span>
               <span>
                 Collected: {formatCurrency(c.totalCollected)} × {c.rate * 100}%

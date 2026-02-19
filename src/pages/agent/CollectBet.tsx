@@ -67,19 +67,21 @@ export default function CollectBet() {
   return (
     <div className="space-y-4 pb-20 md:pb-4">
       <div>
-        <h1 className="text-xl font-bold text-white">Collect Bet</h1>
-        <p className="text-gray-400 text-sm">Place bet on behalf of customer</p>
+        <h1 className="text-xl font-bold text-text-primary">Collect Bet</h1>
+        <p className="text-text-muted text-sm">
+          Place bet on behalf of customer
+        </p>
       </div>
 
       {/* Customer Selection */}
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-1">
+        <label className="block text-sm font-medium text-text-secondary mb-1">
           Customer
         </label>
         <select
           value={selectedCustomer}
           onChange={(e) => setSelectedCustomer(e.target.value)}
-          className="w-full bg-surface-elevated border border-gray-600 rounded-lg px-3 py-2.5 text-white text-sm focus:ring-2 focus:ring-brand-gold focus:border-transparent outline-none"
+          className="w-full bg-surface-elevated border border-border-default rounded-lg px-3 py-2.5 text-text-primary text-sm focus:ring-2 focus:ring-brand-gold focus:border-transparent outline-none"
         >
           <option value="">Select customer</option>
           {CUSTOMERS.map((c) => (
@@ -92,7 +94,7 @@ export default function CollectBet() {
 
       {/* Draw Schedule */}
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-1">
+        <label className="block text-sm font-medium text-text-secondary mb-1">
           Draw Schedule
         </label>
         <div className="grid grid-cols-3 gap-2">
@@ -104,7 +106,7 @@ export default function CollectBet() {
               className={`py-2 px-3 rounded-lg text-xs font-medium transition-colors ${
                 selectedDraw === draw.id
                   ? "bg-brand-gold text-white"
-                  : "bg-surface-elevated text-gray-300 hover:bg-gray-600"
+                  : "bg-surface-elevated text-text-secondary hover:bg-surface-elevated/80"
               } disabled:opacity-40`}
             >
               {draw.label}
@@ -116,7 +118,7 @@ export default function CollectBet() {
       {/* Number Grid */}
       <div>
         <div className="flex items-center justify-between mb-1">
-          <label className="text-sm font-medium text-gray-300">
+          <label className="text-sm font-medium text-text-secondary">
             Select 2 Numbers ({numbers.length}/2)
           </label>
           {numbers.length > 0 && (
@@ -148,7 +150,7 @@ export default function CollectBet() {
               className={`w-full aspect-square rounded-full text-sm font-bold transition-all ${
                 numbers.includes(n)
                   ? "bg-brand-red text-white border-2 border-brand-gold scale-110"
-                  : "bg-surface-elevated text-gray-300 hover:bg-gray-600 border border-gray-600"
+                  : "bg-surface-elevated text-text-secondary hover:bg-surface-elevated/80 border border-border-default"
               }`}
             >
               {n}
@@ -159,7 +161,7 @@ export default function CollectBet() {
 
       {/* Bet Amount */}
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-1">
+        <label className="block text-sm font-medium text-text-secondary mb-1">
           Bet Amount
         </label>
         <div className="grid grid-cols-3 gap-2 mb-2">
@@ -173,7 +175,7 @@ export default function CollectBet() {
               className={`py-2 rounded-lg text-sm font-medium transition-colors ${
                 betAmount === a
                   ? "bg-brand-gold text-white"
-                  : "bg-surface-elevated text-gray-300 hover:bg-gray-600"
+                  : "bg-surface-elevated text-text-secondary hover:bg-surface-elevated/80"
               }`}
             >
               ₱{a}
@@ -213,28 +215,30 @@ export default function CollectBet() {
           <Card>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-gray-400">Customer</span>
-                <span className="text-white font-medium">{customerName}</span>
+                <span className="text-text-muted">Customer</span>
+                <span className="text-text-primary font-medium">
+                  {customerName}
+                </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-400">Numbers</span>
-                <span className="text-white font-bold">
+                <span className="text-text-muted">Numbers</span>
+                <span className="text-text-primary font-bold">
                   {numbers.join(" - ")}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-400">Draw</span>
-                <span className="text-white">{drawLabel}</span>
+                <span className="text-text-muted">Draw</span>
+                <span className="text-text-primary">{drawLabel}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-400">Bet Amount</span>
+                <span className="text-text-muted">Bet Amount</span>
                 <span className="text-brand-gold font-bold">
                   {formatCurrency(betAmount)}
                 </span>
               </div>
-              <hr className="border-gray-700" />
+              <hr className="border-border-default" />
               <div className="flex justify-between">
-                <span className="text-gray-400">Your Commission (15%)</span>
+                <span className="text-text-muted">Your Commission (15%)</span>
                 <span className="text-brand-green font-bold">
                   {formatCurrency(betAmount * 0.15)}
                 </span>

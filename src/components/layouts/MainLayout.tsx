@@ -1,6 +1,17 @@
 import { Outlet, useLocation, Link } from "react-router-dom";
 import { cn } from "../../utils";
-import { Home, Target, Trophy, Wallet, User, Bell, Flame } from "lucide-react";
+import {
+  Home,
+  Target,
+  Trophy,
+  Wallet,
+  User,
+  Bell,
+  Flame,
+  Sun,
+  Moon,
+} from "lucide-react";
+import { useThemeStore } from "../../store/useThemeStore";
 
 const navItems = [
   { path: "/", label: "Home", icon: Home },
@@ -12,6 +23,7 @@ const navItems = [
 
 export default function MainLayout() {
   const location = useLocation();
+  const { theme, toggleTheme } = useThemeStore();
 
   return (
     <div className="min-h-screen bg-surface flex flex-col">
@@ -19,8 +31,7 @@ export default function MainLayout() {
       <header
         className="sticky top-0 z-40 backdrop-blur-lg border-b border-brand-gold/20"
         style={{
-          background:
-            "linear-gradient(180deg, rgba(139,0,0,0.35) 0%, rgba(15,10,10,0.95) 100%)",
+          background: `linear-gradient(180deg, var(--color-header-from) 0%, var(--color-header-to) 100%)`,
         }}
       >
         {/* Gold trim line */}
@@ -34,6 +45,17 @@ export default function MainLayout() {
             </span>
           </Link>
           <div className="flex items-center gap-3">
+            <button
+              onClick={toggleTheme}
+              className="p-1.5 rounded-lg text-brand-gold/70 hover:text-brand-gold hover:bg-brand-gold/10 transition-colors cursor-pointer"
+              aria-label="Toggle theme"
+            >
+              {theme === "dark" ? (
+                <Sun className="w-5 h-5" />
+              ) : (
+                <Moon className="w-5 h-5" />
+              )}
+            </button>
             <Link
               to="/notifications"
               className="relative text-brand-gold/70 hover:text-brand-gold transition-colors"
@@ -58,8 +80,7 @@ export default function MainLayout() {
       <nav
         className="fixed bottom-0 left-0 right-0 z-40 border-t-2 border-brand-gold/25 backdrop-blur-lg"
         style={{
-          background:
-            "linear-gradient(0deg, rgba(15,10,10,0.98) 0%, rgba(26,16,16,0.95) 100%)",
+          background: `linear-gradient(0deg, var(--color-nav-from) 0%, var(--color-nav-to) 100%)`,
         }}
       >
         <div className="h-[1px] bg-gradient-to-r from-transparent via-brand-gold/20 to-transparent" />

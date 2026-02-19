@@ -6,7 +6,7 @@ const METRICS = [
     label: "Total Bets Today",
     value: "3,247",
     change: "+12%",
-    color: "text-white",
+    color: "text-text-primary",
   },
   {
     label: "Revenue Today",
@@ -102,8 +102,10 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Operations Dashboard</h1>
-        <p className="text-gray-400 text-sm">
+        <h1 className="text-2xl font-bold text-text-primary">
+          Operations Dashboard
+        </h1>
+        <p className="text-text-muted text-sm">
           {new Date().toLocaleDateString("en-PH", {
             weekday: "long",
             month: "long",
@@ -118,7 +120,7 @@ export default function AdminDashboard() {
         {METRICS.map((m) => (
           <Card key={m.label}>
             <p className={`text-xl font-bold ${m.color}`}>{m.value}</p>
-            <p className="text-xs text-gray-400 mt-1">{m.label}</p>
+            <p className="text-xs text-text-muted mt-1">{m.label}</p>
             {m.change && (
               <p className="text-[10px] text-brand-green mt-0.5">{m.change}</p>
             )}
@@ -129,7 +131,7 @@ export default function AdminDashboard() {
       <div className="grid md:grid-cols-2 gap-4">
         {/* Today's Draws */}
         <Card>
-          <h2 className="text-sm font-semibold text-gray-300 mb-3">
+          <h2 className="text-sm font-semibold text-text-secondary mb-3">
             Today's Draws
           </h2>
           <div className="space-y-3">
@@ -138,10 +140,10 @@ export default function AdminDashboard() {
               return (
                 <div
                   key={draw.time}
-                  className="flex items-center justify-between py-2 border-b border-gray-700/50 last:border-0"
+                  className="flex items-center justify-between py-2 border-b border-border-default last:border-0"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium text-white">
+                    <span className="text-sm font-medium text-text-primary">
                       {draw.time}
                     </span>
                     <Badge variant={badge.variant}>{badge.label}</Badge>
@@ -150,7 +152,7 @@ export default function AdminDashboard() {
                     <p className="text-sm font-bold text-brand-gold">
                       {formatCurrency(draw.revenue)}
                     </p>
-                    <p className="text-[10px] text-gray-500">
+                    <p className="text-[10px] text-text-muted">
                       {draw.bets.toLocaleString()} bets
                     </p>
                   </div>
@@ -162,7 +164,7 @@ export default function AdminDashboard() {
 
         {/* Recent Activity */}
         <Card>
-          <h2 className="text-sm font-semibold text-gray-300 mb-3">
+          <h2 className="text-sm font-semibold text-text-secondary mb-3">
             Recent Activity
           </h2>
           <div className="space-y-2.5">
@@ -170,10 +172,10 @@ export default function AdminDashboard() {
               <div key={a.id} className="flex items-start gap-2">
                 <div className="w-2 h-2 rounded-full bg-brand-gold mt-1.5 shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-white">{a.action}</p>
-                  <p className="text-xs text-gray-400 truncate">{a.detail}</p>
+                  <p className="text-sm text-text-primary">{a.action}</p>
+                  <p className="text-xs text-text-muted truncate">{a.detail}</p>
                 </div>
-                <span className="text-[10px] text-gray-500 whitespace-nowrap">
+                <span className="text-[10px] text-text-muted whitespace-nowrap">
                   {a.time}
                 </span>
               </div>
@@ -184,13 +186,13 @@ export default function AdminDashboard() {
 
       {/* Regional Performance */}
       <Card>
-        <h2 className="text-sm font-semibold text-gray-300 mb-3">
+        <h2 className="text-sm font-semibold text-text-secondary mb-3">
           Regional Performance
         </h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-[10px] text-gray-500 uppercase">
+              <tr className="text-left text-[10px] text-text-muted uppercase">
                 <th className="pb-2 pr-4">Region</th>
                 <th className="pb-2 pr-4">Bets</th>
                 <th className="pb-2 pr-4">Revenue</th>
@@ -199,17 +201,17 @@ export default function AdminDashboard() {
             </thead>
             <tbody>
               {REGIONAL_DATA.map((r) => (
-                <tr key={r.region} className="border-t border-gray-700/50">
-                  <td className="py-2 pr-4 text-white font-medium">
+                <tr key={r.region} className="border-t border-border-default">
+                  <td className="py-2 pr-4 text-text-primary font-medium">
                     {r.region}
                   </td>
-                  <td className="py-2 pr-4 text-gray-300">
+                  <td className="py-2 pr-4 text-text-secondary">
                     {r.bets.toLocaleString()}
                   </td>
                   <td className="py-2 pr-4 text-brand-gold font-semibold">
                     {formatCurrency(r.revenue)}
                   </td>
-                  <td className="py-2 text-gray-300">{r.agents}</td>
+                  <td className="py-2 text-text-secondary">{r.agents}</td>
                 </tr>
               ))}
             </tbody>

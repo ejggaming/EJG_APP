@@ -11,7 +11,7 @@ const variantStyles = {
   gold: "bg-brand-gold/20 text-brand-gold-light border-brand-gold/30",
   green: "bg-brand-green/20 text-brand-green-light border-brand-green/30",
   blue: "bg-brand-blue/20 text-brand-blue-light border-brand-blue/30",
-  gray: "bg-gray-600/20 text-gray-300 border-gray-600/30",
+  gray: "bg-surface-elevated/40 text-text-secondary border-border-default/30",
 };
 
 export default function Badge({

@@ -22,24 +22,24 @@ export default function Input({
       {label && (
         <label
           htmlFor={inputId}
-          className="block text-sm font-medium text-gray-300"
+          className="block text-sm font-medium text-text-secondary"
         >
           {label}
         </label>
       )}
       <div className="relative">
         {icon && (
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted">
             {icon}
           </div>
         )}
         <input
           id={inputId}
           className={cn(
-            "w-full rounded-lg border bg-surface-elevated px-4 py-2.5 text-white placeholder-gray-400 transition-colors focus:outline-none focus:ring-2",
+            "w-full rounded-lg border bg-surface-elevated px-4 py-2.5 text-text-primary placeholder-text-muted transition-colors focus:outline-none focus:ring-2",
             error
               ? "border-red-500 focus:ring-red-500"
-              : "border-gray-600 focus:border-brand-gold focus:ring-brand-gold",
+              : "border-border-default focus:border-brand-gold focus:ring-brand-gold",
             icon && "pl-10",
             className,
           )}

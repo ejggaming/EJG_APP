@@ -56,8 +56,8 @@ export default function AgentDashboard() {
       <Card className="bg-gradient-to-br from-brand-gold/20 to-brand-gold/5 border-brand-gold/30">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-gray-300">Welcome back,</p>
-            <h1 className="text-lg font-bold text-white">
+            <p className="text-sm text-text-secondary">Welcome back,</p>
+            <h1 className="text-lg font-bold text-text-primary">
               {user?.name ?? "Agent"}
             </h1>
             <Badge variant="gold" className="mt-1">
@@ -65,7 +65,7 @@ export default function AgentDashboard() {
             </Badge>
           </div>
           <div className="text-right">
-            <p className="text-xs text-gray-400">Commission Wallet</p>
+            <p className="text-xs text-text-muted">Commission Wallet</p>
             <p className="text-2xl font-bold text-brand-gold">
               {formatCurrency(balance)}
             </p>
@@ -81,28 +81,28 @@ export default function AgentDashboard() {
       {/* Today's Stats */}
       <div className="grid grid-cols-2 gap-2">
         <Card>
-          <p className="text-2xl font-bold text-white">
+          <p className="text-2xl font-bold text-text-primary">
             {MOCK_STATS.totalBetsToday}
           </p>
-          <p className="text-xs text-gray-400">Bets Today</p>
+          <p className="text-xs text-text-muted">Bets Today</p>
         </Card>
         <Card>
           <p className="text-2xl font-bold text-brand-gold">
             {formatCurrency(MOCK_STATS.collectionToday)}
           </p>
-          <p className="text-xs text-gray-400">Collections Today</p>
+          <p className="text-xs text-text-muted">Collections Today</p>
         </Card>
         <Card>
           <p className="text-2xl font-bold text-brand-green">
             {formatCurrency(MOCK_STATS.commissionToday)}
           </p>
-          <p className="text-xs text-gray-400">Commission Today (15%)</p>
+          <p className="text-xs text-text-muted">Commission Today (15%)</p>
         </Card>
         <Card>
-          <p className="text-2xl font-bold text-white">
+          <p className="text-2xl font-bold text-text-primary">
             {MOCK_STATS.totalCustomers}
           </p>
-          <p className="text-xs text-gray-400">Total Customers</p>
+          <p className="text-xs text-text-muted">Total Customers</p>
         </Card>
       </div>
 
@@ -123,7 +123,7 @@ export default function AgentDashboard() {
       {/* Recent Collections */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-sm font-semibold text-gray-300">
+          <h2 className="text-sm font-semibold text-text-secondary">
             Recent Collections
           </h2>
           <Link
@@ -147,10 +147,10 @@ export default function AgentDashboard() {
                 ))}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white truncate">
+                <p className="text-sm font-medium text-text-primary truncate">
                   {bet.customer}
                 </p>
-                <p className="text-[10px] text-gray-500">
+                <p className="text-[10px] text-text-muted">
                   {bet.draw} Draw · {bet.time}
                 </p>
               </div>
@@ -164,29 +164,29 @@ export default function AgentDashboard() {
 
       {/* Performance */}
       <Card className="border border-brand-green/30">
-        <h3 className="text-sm font-semibold text-gray-300 mb-2">
+        <h3 className="text-sm font-semibold text-text-secondary mb-2">
           Performance Summary
         </h3>
         <div className="grid grid-cols-2 gap-3 text-sm">
           <div>
-            <p className="text-gray-400">Total Commission</p>
+            <p className="text-text-muted">Total Commission</p>
             <p className="font-bold text-brand-green">
               {formatCurrency(MOCK_STATS.commissionTotal)}
             </p>
           </div>
           <div>
-            <p className="text-gray-400">Pending Payouts</p>
+            <p className="text-text-muted">Pending Payouts</p>
             <p className="font-bold text-brand-gold">
               {MOCK_STATS.pendingPayouts}
             </p>
           </div>
           <div>
-            <p className="text-gray-400">Commission Rate</p>
-            <p className="font-bold text-white">15%</p>
+            <p className="text-text-muted">Commission Rate</p>
+            <p className="font-bold text-text-primary">15%</p>
           </div>
           <div>
-            <p className="text-gray-400">Territory</p>
-            <p className="font-bold text-white">Tondo, Manila</p>
+            <p className="text-text-muted">Territory</p>
+            <p className="font-bold text-text-primary">Tondo, Manila</p>
           </div>
         </div>
       </Card>

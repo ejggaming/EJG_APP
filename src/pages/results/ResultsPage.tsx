@@ -91,10 +91,10 @@ export default function ResultsPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-extrabold text-white chinese-header">
+        <h1 className="text-xl font-extrabold text-text-primary chinese-header">
           Draw Results
         </h1>
-        <p className="text-gray-500 text-sm mt-1">
+        <p className="text-text-muted text-sm mt-1">
           <Trophy className="w-3.5 h-3.5 inline mr-1" />
           Latest winning numbers
         </p>
@@ -109,7 +109,7 @@ export default function ResultsPage() {
             className={`px-4 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all border ${
               activeTab === tab
                 ? "bg-brand-red text-white border-brand-gold/40 shadow-[0_0_10px_rgba(220,38,38,0.2)]"
-                : "bg-surface-card text-gray-500 border-brand-gold/10 hover:text-white hover:border-brand-gold/25"
+                : "bg-surface-card text-text-muted border-brand-gold/10 hover:text-text-primary hover:border-brand-gold/25"
             }`}
           >
             {tab}
@@ -122,6 +122,8 @@ export default function ResultsPage() {
         <Card
           className="auspicious-bg overflow-hidden"
           ornate
+          bento
+          delay={100}
           style={
             {
               background:
@@ -134,7 +136,7 @@ export default function ResultsPage() {
               <Flame className="w-3 h-3 inline mr-1" />
               Latest Draw
             </span>
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-text-muted">
               {filteredResults[0].date} · {filteredResults[0].drawTime}
             </span>
           </div>
@@ -153,15 +155,15 @@ export default function ResultsPage() {
               <p className="text-brand-gold font-extrabold">
                 ₱{filteredResults[0].prize.toLocaleString()}
               </p>
-              <p className="text-gray-600 text-[10px] uppercase tracking-wider">
+              <p className="text-text-muted text-[10px] uppercase tracking-wider">
                 Prize Pool
               </p>
             </div>
             <div>
-              <p className="text-white font-bold">
+              <p className="text-text-primary font-bold">
                 {filteredResults[0].totalBets.toLocaleString()}
               </p>
-              <p className="text-gray-600 text-[10px] uppercase tracking-wider">
+              <p className="text-text-muted text-[10px] uppercase tracking-wider">
                 Total Bets
               </p>
             </div>
@@ -169,7 +171,7 @@ export default function ResultsPage() {
               <p className="text-brand-green font-bold">
                 {filteredResults[0].winners}
               </p>
-              <p className="text-gray-600 text-[10px] uppercase tracking-wider">
+              <p className="text-text-muted text-[10px] uppercase tracking-wider">
                 Winners
               </p>
             </div>
@@ -182,13 +184,15 @@ export default function ResultsPage() {
 
       {/* Previous Results */}
       <div>
-        <h2 className="text-sm font-semibold text-gray-400 mb-2 chinese-header">
+        <h2 className="text-sm font-semibold text-text-secondary mb-2 chinese-header">
           Previous Results
         </h2>
         <div className="space-y-2">
-          {filteredResults.slice(1).map((result) => (
+          {filteredResults.slice(1).map((result, index) => (
             <Card
               key={result.id}
+              bento
+              delay={200 + index * 80}
               className="flex items-center gap-3 lantern-card"
             >
               <div className="flex gap-1.5">
@@ -199,16 +203,16 @@ export default function ResultsPage() {
                 ))}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white">
+                <p className="text-sm font-medium text-text-primary">
                   {result.drawTime} Draw
                 </p>
-                <p className="text-xs text-gray-500">{result.date}</p>
+                <p className="text-xs text-text-muted">{result.date}</p>
               </div>
               <div className="text-right">
                 <p className="text-sm font-bold text-brand-gold">
                   ₱{result.prize.toLocaleString()}
                 </p>
-                <p className="text-[10px] text-gray-600">
+                <p className="text-[10px] text-text-muted">
                   {result.winners} winner{result.winners > 1 ? "s" : ""}
                 </p>
               </div>

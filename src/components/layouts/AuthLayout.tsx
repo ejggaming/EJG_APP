@@ -12,7 +12,7 @@ export default function AuthLayout() {
           <span className="text-brand-red">Jueteng</span>
           <span className="text-brand-gold">PH</span>
         </h1>
-        <p className="text-gray-400 text-sm mt-1">Digital Betting Platform</p>
+        <p className="text-text-muted text-sm mt-1">Digital Betting Platform</p>
       </div>
 
       {/* Content */}

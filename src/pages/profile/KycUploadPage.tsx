@@ -58,20 +58,27 @@ export default function KycUploadPage() {
   return (
     <div className="space-y-4">
       <div className="chinese-header">
-        <h1 className="text-xl font-extrabold text-white">KYC Verification</h1>
-        <p className="text-gray-500 text-sm">
+        <h1 className="text-xl font-extrabold text-text-primary">
+          KYC Verification
+        </h1>
+        <p className="text-text-muted text-sm">
           Verify your identity to unlock all features
         </p>
       </div>
 
       {/* Info Card */}
-      <Card className="lantern-card border-brand-gold/20" ornate>
+      <Card
+        bento
+        delay={100}
+        className="lantern-card border-brand-gold/20"
+        ornate
+      >
         <div className="flex items-start gap-3">
           <Info className="w-5 h-5 text-brand-gold shrink-0" />
-          <div className="text-xs text-gray-400 space-y-1">
+          <div className="text-xs text-text-secondary space-y-1">
             <p>
               Documents are processed within{" "}
-              <span className="text-white font-medium">24 hours</span>.
+              <span className="text-text-primary font-medium">24 hours</span>.
             </p>
             <p>Ensure your ID is clear and readable.</p>
             <p>Your selfie must clearly show your face holding the ID.</p>
@@ -81,13 +88,13 @@ export default function KycUploadPage() {
 
       {/* ID Type */}
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-1">
+        <label className="block text-sm font-medium text-text-secondary mb-1">
           ✦ Government ID Type
         </label>
         <select
           value={idType}
           onChange={(e) => setIdType(e.target.value)}
-          className="w-full bg-surface-card border border-brand-gold/20 rounded-xl px-3 py-2.5 text-white text-sm focus:ring-2 focus:ring-brand-red focus:border-transparent outline-none"
+          className="w-full bg-surface-card border border-brand-gold/20 rounded-xl px-3 py-2.5 text-text-primary text-sm focus:ring-2 focus:ring-brand-red focus:border-transparent outline-none"
         >
           <option value="">Select ID type</option>
           {ID_TYPES.map((type) => (
@@ -108,7 +115,7 @@ export default function KycUploadPage() {
 
       {/* ID Photo Upload */}
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-1">
+        <label className="block text-sm font-medium text-text-secondary mb-1">
           ✦ Front of ID
         </label>
         <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-brand-gold/20 rounded-xl cursor-pointer hover:border-brand-gold/40 transition-colors bg-surface-card">
@@ -117,14 +124,14 @@ export default function KycUploadPage() {
               <p className="text-brand-green text-sm font-medium">
                 ✓ {idFront.name}
               </p>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-text-muted mt-1">
                 {(idFront.size / 1024 / 1024).toFixed(2)} MB
               </p>
             </div>
           ) : (
             <div className="text-center">
-              <Camera className="w-8 h-8 text-gray-500 mx-auto mb-1" />
-              <p className="text-xs text-gray-500">
+              <Camera className="w-8 h-8 text-text-muted mx-auto mb-1" />
+              <p className="text-xs text-text-muted">
                 Tap to upload (JPG, PNG · Max 5MB)
               </p>
             </div>
@@ -140,7 +147,7 @@ export default function KycUploadPage() {
 
       {/* Selfie Upload */}
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-1">
+        <label className="block text-sm font-medium text-text-secondary mb-1">
           ✦ Selfie with ID
         </label>
         <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-brand-gold/20 rounded-xl cursor-pointer hover:border-brand-gold/40 transition-colors bg-surface-card">
@@ -149,14 +156,14 @@ export default function KycUploadPage() {
               <p className="text-brand-green text-sm font-medium">
                 ✓ {selfie.name}
               </p>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-text-muted mt-1">
                 {(selfie.size / 1024 / 1024).toFixed(2)} MB
               </p>
             </div>
           ) : (
             <div className="text-center">
-              <UserCheck className="w-8 h-8 text-gray-500 mx-auto mb-1" />
-              <p className="text-xs text-gray-500">
+              <UserCheck className="w-8 h-8 text-text-muted mx-auto mb-1" />
+              <p className="text-xs text-text-muted">
                 Tap to take photo or upload
               </p>
             </div>

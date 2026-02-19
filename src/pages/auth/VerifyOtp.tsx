@@ -53,9 +53,11 @@ export default function VerifyOtpPage() {
   };
 
   return (
-    <div className="bg-surface-card rounded-2xl border border-gray-700/50 p-6">
-      <h2 className="text-xl font-bold text-white mb-1">Verify Mobile</h2>
-      <p className="text-gray-400 text-sm mb-6">
+    <div className="bg-surface-card rounded-2xl border border-border-default p-6">
+      <h2 className="text-xl font-bold text-text-primary mb-1">
+        Verify Mobile
+      </h2>
+      <p className="text-text-muted text-sm mb-6">
         Enter the 6-digit code sent to your mobile number
       </p>
 
@@ -73,7 +75,7 @@ export default function VerifyOtpPage() {
               value={digit}
               onChange={(e) => handleChange(i, e.target.value)}
               onKeyDown={(e) => handleKeyDown(i, e)}
-              className="w-12 h-14 rounded-lg bg-surface-elevated border border-gray-600 text-center text-xl font-bold text-white focus:border-brand-gold focus:ring-2 focus:ring-brand-gold focus:outline-none transition-colors"
+              className="w-12 h-14 rounded-lg bg-surface-elevated border border-border-default text-center text-xl font-bold text-text-primary focus:border-brand-gold focus:ring-2 focus:ring-brand-gold focus:outline-none transition-colors"
             />
           ))}
         </div>
@@ -82,7 +84,7 @@ export default function VerifyOtpPage() {
           Verify
         </Button>
 
-        <p className="text-center text-gray-400 text-sm">
+        <p className="text-center text-text-muted text-sm">
           Didn't receive the code?{" "}
           <button
             type="button"

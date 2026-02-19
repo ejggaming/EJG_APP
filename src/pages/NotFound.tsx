@@ -8,7 +8,7 @@ export default function NotFoundPage() {
         <span className="text-4xl">🎱</span>
       </div>
       <h1 className="text-5xl font-bold text-brand-red mb-2">404</h1>
-      <p className="text-gray-400 mb-6 text-center">
+      <p className="text-text-muted mb-6 text-center">
         The page you're looking for doesn't exist or has been moved.
       </p>
       <Link to="/">

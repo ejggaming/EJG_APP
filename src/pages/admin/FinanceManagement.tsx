@@ -99,8 +99,10 @@ export default function FinanceManagement() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Financial Management</h1>
-        <p className="text-gray-400 text-sm">
+        <h1 className="text-2xl font-bold text-text-primary">
+          Financial Management
+        </h1>
+        <p className="text-text-muted text-sm">
           Manage deposits, withdrawals, and settlements
         </p>
       </div>
@@ -111,31 +113,31 @@ export default function FinanceManagement() {
           <p className="text-xl font-bold text-brand-green">
             {formatCurrency(245000)}
           </p>
-          <p className="text-xs text-gray-400">Total Deposits Today</p>
+          <p className="text-xs text-text-muted">Total Deposits Today</p>
         </Card>
         <Card>
           <p className="text-xl font-bold text-brand-red">
             {formatCurrency(23000)}
           </p>
-          <p className="text-xs text-gray-400">Pending Withdrawals</p>
+          <p className="text-xs text-text-muted">Pending Withdrawals</p>
         </Card>
         <Card>
           <p className="text-xl font-bold text-brand-gold">
             {formatCurrency(162350)}
           </p>
-          <p className="text-xs text-gray-400">Bet Revenue Today</p>
+          <p className="text-xs text-text-muted">Bet Revenue Today</p>
         </Card>
         <Card>
           <p className="text-xl font-bold text-brand-blue">
             {formatCurrency(48705)}
           </p>
-          <p className="text-xs text-gray-400">Gov't Share (30%)</p>
+          <p className="text-xs text-text-muted">Gov't Share (30%)</p>
         </Card>
       </div>
 
       {/* Pending Withdrawals */}
       <div>
-        <h2 className="text-lg font-bold text-white mb-3">
+        <h2 className="text-lg font-bold text-text-primary mb-3">
           Pending Withdrawals
         </h2>
         <div className="space-y-2">
@@ -147,11 +149,13 @@ export default function FinanceManagement() {
                     {w.user[0]}
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-white">{w.user}</p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-sm font-medium text-text-primary">
+                      {w.user}
+                    </p>
+                    <p className="text-xs text-text-muted">
                       {w.mobile} · {w.method} → {w.account}
                     </p>
-                    <p className="text-[10px] text-gray-500">{w.date}</p>
+                    <p className="text-[10px] text-text-muted">{w.date}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -180,7 +184,7 @@ export default function FinanceManagement() {
           ))}
           {PENDING_WITHDRAWALS.length === 0 && (
             <Card className="text-center py-8">
-              <p className="text-gray-500">No pending withdrawals</p>
+              <p className="text-text-muted">No pending withdrawals</p>
             </Card>
           )}
         </div>
@@ -188,13 +192,13 @@ export default function FinanceManagement() {
 
       {/* Recent Transactions */}
       <div>
-        <h2 className="text-lg font-bold text-white mb-3">
+        <h2 className="text-lg font-bold text-text-primary mb-3">
           Recent Transactions
         </h2>
         <Card className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-[10px] text-gray-500 uppercase border-b border-gray-700/50">
+              <tr className="text-left text-[10px] text-text-muted uppercase border-b border-border-default">
                 <th className="pb-3 pr-4">Type</th>
                 <th className="pb-3 pr-4">User</th>
                 <th className="pb-3 pr-4">Amount</th>
@@ -207,15 +211,17 @@ export default function FinanceManagement() {
               {RECENT_TRANSACTIONS.map((tx) => {
                 const style = txBadge[tx.type];
                 return (
-                  <tr key={tx.id} className="border-b border-gray-700/30">
+                  <tr key={tx.id} className="border-b border-border-default/30">
                     <td className="py-2.5 pr-4">
                       <Badge variant={style.variant}>{style.label}</Badge>
                     </td>
-                    <td className="py-2.5 pr-4 text-white">{tx.user}</td>
+                    <td className="py-2.5 pr-4 text-text-primary">{tx.user}</td>
                     <td className="py-2.5 pr-4 text-brand-gold font-semibold">
                       {formatCurrency(tx.amount)}
                     </td>
-                    <td className="py-2.5 pr-4 text-gray-300">{tx.method}</td>
+                    <td className="py-2.5 pr-4 text-text-secondary">
+                      {tx.method}
+                    </td>
                     <td className="py-2.5 pr-4">
                       <Badge
                         variant={tx.status === "completed" ? "green" : "gold"}
@@ -223,7 +229,7 @@ export default function FinanceManagement() {
                         {tx.status === "completed" ? "Done" : "Pending"}
                       </Badge>
                     </td>
-                    <td className="py-2.5 text-gray-400 text-xs whitespace-nowrap">
+                    <td className="py-2.5 text-text-muted text-xs whitespace-nowrap">
                       {tx.date}
                     </td>
                   </tr>

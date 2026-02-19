@@ -125,12 +125,12 @@ export default function Reports() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold text-white">Reports</h1>
-          <p className="text-gray-400 text-sm">
+          <h1 className="text-2xl font-bold text-text-primary">Reports</h1>
+          <p className="text-text-muted text-sm">
             Revenue, bets, and performance analytics
           </p>
         </div>
-        <div className="flex bg-surface-card rounded-lg overflow-hidden border border-gray-700/50">
+        <div className="flex bg-surface-card rounded-lg overflow-hidden border border-border-default">
           {(["daily", "weekly", "monthly"] as TimeRange[]).map((r) => (
             <button
               key={r}
@@ -138,7 +138,7 @@ export default function Reports() {
               className={`px-4 py-2 text-sm font-medium capitalize transition-colors ${
                 range === r
                   ? "bg-brand-red text-white"
-                  : "text-gray-400 hover:text-white"
+                  : "text-text-muted hover:text-text-primary"
               }`}
             >
               {r}
@@ -153,43 +153,43 @@ export default function Reports() {
           <p className="text-xl font-bold text-brand-blue">
             {data.bets.toLocaleString()}
           </p>
-          <p className="text-xs text-gray-400">Total Bets</p>
+          <p className="text-xs text-text-muted">Total Bets</p>
         </Card>
         <Card>
           <p className="text-xl font-bold text-brand-gold">
             {formatCurrency(data.revenue)}
           </p>
-          <p className="text-xs text-gray-400">Gross Revenue</p>
+          <p className="text-xs text-text-muted">Gross Revenue</p>
         </Card>
         <Card>
           <p className="text-xl font-bold text-brand-red">
             {formatCurrency(data.payouts)}
           </p>
-          <p className="text-xs text-gray-400">Total Payouts</p>
+          <p className="text-xs text-text-muted">Total Payouts</p>
         </Card>
         <Card>
           <p className="text-xl font-bold text-brand-green">
             {formatCurrency(data.net)}
           </p>
-          <p className="text-xs text-gray-400">Net Revenue</p>
+          <p className="text-xs text-text-muted">Net Revenue</p>
         </Card>
         <Card className="col-span-2 md:col-span-1">
-          <p className="text-xl font-bold text-white">
+          <p className="text-xl font-bold text-text-primary">
             {formatCurrency(data.govShare)}
           </p>
-          <p className="text-xs text-gray-400">PCSO Share (30%)</p>
+          <p className="text-xs text-text-muted">PCSO Share (30%)</p>
         </Card>
       </div>
 
       {/* Regional Performance */}
       <div>
-        <h2 className="text-lg font-bold text-white mb-3">
+        <h2 className="text-lg font-bold text-text-primary mb-3">
           Regional Performance
         </h2>
         <Card className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-[10px] text-gray-500 uppercase border-b border-gray-700/50">
+              <tr className="text-left text-[10px] text-text-muted uppercase border-b border-border-default">
                 <th className="pb-3 pr-4">Region</th>
                 <th className="pb-3 pr-4">Bets</th>
                 <th className="pb-3 pr-4">Revenue</th>
@@ -199,15 +199,20 @@ export default function Reports() {
             </thead>
             <tbody>
               {REGIONAL_DATA.map((r) => (
-                <tr key={r.region} className="border-b border-gray-700/30">
-                  <td className="py-2.5 pr-4 text-white font-medium">
+                <tr
+                  key={r.region}
+                  className="border-b border-border-default/30"
+                >
+                  <td className="py-2.5 pr-4 text-text-primary font-medium">
                     {r.region}
                   </td>
-                  <td className="py-2.5 pr-4 text-gray-300">{r.bets}</td>
+                  <td className="py-2.5 pr-4 text-text-secondary">{r.bets}</td>
                   <td className="py-2.5 pr-4 text-brand-gold font-semibold">
                     {formatCurrency(r.revenue)}
                   </td>
-                  <td className="py-2.5 pr-4 text-gray-300">{r.agents}</td>
+                  <td className="py-2.5 pr-4 text-text-secondary">
+                    {r.agents}
+                  </td>
                   <td className="py-2.5 pr-4">
                     <Badge variant="green">{r.growth}</Badge>
                   </td>
@@ -220,7 +225,7 @@ export default function Reports() {
 
       {/* Top Performing Agents */}
       <div>
-        <h2 className="text-lg font-bold text-white mb-3">
+        <h2 className="text-lg font-bold text-text-primary mb-3">
           Top Performing Agents
         </h2>
         <div className="space-y-2">
@@ -232,14 +237,14 @@ export default function Reports() {
                     #{i + 1}
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-white">
+                    <p className="text-sm font-medium text-text-primary">
                       {agent.name}
                     </p>
                     <div className="flex gap-2 items-center">
                       <Badge variant={agent.role === "CABO" ? "gold" : "blue"}>
                         {agent.role}
                       </Badge>
-                      <span className="text-[10px] text-gray-500">
+                      <span className="text-[10px] text-text-muted">
                         {agent.customers} customers
                       </span>
                     </div>
@@ -261,37 +266,37 @@ export default function Reports() {
 
       {/* PCSO Report Summary */}
       <div>
-        <h2 className="text-lg font-bold text-white mb-3">
+        <h2 className="text-lg font-bold text-text-primary mb-3">
           PCSO Government Share Report
         </h2>
         <Card>
           <div className="space-y-3">
             <div className="flex justify-between text-sm">
-              <span className="text-gray-400">Gross Revenue ({range})</span>
-              <span className="text-white font-medium">
+              <span className="text-text-muted">Gross Revenue ({range})</span>
+              <span className="text-text-primary font-medium">
                 {formatCurrency(data.revenue)}
               </span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-400">Less: Payouts</span>
+              <span className="text-text-muted">Less: Payouts</span>
               <span className="text-brand-red font-medium">
                 -{formatCurrency(data.payouts)}
               </span>
             </div>
-            <div className="border-t border-gray-700/50 pt-3 flex justify-between text-sm">
-              <span className="text-gray-400">Net Revenue</span>
+            <div className="border-t border-border-default pt-3 flex justify-between text-sm">
+              <span className="text-text-muted">Net Revenue</span>
               <span className="text-brand-green font-medium">
                 {formatCurrency(data.net)}
               </span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-400">Government Share (30%)</span>
-              <span className="text-white font-bold">
+              <span className="text-text-muted">Government Share (30%)</span>
+              <span className="text-text-primary font-bold">
                 {formatCurrency(data.govShare)}
               </span>
             </div>
-            <div className="border-t border-gray-700/50 pt-3 flex justify-between text-sm">
-              <span className="text-gray-400">Operator Retained</span>
+            <div className="border-t border-border-default pt-3 flex justify-between text-sm">
+              <span className="text-text-muted">Operator Retained</span>
               <span className="text-brand-gold font-bold">
                 {formatCurrency(data.net - data.govShare)}
               </span>

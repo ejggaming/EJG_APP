@@ -84,7 +84,7 @@ export default function AgentWallet() {
     <div className="space-y-4 pb-20 md:pb-4">
       {/* Balance */}
       <Card className="bg-gradient-to-br from-brand-gold/20 to-brand-gold/5 border-brand-gold/30">
-        <p className="text-sm text-gray-300">Commission Wallet</p>
+        <p className="text-sm text-text-secondary">Commission Wallet</p>
         <p className="text-3xl font-bold text-brand-gold mt-1">
           {formatCurrency(balance)}
         </p>
@@ -101,7 +101,7 @@ export default function AgentWallet() {
       {/* Withdraw Form */}
       {showWithdraw && (
         <Card className="border border-brand-gold/30 space-y-3">
-          <h3 className="text-sm font-semibold text-white">
+          <h3 className="text-sm font-semibold text-text-primary">
             Withdraw Commission
           </h3>
           <div className="grid grid-cols-3 gap-2">
@@ -112,7 +112,7 @@ export default function AgentWallet() {
                 className={`py-2 rounded-lg text-xs font-medium flex flex-col items-center gap-1 transition-colors ${
                   method === m.id
                     ? "bg-brand-gold text-white"
-                    : "bg-surface-elevated text-gray-300 hover:bg-gray-600"
+                    : "bg-surface-elevated text-text-secondary hover:bg-surface-elevated/80"
                 }`}
               >
                 <span className="text-lg">{m.icon}</span>
@@ -147,7 +147,7 @@ export default function AgentWallet() {
 
       {/* Transaction History */}
       <div>
-        <h2 className="text-sm font-semibold text-gray-300 mb-2">
+        <h2 className="text-sm font-semibold text-text-secondary mb-2">
           Transaction History
         </h2>
         <div className="space-y-2">
@@ -159,13 +159,13 @@ export default function AgentWallet() {
                 {tx.amount >= 0 ? "💰" : "↑"}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white truncate">
+                <p className="text-sm font-medium text-text-primary truncate">
                   {tx.label}
                 </p>
-                <p className="text-[10px] text-gray-500">{tx.date}</p>
+                <p className="text-[10px] text-text-muted">{tx.date}</p>
               </div>
               <span
-                className={`text-sm font-bold ${tx.amount >= 0 ? "text-brand-green" : "text-white"}`}
+                className={`text-sm font-bold ${tx.amount >= 0 ? "text-brand-green" : "text-text-primary"}`}
               >
                 {tx.amount >= 0 ? "+" : ""}
                 {formatCurrency(Math.abs(tx.amount))}

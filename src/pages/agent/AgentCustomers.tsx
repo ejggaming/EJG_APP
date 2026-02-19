@@ -78,8 +78,8 @@ export default function AgentCustomers() {
     <div className="space-y-4 pb-20 md:pb-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-white">My Customers</h1>
-          <p className="text-gray-400 text-sm">
+          <h1 className="text-xl font-bold text-text-primary">My Customers</h1>
+          <p className="text-text-muted text-sm">
             {MOCK_CUSTOMERS.length} registered
           </p>
         </div>
@@ -101,13 +101,13 @@ export default function AgentCustomers() {
           <p className="text-lg font-bold text-brand-green">
             {MOCK_CUSTOMERS.filter((c) => c.status === "active").length}
           </p>
-          <p className="text-[10px] text-gray-400">Active</p>
+          <p className="text-[10px] text-text-muted">Active</p>
         </Card>
         <Card className="text-center">
-          <p className="text-lg font-bold text-white">
+          <p className="text-lg font-bold text-text-primary">
             {MOCK_CUSTOMERS.reduce((a, c) => a + c.totalBets, 0)}
           </p>
-          <p className="text-[10px] text-gray-400">Total Bets</p>
+          <p className="text-[10px] text-text-muted">Total Bets</p>
         </Card>
         <Card className="text-center">
           <p className="text-lg font-bold text-brand-gold">
@@ -115,7 +115,7 @@ export default function AgentCustomers() {
               MOCK_CUSTOMERS.reduce((a, c) => a + c.totalSpent, 0),
             )}
           </p>
-          <p className="text-[10px] text-gray-400">Total Spent</p>
+          <p className="text-[10px] text-text-muted">Total Spent</p>
         </Card>
       </div>
 
@@ -134,18 +134,18 @@ export default function AgentCustomers() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium text-white truncate">
+                    <p className="text-sm font-medium text-text-primary truncate">
                       {customer.name}
                     </p>
                     <Badge variant={badge.variant}>{badge.label}</Badge>
                   </div>
-                  <p className="text-xs text-gray-400">{customer.mobile}</p>
+                  <p className="text-xs text-text-muted">{customer.mobile}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-bold text-brand-gold">
                     {formatCurrency(customer.totalSpent)}
                   </p>
-                  <p className="text-[10px] text-gray-500">
+                  <p className="text-[10px] text-text-muted">
                     {customer.totalBets} bets
                   </p>
                 </div>
@@ -154,7 +154,7 @@ export default function AgentCustomers() {
           );
         })}
         {filtered.length === 0 && (
-          <p className="text-center text-gray-500 py-8">No customers found</p>
+          <p className="text-center text-text-muted py-8">No customers found</p>
         )}
       </div>
     </div>

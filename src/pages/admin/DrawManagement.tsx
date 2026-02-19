@@ -115,8 +115,10 @@ export default function DrawManagement() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold text-white">Draw Management</h1>
-        <p className="text-gray-400 text-sm">
+        <h1 className="text-2xl font-bold text-text-primary">
+          Draw Management
+        </h1>
+        <p className="text-text-muted text-sm">
           Manage draw schedules and encode results
         </p>
       </div>
@@ -127,19 +129,19 @@ export default function DrawManagement() {
           <p className="text-xl font-bold text-brand-green">
             {MOCK_DRAWS.filter((d) => d.status === "published").length}
           </p>
-          <p className="text-xs text-gray-400">Published</p>
+          <p className="text-xs text-text-muted">Published</p>
         </Card>
         <Card>
           <p className="text-xl font-bold text-brand-gold">
             {MOCK_DRAWS.filter((d) => d.status === "open").length}
           </p>
-          <p className="text-xs text-gray-400">Open</p>
+          <p className="text-xs text-text-muted">Open</p>
         </Card>
         <Card>
-          <p className="text-xl font-bold text-gray-400">
+          <p className="text-xl font-bold text-text-muted">
             {MOCK_DRAWS.filter((d) => d.status === "scheduled").length}
           </p>
-          <p className="text-xs text-gray-400">Scheduled</p>
+          <p className="text-xs text-text-muted">Scheduled</p>
         </Card>
       </div>
 
@@ -152,10 +154,10 @@ export default function DrawManagement() {
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-3">
                   <div>
-                    <p className="text-sm font-bold text-white">
+                    <p className="text-sm font-bold text-text-primary">
                       {draw.time} Draw
                     </p>
-                    <p className="text-xs text-gray-400">{draw.date}</p>
+                    <p className="text-xs text-text-muted">{draw.date}</p>
                   </div>
                   <Badge variant={style.variant}>{style.label}</Badge>
                 </div>
@@ -174,19 +176,19 @@ export default function DrawManagement() {
               </div>
               <div className="grid grid-cols-3 gap-2 text-xs">
                 <div>
-                  <p className="text-gray-500">Total Bets</p>
-                  <p className="text-white font-medium">
+                  <p className="text-text-muted">Total Bets</p>
+                  <p className="text-text-primary font-medium">
                     {draw.totalBets.toLocaleString()}
                   </p>
                 </div>
                 <div>
-                  <p className="text-gray-500">Total Stake</p>
+                  <p className="text-text-muted">Total Stake</p>
                   <p className="text-brand-gold font-medium">
                     ₱{draw.totalStake.toLocaleString()}
                   </p>
                 </div>
                 <div>
-                  <p className="text-gray-500">Winners</p>
+                  <p className="text-text-muted">Winners</p>
                   <p className="text-brand-green font-medium">{draw.winners}</p>
                 </div>
               </div>
@@ -223,10 +225,10 @@ export default function DrawManagement() {
       >
         <div className="space-y-4">
           <Card className="text-center">
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-text-muted">
               {selectedDraw?.time} Draw — {selectedDraw?.date}
             </p>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-text-muted mt-1">
               {selectedDraw?.totalBets.toLocaleString()} bets · ₱
               {selectedDraw?.totalStake.toLocaleString()} stake
             </p>

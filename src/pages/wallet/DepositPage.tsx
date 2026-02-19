@@ -63,10 +63,10 @@ export default function DepositPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-extrabold text-white chinese-header">
+        <h1 className="text-xl font-extrabold text-text-primary chinese-header">
           Deposit Funds
         </h1>
-        <p className="text-gray-500 text-sm mt-1">
+        <p className="text-text-muted text-sm mt-1">
           Current balance:{" "}
           <span className="gold-shimmer font-semibold">
             {formatCurrency(balance)}
@@ -76,13 +76,15 @@ export default function DepositPage() {
 
       {/* Payment Method */}
       <div>
-        <h2 className="text-sm font-semibold text-gray-400 mb-2">
+        <h2 className="text-sm font-semibold text-text-secondary mb-2">
           ✦ Payment Method
         </h2>
         <div className="space-y-2">
-          {PAYMENT_METHODS.map((method) => (
+          {PAYMENT_METHODS.map((method, index) => (
             <Card
               key={method.id}
+              bento
+              delay={100 + index * 100}
               className={`flex items-center gap-3 cursor-pointer transition-all lantern-card ${
                 selectedMethod === method.id
                   ? "ring-2 ring-brand-gold border-brand-gold/50"
@@ -92,14 +94,14 @@ export default function DepositPage() {
             >
               <method.Icon className="w-6 h-6 text-brand-gold" />
               <div className="flex-1">
-                <p className="text-white font-medium">{method.name}</p>
-                <p className="text-xs text-gray-500">{method.description}</p>
+                <p className="text-text-primary font-medium">{method.name}</p>
+                <p className="text-xs text-text-muted">{method.description}</p>
               </div>
               <div
                 className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                   selectedMethod === method.id
                     ? "border-brand-gold bg-brand-gold"
-                    : "border-gray-600"
+                    : "border-border-default"
                 }`}
               >
                 {selectedMethod === method.id && (
@@ -113,7 +115,9 @@ export default function DepositPage() {
 
       {/* Amount */}
       <div>
-        <h2 className="text-sm font-semibold text-gray-400 mb-2">✦ Amount</h2>
+        <h2 className="text-sm font-semibold text-text-secondary mb-2">
+          ✦ Amount
+        </h2>
         <Input
           label=""
           type="number"
@@ -129,7 +133,7 @@ export default function DepositPage() {
               className={`py-2 rounded-xl text-sm font-semibold transition-all border-2 ${
                 numAmount === a
                   ? "bg-brand-red/15 text-brand-red border-brand-red/30"
-                  : "bg-surface-card text-gray-500 border-brand-gold/10 hover:border-brand-gold/25"
+                  : "bg-surface-card text-text-muted border-brand-gold/10 hover:border-brand-gold/25"
               }`}
             >
               {formatCurrency(a)}
@@ -140,22 +144,24 @@ export default function DepositPage() {
 
       {/* Summary */}
       {numAmount >= 50 && selectedMethod && (
-        <Card ornate className="lantern-card">
-          <h3 className="text-sm font-semibold text-gray-400 mb-2">
+        <Card ornate bento delay={400} className="lantern-card">
+          <h3 className="text-sm font-semibold text-text-secondary mb-2">
             ✦ Summary
           </h3>
           <div className="space-y-1 text-sm">
             <div className="flex justify-between">
-              <span className="text-gray-500">Deposit Amount</span>
-              <span className="text-white">{formatCurrency(numAmount)}</span>
+              <span className="text-text-muted">Deposit Amount</span>
+              <span className="text-text-primary">
+                {formatCurrency(numAmount)}
+              </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500">Service Fee</span>
+              <span className="text-text-muted">Service Fee</span>
               <span className="text-brand-green">FREE</span>
             </div>
             <hr className="border-brand-gold/15 my-1" />
             <div className="flex justify-between font-bold">
-              <span className="text-white">Total</span>
+              <span className="text-text-primary">Total</span>
               <span className="gold-shimmer">{formatCurrency(numAmount)}</span>
             </div>
           </div>

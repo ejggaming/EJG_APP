@@ -63,7 +63,7 @@ export default function HomePage() {
       {/* Welcome & Balance — Auspicious Hero Card */}
       {isAuthenticated ? (
         <div
-          className="auspicious-bg chinese-frame rounded-xl overflow-hidden"
+          className="auspicious-bg chinese-frame rounded-2xl overflow-hidden bento-card"
           style={{
             background:
               "linear-gradient(135deg, #7f1d1d 0%, #991b1b 30%, #b91c1c 60%, #7f1d1d 100%)",
@@ -101,7 +101,7 @@ export default function HomePage() {
         </div>
       ) : (
         <div
-          className="auspicious-bg chinese-frame rounded-xl overflow-hidden text-center"
+          className="auspicious-bg chinese-frame rounded-2xl overflow-hidden text-center bento-card"
           style={{
             background:
               "linear-gradient(135deg, #7f1d1d 0%, #991b1b 30%, #b91c1c 60%, #7f1d1d 100%)",
@@ -137,35 +137,37 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Quick Stats — Fortune tokens */}
+      {/* Quick Stats — Bento Fortune tokens */}
       <div className="grid grid-cols-3 gap-3">
-        <Card className="text-center lantern-card">
-          <Trophy className="w-4 h-4 text-brand-gold/60 mx-auto mb-1" />
+        <Card bento delay={100} className="text-center lantern-card">
+          <Trophy className="w-5 h-5 text-brand-gold/60 mx-auto mb-1.5" />
           <p className="text-brand-gold text-xl font-extrabold">₱50K</p>
-          <p className="text-gray-500 text-[10px] mt-0.5 uppercase tracking-wider">
+          <p className="text-text-muted text-[10px] mt-0.5 uppercase tracking-wider">
             Top Prize
           </p>
         </Card>
-        <Card className="text-center lantern-card">
-          <Coins className="w-4 h-4 text-brand-green/60 mx-auto mb-1" />
+        <Card bento delay={200} className="text-center lantern-card">
+          <Coins className="w-5 h-5 text-brand-green/60 mx-auto mb-1.5" />
           <p className="text-brand-green text-xl font-extrabold">₱5</p>
-          <p className="text-gray-500 text-[10px] mt-0.5 uppercase tracking-wider">
+          <p className="text-text-muted text-[10px] mt-0.5 uppercase tracking-wider">
             Min Bet
           </p>
         </Card>
-        <Card className="text-center lantern-card">
-          <CircleDot className="w-4 h-4 text-brand-red/60 mx-auto mb-1" />
+        <Card bento delay={300} className="text-center lantern-card">
+          <CircleDot className="w-5 h-5 text-brand-red/60 mx-auto mb-1.5" />
           <p className="text-brand-red-light text-xl font-extrabold">1-37</p>
-          <p className="text-gray-500 text-[10px] mt-0.5 uppercase tracking-wider">
+          <p className="text-text-muted text-[10px] mt-0.5 uppercase tracking-wider">
             Numbers
           </p>
         </Card>
       </div>
 
       {/* Today's Draws  */}
-      <section>
+      <section className="bento-section" style={{ animationDelay: "150ms" }}>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-bold text-white chinese-header">Today's Draws</h3>
+          <h3 className="font-bold text-text-primary chinese-header">
+            Today's Draws
+          </h3>
           <Link
             to="/results"
             className="text-brand-gold text-sm hover:underline"
@@ -174,10 +176,12 @@ export default function HomePage() {
           </Link>
         </div>
         <div className="space-y-2">
-          {MOCK_DRAWS.map((draw) => (
+          {MOCK_DRAWS.map((draw, idx) => (
             <Card
               key={draw.id}
               hover
+              bento
+              delay={200 + idx * 100}
               className="flex items-center justify-between lantern-card"
             >
               <div className="flex items-center gap-3">
@@ -192,10 +196,10 @@ export default function HomePage() {
                   <Clock className="w-5 h-5 text-brand-red/70" />
                 </div>
                 <div>
-                  <p className="font-semibold text-white text-sm">
+                  <p className="font-semibold text-text-primary text-sm">
                     {draw.label}
                   </p>
-                  <p className="text-gray-500 text-xs">Feb 19, 2026</p>
+                  <p className="text-text-muted text-xs">Feb 19, 2026</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -219,9 +223,9 @@ export default function HomePage() {
       <div className="cloud-divider" />
 
       {/* Recent Results */}
-      <section>
+      <section className="bento-section" style={{ animationDelay: "300ms" }}>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-bold text-white chinese-header">
+          <h3 className="font-bold text-text-primary chinese-header">
             Recent Results
           </h3>
           <Link
@@ -232,16 +236,18 @@ export default function HomePage() {
           </Link>
         </div>
         <div className="space-y-2">
-          {MOCK_RECENT_RESULTS.map((result) => (
+          {MOCK_RECENT_RESULTS.map((result, idx) => (
             <Card
               key={result.id}
+              bento
+              delay={350 + idx * 100}
               className="flex items-center justify-between lantern-card"
             >
               <div>
-                <p className="text-sm font-medium text-white">
+                <p className="text-sm font-medium text-text-primary">
                   {result.draw} Draw
                 </p>
-                <p className="text-xs text-gray-500">{result.date}</p>
+                <p className="text-xs text-text-muted">{result.date}</p>
               </div>
               <div className="flex items-center gap-3">
                 <div className="flex gap-1.5">
@@ -263,11 +269,11 @@ export default function HomePage() {
       </section>
 
       {/* How to Play — Scroll style */}
-      <section>
-        <h3 className="font-bold text-white mb-3 chinese-header">
+      <section className="bento-section" style={{ animationDelay: "450ms" }}>
+        <h3 className="font-bold text-text-primary mb-3 chinese-header">
           How to Play
         </h3>
-        <Card ornate>
+        <Card ornate bento delay={500}>
           <div className="space-y-3">
             {[
               {
@@ -300,10 +306,10 @@ export default function HomePage() {
                   <item.Icon className="w-4 h-4 text-brand-gold" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-white">
+                  <p className="text-sm font-semibold text-text-primary">
                     {item.title}
                   </p>
-                  <p className="text-xs text-gray-500">{item.desc}</p>
+                  <p className="text-xs text-text-muted">{item.desc}</p>
                 </div>
               </div>
             ))}

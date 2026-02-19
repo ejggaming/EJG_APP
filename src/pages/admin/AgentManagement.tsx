@@ -129,8 +129,10 @@ export default function AgentManagement() {
     <div className="space-y-4">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-white">Agent Management</h1>
-          <p className="text-gray-400 text-sm">
+          <h1 className="text-2xl font-bold text-text-primary">
+            Agent Management
+          </h1>
+          <p className="text-text-muted text-sm">
             {MOCK_AGENTS.length} agents registered
           </p>
         </div>
@@ -149,22 +151,22 @@ export default function AgentManagement() {
       {/* Summary */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Card>
-          <p className="text-xl font-bold text-white">
+          <p className="text-xl font-bold text-text-primary">
             {MOCK_AGENTS.filter((a) => a.role === "COBRADOR").length}
           </p>
-          <p className="text-xs text-gray-400">Cobradors</p>
+          <p className="text-xs text-text-muted">Cobradors</p>
         </Card>
         <Card>
           <p className="text-xl font-bold text-brand-blue">
             {MOCK_AGENTS.filter((a) => a.role === "CABO").length}
           </p>
-          <p className="text-xs text-gray-400">Cabos</p>
+          <p className="text-xs text-text-muted">Cabos</p>
         </Card>
         <Card>
           <p className="text-xl font-bold text-brand-green">
             {MOCK_AGENTS.filter((a) => a.role === "CAPITALISTA").length}
           </p>
-          <p className="text-xs text-gray-400">Capitalistas</p>
+          <p className="text-xs text-text-muted">Capitalistas</p>
         </Card>
         <Card>
           <p className="text-xl font-bold text-brand-gold">
@@ -172,7 +174,7 @@ export default function AgentManagement() {
               MOCK_AGENTS.reduce((a, c) => a + c.totalCommission, 0),
             )}
           </p>
-          <p className="text-xs text-gray-400">Total Commissions</p>
+          <p className="text-xs text-text-muted">Total Commissions</p>
         </Card>
       </div>
 
@@ -191,10 +193,10 @@ export default function AgentManagement() {
                     {agent.name[0]}
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-white">
+                    <p className="text-sm font-medium text-text-primary">
                       {agent.name}
                     </p>
-                    <p className="text-xs text-gray-400">{agent.mobile}</p>
+                    <p className="text-xs text-text-muted">{agent.mobile}</p>
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-1">
@@ -202,25 +204,27 @@ export default function AgentManagement() {
                   <Badge variant={status.variant}>{status.label}</Badge>
                 </div>
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs mt-2 pt-2 border-t border-gray-700/50">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs mt-2 pt-2 border-t border-border-default">
                 <div>
-                  <p className="text-gray-500">Territory</p>
-                  <p className="text-white font-medium">{agent.territory}</p>
+                  <p className="text-text-muted">Territory</p>
+                  <p className="text-text-primary font-medium">
+                    {agent.territory}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-gray-500">Commission Rate</p>
-                  <p className="text-white font-medium">
+                  <p className="text-text-muted">Commission Rate</p>
+                  <p className="text-text-primary font-medium">
                     {(agent.commissionRate * 100).toFixed(0)}%
                   </p>
                 </div>
                 <div>
-                  <p className="text-gray-500">Total Collected</p>
+                  <p className="text-text-muted">Total Collected</p>
                   <p className="text-brand-gold font-medium">
                     {formatCurrency(agent.totalCollected)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-gray-500">Total Commission</p>
+                  <p className="text-text-muted">Total Commission</p>
                   <p className="text-brand-green font-medium">
                     {formatCurrency(agent.totalCommission)}
                   </p>

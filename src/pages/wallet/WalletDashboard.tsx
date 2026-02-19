@@ -114,27 +114,27 @@ export default function WalletDashboard() {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-3 gap-2">
-        <Card className="text-center lantern-card">
+        <Card bento delay={100} className="text-center lantern-card">
           <p className="text-lg font-extrabold text-brand-green">
             {formatCurrency(6500)}
           </p>
-          <p className="text-[10px] text-gray-500 uppercase tracking-wider">
+          <p className="text-[10px] text-text-muted uppercase tracking-wider">
             Total Deposits
           </p>
         </Card>
-        <Card className="text-center lantern-card">
+        <Card bento delay={200} className="text-center lantern-card">
           <p className="text-lg font-extrabold gold-shimmer">
             {formatCurrency(5000)}
           </p>
-          <p className="text-[10px] text-gray-500 uppercase tracking-wider">
+          <p className="text-[10px] text-text-muted uppercase tracking-wider">
             Total Winnings
           </p>
         </Card>
-        <Card className="text-center lantern-card">
+        <Card bento delay={300} className="text-center lantern-card">
           <p className="text-lg font-extrabold text-brand-red-light">
             {formatCurrency(2000)}
           </p>
-          <p className="text-[10px] text-gray-500 uppercase tracking-wider">
+          <p className="text-[10px] text-text-muted uppercase tracking-wider">
             Withdrawn
           </p>
         </Card>
@@ -145,21 +145,23 @@ export default function WalletDashboard() {
 
       {/* Transaction History */}
       <div>
-        <h2 className="text-lg font-bold text-white mb-3 chinese-header">
+        <h2 className="text-lg font-bold text-text-primary mb-3 chinese-header">
           Transactions
         </h2>
         <div className="space-y-2">
-          {MOCK_TRANSACTIONS.map((tx) => {
+          {MOCK_TRANSACTIONS.map((tx, index) => {
             const style = txTypeStyles[tx.type];
             return (
               <Card
                 key={tx.id}
+                bento
+                delay={350 + index * 80}
                 className="flex items-center gap-3 lantern-card"
               >
                 <style.Icon className={`w-5 h-5 ${style.color}`} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium text-white">
+                    <p className="text-sm font-medium text-text-primary">
                       {style.label}
                     </p>
                     {tx.status === "pending" && (
@@ -169,13 +171,13 @@ export default function WalletDashboard() {
                       </Badge>
                     )}
                   </div>
-                  <p className="text-xs text-gray-500 truncate">
+                  <p className="text-xs text-text-muted truncate">
                     {"method" in tx ? tx.method : tx.label}
                   </p>
-                  <p className="text-[10px] text-gray-600">{tx.date}</p>
+                  <p className="text-[10px] text-text-muted">{tx.date}</p>
                 </div>
                 <p
-                  className={`text-sm font-bold ${tx.amount >= 0 ? "text-brand-green" : "text-gray-400"}`}
+                  className={`text-sm font-bold ${tx.amount >= 0 ? "text-brand-green" : "text-text-muted"}`}
                 >
                   {tx.amount >= 0 ? "+" : ""}
                   {formatCurrency(Math.abs(tx.amount))}

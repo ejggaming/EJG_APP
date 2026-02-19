@@ -100,7 +100,7 @@ export default function ProfilePage() {
         className="auspicious-bg chinese-frame rounded-xl overflow-hidden"
         style={{
           background:
-            "linear-gradient(135deg, #1a0808 0%, #2a1515 50%, #1a0808 100%)",
+            "linear-gradient(135deg, #7f1d1d 0%, #991b1b 30%, #b91c1c 60%, #7f1d1d 100%)",
         }}
       >
         <div className="relative p-4">
@@ -120,7 +120,7 @@ export default function ProfilePage() {
               <h2 className="text-lg font-extrabold text-white">
                 {user?.name ?? "Guest User"}
               </h2>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-white/70">
                 {user?.mobile ?? "No mobile"}
               </p>
               <div className="mt-1">
@@ -130,7 +130,7 @@ export default function ProfilePage() {
           </div>
           <div className="mt-3 pt-3 border-t border-brand-gold/15">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] text-gray-500 uppercase tracking-wider">
+              <span className="text-[10px] text-white/60 uppercase tracking-wider">
                 Wallet Balance
               </span>
               <span className="text-lg font-extrabold gold-shimmer">
@@ -143,12 +143,19 @@ export default function ProfilePage() {
 
       {/* KYC Prompt */}
       {kycStatus !== "approved" && (
-        <Card className="lantern-card border-brand-gold/20" ornate>
+        <Card
+          bento
+          delay={100}
+          className="lantern-card border-brand-gold/20"
+          ornate
+        >
           <div className="flex items-center gap-3">
             <ShieldCheck className="w-6 h-6 text-brand-gold" />
             <div className="flex-1">
-              <p className="text-sm font-medium text-white">{kyc.message}</p>
-              <p className="text-xs text-gray-500">
+              <p className="text-sm font-medium text-text-primary">
+                {kyc.message}
+              </p>
+              <p className="text-xs text-text-muted">
                 Required to place bets and withdraw
               </p>
             </div>
@@ -163,13 +170,19 @@ export default function ProfilePage() {
 
       {/* Menu Items */}
       <div className="space-y-1.5">
-        {MENU_ITEMS.map((item) => (
+        {MENU_ITEMS.map((item, index) => (
           <Link key={item.path} to={item.path}>
-            <Card className="flex items-center gap-3 lantern-card hover:border-brand-gold/20 transition-all">
+            <Card
+              bento
+              delay={200 + index * 80}
+              className="flex items-center gap-3 lantern-card hover:border-brand-gold/20 transition-all"
+            >
               <item.Icon className="w-5 h-5 text-brand-gold/70" />
               <div className="flex-1">
-                <p className="text-sm font-medium text-white">{item.label}</p>
-                <p className="text-xs text-gray-600">{item.description}</p>
+                <p className="text-sm font-medium text-text-primary">
+                  {item.label}
+                </p>
+                <p className="text-xs text-text-muted">{item.description}</p>
               </div>
               <ChevronRight className="w-4 h-4 text-brand-gold/40" />
             </Card>
@@ -182,7 +195,7 @@ export default function ProfilePage() {
         Logout
       </Button>
 
-      <p className="text-center text-[10px] text-gray-700">
+      <p className="text-center text-[10px] text-text-muted">
         JuetengPH v1.0.0 · © 2026
       </p>
     </div>

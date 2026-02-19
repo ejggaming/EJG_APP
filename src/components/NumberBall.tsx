@@ -31,10 +31,10 @@ export default function NumberBall({
         sizeStyles[size],
         selected
           ? "lottery-ball lottery-ball-selected scale-110"
-          : "bg-surface-elevated border-2 border-brand-gold/30 text-gray-300 hover:border-brand-gold hover:text-white hover:bg-surface-elevated/80",
+          : "bg-surface-elevated border-2 border-brand-gold/30 text-text-secondary hover:border-brand-gold hover:text-text-primary hover:bg-surface-elevated/80",
         disabled &&
           !selected &&
-          "opacity-40 cursor-not-allowed hover:border-brand-gold/30 hover:text-gray-300",
+          "opacity-40 cursor-not-allowed hover:border-brand-gold/30 hover:text-text-secondary",
       )}
       style={
         selected

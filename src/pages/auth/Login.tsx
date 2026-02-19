@@ -94,9 +94,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="bg-surface-card rounded-2xl border border-gray-700/50 p-6">
-      <h2 className="text-xl font-bold text-white mb-1">Welcome Back</h2>
-      <p className="text-gray-400 text-sm mb-6">Sign in to place your bets</p>
+    <div className="bg-surface-card rounded-2xl border border-border-default p-6">
+      <h2 className="text-xl font-bold text-text-primary mb-1">Welcome Back</h2>
+      <p className="text-text-muted text-sm mb-6">Sign in to place your bets</p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
@@ -147,10 +147,10 @@ export default function LoginPage() {
         />
 
         <div className="flex items-center justify-between text-sm">
-          <label className="flex items-center gap-2 text-gray-400">
+          <label className="flex items-center gap-2 text-text-muted">
             <input
               type="checkbox"
-              className="rounded border-gray-600 accent-brand-red"
+              className="rounded border-border-default accent-brand-red"
             />
             Remember me
           </label>
@@ -164,7 +164,7 @@ export default function LoginPage() {
 
         {/* Role selector (demo) */}
         <div>
-          <label className="block text-xs text-gray-400 mb-1">
+          <label className="block text-xs text-text-muted mb-1">
             Login as (demo)
           </label>
           <div className="grid grid-cols-2 gap-1.5">
@@ -176,7 +176,7 @@ export default function LoginPage() {
                 className={`px-3 py-1.5 text-xs rounded-lg border transition-colors ${
                   selectedRole === role
                     ? "border-brand-gold bg-brand-gold/10 text-brand-gold font-semibold"
-                    : "border-gray-700/50 text-gray-400 hover:border-gray-600"
+                    : "border-border-default text-text-muted hover:border-text-secondary"
                 }`}
               >
                 {role.replace("_", " ")}
@@ -190,7 +190,7 @@ export default function LoginPage() {
         </Button>
       </form>
 
-      <p className="text-center text-gray-400 text-sm mt-6">
+      <p className="text-center text-text-muted text-sm mt-6">
         Don't have an account?{" "}
         <Link
           to="/register"

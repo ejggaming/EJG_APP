@@ -52,31 +52,33 @@ export default function BetHistoryPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-extrabold text-white chinese-header">
+        <h1 className="text-xl font-extrabold text-text-primary chinese-header">
           Bet History
         </h1>
-        <p className="text-gray-500 text-sm mt-1">Your past bets and results</p>
+        <p className="text-text-muted text-sm mt-1">
+          Your past bets and results
+        </p>
       </div>
 
       {/* Summary */}
       <div className="grid grid-cols-3 gap-2">
-        <Card className="text-center lantern-card">
-          <p className="text-lg font-extrabold text-white">12</p>
-          <p className="text-[10px] text-gray-500 uppercase tracking-wider">
+        <Card bento delay={100} className="text-center lantern-card">
+          <p className="text-lg font-extrabold text-text-primary">12</p>
+          <p className="text-[10px] text-text-muted uppercase tracking-wider">
             Total Bets
           </p>
         </Card>
-        <Card className="text-center lantern-card">
+        <Card bento delay={200} className="text-center lantern-card">
           <p className="text-lg font-extrabold text-brand-green">2</p>
-          <p className="text-[10px] text-gray-500 uppercase tracking-wider">
+          <p className="text-[10px] text-text-muted uppercase tracking-wider">
             Won
           </p>
         </Card>
-        <Card className="text-center lantern-card">
+        <Card bento delay={300} className="text-center lantern-card">
           <p className="text-lg font-extrabold gold-shimmer">
             {formatCurrency(5000)}
           </p>
-          <p className="text-[10px] text-gray-500 uppercase tracking-wider">
+          <p className="text-[10px] text-text-muted uppercase tracking-wider">
             Total Won
           </p>
         </Card>
@@ -87,10 +89,15 @@ export default function BetHistoryPage() {
 
       {/* Bet List */}
       <div className="space-y-2">
-        {MOCK_BETS.map((bet) => {
+        {MOCK_BETS.map((bet, index) => {
           const badge = statusBadge[bet.status];
           return (
-            <Card key={bet.id} className="lantern-card">
+            <Card
+              key={bet.id}
+              bento
+              delay={350 + index * 80}
+              className="lantern-card"
+            >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <div className="flex gap-1">
@@ -109,7 +116,7 @@ export default function BetHistoryPage() {
                   {formatCurrency(bet.amount)}
                 </span>
               </div>
-              <div className="flex items-center justify-between text-xs text-gray-500">
+              <div className="flex items-center justify-between text-xs text-text-muted">
                 <span>{bet.draw}</span>
                 <span>{bet.date}</span>
               </div>
@@ -121,7 +128,9 @@ export default function BetHistoryPage() {
                   </p>
                 </div>
               )}
-              <p className="text-[10px] text-gray-600 mt-1">{bet.reference}</p>
+              <p className="text-[10px] text-text-muted mt-1">
+                {bet.reference}
+              </p>
             </Card>
           );
         })}

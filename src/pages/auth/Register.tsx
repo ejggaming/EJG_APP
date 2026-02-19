@@ -58,9 +58,11 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="bg-surface-card rounded-2xl border border-gray-700/50 p-6">
-      <h2 className="text-xl font-bold text-white mb-1">Create Account</h2>
-      <p className="text-gray-400 text-sm mb-6">
+    <div className="bg-surface-card rounded-2xl border border-border-default p-6">
+      <h2 className="text-xl font-bold text-text-primary mb-1">
+        Create Account
+      </h2>
+      <p className="text-text-muted text-sm mb-6">
         Join JuetengPH and start winning
       </p>
 
@@ -99,12 +101,12 @@ export default function RegisterPage() {
           error={errors.confirmPassword}
         />
 
-        <label className="flex items-start gap-2 text-sm text-gray-400 cursor-pointer">
+        <label className="flex items-start gap-2 text-sm text-text-muted cursor-pointer">
           <input
             type="checkbox"
             checked={agreed}
             onChange={(e) => setAgreed(e.target.checked)}
-            className="mt-1 rounded border-gray-600 accent-brand-red"
+            className="mt-1 rounded border-border-default accent-brand-red"
           />
           <span>
             I am 18+ years old and agree to the{" "}
@@ -118,7 +120,7 @@ export default function RegisterPage() {
         </Button>
       </form>
 
-      <p className="text-center text-gray-400 text-sm mt-6">
+      <p className="text-center text-text-muted text-sm mt-6">
         Already have an account?{" "}
         <Link
           to="/login"
