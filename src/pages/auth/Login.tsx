@@ -3,7 +3,40 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button, Input } from "../../components";
 import { loginSchema, type LoginInput } from "../../schema";
 import { useAppStore } from "../../store/useAppStore";
+import { getRoleHome } from "../../components/guards/RoleGuard";
 import toast from "react-hot-toast";
+
+const ROLES = ["PLAYER", "AGENT", "ADMIN", "SUPER_ADMIN"] as const;
+
+const DEMO_USERS: Record<
+  string,
+  { id: string; name: string; email: string; role: string }
+> = {
+  PLAYER: {
+    id: "1",
+    name: "Juan Dela Cruz",
+    email: "juan@example.com",
+    role: "PLAYER",
+  },
+  AGENT: {
+    id: "2",
+    name: "Ricardo Dalisay",
+    email: "ricardo@example.com",
+    role: "AGENT",
+  },
+  ADMIN: {
+    id: "3",
+    name: "Admin User",
+    email: "admin@example.com",
+    role: "ADMIN",
+  },
+  SUPER_ADMIN: {
+    id: "4",
+    name: "Super Admin",
+    email: "superadmin@example.com",
+    role: "SUPER_ADMIN",
+  },
+};
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -13,6 +46,7 @@ export default function LoginPage() {
   const [form, setForm] = useState<LoginInput>({ mobile: "", password: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<string>("PLAYER");
 
   const handleChange =
     (field: keyof LoginInput) => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -39,18 +73,19 @@ export default function LoginPage() {
     try {
       // Simulated login — replace with real API call
       await new Promise((r) => setTimeout(r, 1000));
+      const demoUser = DEMO_USERS[selectedRole];
       setUser({
-        id: "1",
-        name: "Juan Dela Cruz",
-        email: "juan@example.com",
+        id: demoUser.id,
+        name: demoUser.name,
+        email: demoUser.email,
         mobile: form.mobile,
-        role: "player",
+        role: demoUser.role,
         kycStatus: "approved",
         isVerified: true,
       });
       setBalance(1500);
       toast.success("Welcome back!");
-      navigate("/");
+      navigate(getRoleHome(demoUser.role));
     } catch {
       toast.error("Invalid credentials");
     } finally {
@@ -125,6 +160,29 @@ export default function LoginPage() {
           >
             Forgot password?
           </Link>
+        </div>
+
+        {/* Role selector (demo) */}
+        <div>
+          <label className="block text-xs text-gray-400 mb-1">
+            Login as (demo)
+          </label>
+          <div className="grid grid-cols-2 gap-1.5">
+            {ROLES.map((role) => (
+              <button
+                key={role}
+                type="button"
+                onClick={() => setSelectedRole(role)}
+                className={`px-3 py-1.5 text-xs rounded-lg border transition-colors ${
+                  selectedRole === role
+                    ? "border-brand-gold bg-brand-gold/10 text-brand-gold font-semibold"
+                    : "border-gray-700/50 text-gray-400 hover:border-gray-600"
+                }`}
+              >
+                {role.replace("_", " ")}
+              </button>
+            ))}
+          </div>
         </div>
 
         <Button type="submit" fullWidth size="lg" isLoading={loading}>
