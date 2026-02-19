@@ -1,7 +1,9 @@
 import { Outlet, useLocation, Link } from "react-router-dom";
 import { cn } from "../../utils";
 import { useAppStore } from "../../store/useAppStore";
+import { useThemeStore } from "../../store/useThemeStore";
 import { formatCurrency } from "../../utils";
+import { Sun, Moon } from "lucide-react";
 
 const navItems = [
   {
@@ -104,13 +106,17 @@ const navItems = [
 export default function AgentLayout() {
   const location = useLocation();
   const { user, balance, logout } = useAppStore();
+  const { theme, toggleTheme } = useThemeStore();
 
   return (
-    <div className="min-h-screen bg-surface flex">
-      {/* Sidebar - hidden on mobile, shown md+ */}
-      <aside className="hidden md:flex md:w-64 flex-col bg-surface-card border-r border-gray-700/50 fixed inset-y-0 z-30">
+    <div
+      className="min-h-screen flex pl-4 pr-4 py-3 gap-3"
+      style={{ background: "var(--admin-outer-bg)" }}
+    >
+      {/* Sidebar — floating card (matches admin) */}
+      <aside className="hidden md:flex md:w-60 shrink-0 flex-col bg-surface-card border border-border-subtle rounded-2xl sticky top-3 h-[calc(100vh-1.5rem)] z-30">
         {/* Logo */}
-        <div className="h-16 flex items-center gap-2 px-4 border-b border-gray-700/50">
+        <div className="h-16 flex items-center gap-2 px-4 border-b border-border-subtle">
           <div className="w-9 h-9 rounded-full bg-brand-gold flex items-center justify-center">
             <span className="text-white font-bold text-sm">A</span>
           </div>
@@ -124,18 +130,18 @@ export default function AgentLayout() {
         </div>
 
         {/* Agent Info */}
-        <div className="px-4 py-3 border-b border-gray-700/50">
-          <p className="text-sm font-medium text-white truncate">
+        <div className="px-4 py-3 border-b border-border-subtle">
+          <p className="text-sm font-medium text-text-primary truncate">
             {user?.name ?? "Agent"}
           </p>
-          <p className="text-xs text-gray-400">{user?.mobile}</p>
+          <p className="text-xs text-text-muted">{user?.mobile}</p>
           <p className="text-sm font-bold text-brand-gold mt-1">
             {formatCurrency(balance)}
           </p>
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
+        <nav className="flex-1 py-4 px-2 space-y-0.5 overflow-y-auto">
           {navItems.map((item) => {
             const isActive =
               item.path === "/agent"
@@ -146,10 +152,10 @@ export default function AgentLayout() {
                 key={item.path}
                 to={item.path}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
                   isActive
                     ? "bg-brand-gold/10 text-brand-gold"
-                    : "text-gray-400 hover:bg-surface-elevated hover:text-white",
+                    : "text-text-muted hover:bg-surface-elevated hover:text-text-primary",
                 )}
               >
                 {item.icon}
@@ -159,14 +165,14 @@ export default function AgentLayout() {
           })}
         </nav>
 
-        {/* Logout */}
-        <div className="p-4 border-t border-gray-700/50">
+        {/* Logout + Theme toggle */}
+        <div className="p-4 border-t border-border-subtle">
           <button
             onClick={() => {
               logout();
               window.location.href = "/login";
             }}
-            className="flex items-center gap-2 text-sm text-gray-400 hover:text-red-400 transition-colors w-full"
+            className="flex items-center gap-2 text-sm text-text-muted hover:text-brand-red-light transition-colors w-full"
           >
             <svg
               className="w-5 h-5"
@@ -183,65 +189,52 @@ export default function AgentLayout() {
             </svg>
             Logout
           </button>
+          <button
+            onClick={toggleTheme}
+            className="flex items-center gap-2 text-sm text-text-muted hover:text-brand-gold transition-colors w-full mt-2 cursor-pointer"
+            aria-label="Toggle theme"
+          >
+            {theme === "dark" ? (
+              <Sun className="w-5 h-5" />
+            ) : (
+              <Moon className="w-5 h-5" />
+            )}
+            {theme === "dark" ? "Light Mode" : "Dark Mode"}
+          </button>
         </div>
       </aside>
 
-      {/* Main area */}
-      <div className="flex-1 md:ml-64">
-        {/* Top bar mobile */}
-        <header className="sticky top-0 z-20 bg-surface-card/90 backdrop-blur-lg border-b border-gray-700/50 h-14 flex items-center justify-between px-4 md:px-6">
-          <div className="flex items-center gap-2 md:hidden">
-            <div className="w-8 h-8 rounded-full bg-brand-gold flex items-center justify-center">
-              <span className="text-white font-bold text-xs">A</span>
-            </div>
-            <span className="font-bold text-sm text-brand-gold">
-              Agent Portal
-            </span>
-          </div>
-          <div className="hidden md:block">
-            <h1 className="text-sm font-semibold text-white">
-              {navItems.find((n) =>
-                n.path === "/agent"
-                  ? location.pathname === "/agent"
-                  : location.pathname.startsWith(n.path),
-              )?.label ?? "Agent"}
-            </h1>
-          </div>
-          <div className="text-sm font-bold text-brand-gold md:hidden">
-            {formatCurrency(balance)}
-          </div>
-        </header>
-
-        {/* Content */}
-        <main className="p-4 md:p-6 max-w-5xl">
+      {/* Main content — floating card, fixed viewport height with inner scroll */}
+      <main className="flex-1 min-w-0 h-[calc(100vh-1.5rem)]">
+        <div className="bg-surface-card rounded-2xl border border-border-subtle p-4 md:p-6 h-full overflow-y-auto custom-scrollbar">
           <Outlet />
-        </main>
+        </div>
+      </main>
 
-        {/* Bottom nav mobile */}
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-surface-card/90 backdrop-blur-lg border-t border-gray-700/50">
-          <div className="flex items-center justify-around py-2">
-            {navItems.map((item) => {
-              const isActive =
-                item.path === "/agent"
-                  ? location.pathname === "/agent"
-                  : location.pathname.startsWith(item.path);
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={cn(
-                    "flex flex-col items-center gap-0.5 px-2 py-1",
-                    isActive ? "text-brand-gold" : "text-gray-500",
-                  )}
-                >
-                  {item.icon}
-                  <span className="text-[9px] font-medium">{item.label}</span>
-                </Link>
-              );
-            })}
-          </div>
-        </nav>
-      </div>
+      {/* Bottom nav mobile */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-surface-card/90 backdrop-blur-lg border-t border-border-subtle">
+        <div className="flex items-center justify-around py-2">
+          {navItems.map((item) => {
+            const isActive =
+              item.path === "/agent"
+                ? location.pathname === "/agent"
+                : location.pathname.startsWith(item.path);
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={cn(
+                  "flex flex-col items-center gap-0.5 px-2 py-1",
+                  isActive ? "text-brand-gold" : "text-text-muted",
+                )}
+              >
+                {item.icon}
+                <span className="text-[9px] font-medium">{item.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
     </div>
   );
 }

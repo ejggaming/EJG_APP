@@ -1,305 +1,369 @@
 import { useState } from "react";
-import { Card, Badge, Button, Input } from "../../components";
+import { useQuery } from "@tanstack/react-query";
+import { CardGrid, StatCard, DataTable } from "../../components/bento";
+import type { DataTableColumn } from "../../components/bento";
+import {
+  Users,
+  UserPlus,
+  Lock,
+  Trash2,
+  Edit2,
+  ShieldCheck,
+  ShieldAlert,
+  Ban,
+  CheckCircle,
+} from "lucide-react";
+import Spinner from "../../components/Spinner";
 import toast from "react-hot-toast";
 
-interface UserRow {
-  id: string;
-  name: string;
-  mobile: string;
-  email: string;
-  role: string;
-  kycStatus: "approved" | "pending" | "rejected" | "none";
-  status: "active" | "suspended" | "inactive";
-  joined: string;
-  totalBets: number;
-}
-
-const MOCK_USERS: UserRow[] = [
-  {
-    id: "1",
-    name: "Maria Santos",
-    mobile: "09171234567",
-    email: "maria@mail.com",
-    role: "PLAYER",
-    kycStatus: "approved",
-    status: "active",
-    joined: "Jan 15, 2026",
-    totalBets: 89,
-  },
-  {
-    id: "2",
-    name: "Pedro Reyes",
-    mobile: "09189876543",
-    email: "pedro@mail.com",
-    role: "PLAYER",
-    kycStatus: "approved",
-    status: "active",
-    joined: "Jan 20, 2026",
-    totalBets: 56,
-  },
-  {
-    id: "3",
-    name: "Anna Cruz",
-    mobile: "09201234567",
-    email: "anna@mail.com",
-    role: "PLAYER",
-    kycStatus: "pending",
-    status: "active",
-    joined: "Feb 01, 2026",
-    totalBets: 34,
-  },
-  {
-    id: "4",
-    name: "Jose Garcia",
-    mobile: "09221111222",
-    email: "jose@mail.com",
-    role: "PLAYER",
-    kycStatus: "approved",
-    status: "active",
-    joined: "Dec 10, 2025",
-    totalBets: 120,
-  },
-  {
-    id: "5",
-    name: "Rosa Bautista",
-    mobile: "09339998877",
-    email: "rosa@mail.com",
-    role: "PLAYER",
-    kycStatus: "none",
-    status: "inactive",
-    joined: "Feb 10, 2026",
-    totalBets: 12,
-  },
-  {
-    id: "6",
-    name: "Carlos Mendoza",
-    mobile: "09451112233",
-    email: "carlos@mail.com",
-    role: "PLAYER",
-    kycStatus: "rejected",
-    status: "suspended",
-    joined: "Feb 18, 2026",
-    totalBets: 0,
-  },
-];
-
-const kycBadge = {
-  approved: { variant: "green" as const, label: "Verified" },
-  pending: { variant: "gold" as const, label: "Pending" },
-  rejected: { variant: "red" as const, label: "Rejected" },
-  none: { variant: "gray" as const, label: "No KYC" },
-};
-
-const statusBadge = {
-  active: { variant: "green" as const, label: "Active" },
-  suspended: { variant: "red" as const, label: "Suspended" },
-  inactive: { variant: "gray" as const, label: "Inactive" },
-};
-
 export default function UserManagement() {
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<string>("all");
+  const [_search, _setSearch] = useState("");
+  const [_filter, _setFilter] = useState<string>("all");
 
-  const filtered = MOCK_USERS.filter((u) => {
-    const match =
-      u.name.toLowerCase().includes(search.toLowerCase()) ||
-      u.mobile.includes(search);
-    if (filter === "all") return match;
-    if (filter === "pending_kyc") return match && u.kycStatus === "pending";
-    if (filter === "suspended") return match && u.status === "suspended";
-    return match;
+  const { data: usersData, isLoading } = useQuery({
+    queryKey: ["admin-users"],
+    queryFn: async () => {
+      return {
+        totalUsers: 12450,
+        activeUsers: 9876,
+        suspendedUsers: 234,
+        newThisMonth: 445,
+        kycPending: 67,
+        selfExcluded: 12,
+        users: [
+          {
+            id: 1,
+            name: "Maria Santos",
+            email: "user001@example.com",
+            mobile: "09171234567",
+            kycStatus: "Verified",
+            ageVerified: true,
+            status: "Active",
+            accountType: "Bettor",
+            walletBalance: 15230,
+            totalBets: 89,
+            bettingLimit: 5000,
+            selfExcluded: false,
+            lastLogin: "10 min ago",
+            joinDate: "Jan 15, 2026",
+          },
+          {
+            id: 2,
+            name: "Pedro Reyes",
+            email: "user002@example.com",
+            mobile: "09189876543",
+            kycStatus: "Verified",
+            ageVerified: true,
+            status: "Active",
+            accountType: "Bettor",
+            walletBalance: 8500,
+            totalBets: 56,
+            bettingLimit: 5000,
+            selfExcluded: false,
+            lastLogin: "1 hr ago",
+            joinDate: "Jan 20, 2026",
+          },
+          {
+            id: 3,
+            name: "Anna Cruz",
+            email: "user003@example.com",
+            mobile: "09201234567",
+            kycStatus: "Pending",
+            ageVerified: false,
+            status: "Active",
+            accountType: "Bettor",
+            walletBalance: 2000,
+            totalBets: 34,
+            bettingLimit: 1000,
+            selfExcluded: false,
+            lastLogin: "3 hrs ago",
+            joinDate: "Feb 01, 2026",
+          },
+          {
+            id: 4,
+            name: "Jose Garcia",
+            email: "user004@example.com",
+            mobile: "09221111222",
+            kycStatus: "Verified",
+            ageVerified: true,
+            status: "Active",
+            accountType: "Bettor",
+            walletBalance: 45000,
+            totalBets: 120,
+            bettingLimit: 10000,
+            selfExcluded: false,
+            lastLogin: "30 min ago",
+            joinDate: "Dec 10, 2025",
+          },
+          {
+            id: 5,
+            name: "Rosa Bautista",
+            email: "user005@example.com",
+            mobile: "09339998877",
+            kycStatus: "None",
+            ageVerified: false,
+            status: "Inactive",
+            accountType: "Bettor",
+            walletBalance: 0,
+            totalBets: 12,
+            bettingLimit: 1000,
+            selfExcluded: false,
+            lastLogin: "2 days ago",
+            joinDate: "Feb 10, 2026",
+          },
+          {
+            id: 6,
+            name: "Carlos Mendoza",
+            email: "user006@example.com",
+            mobile: "09451234567",
+            kycStatus: "Rejected",
+            ageVerified: false,
+            status: "Suspended",
+            accountType: "Bettor",
+            walletBalance: 500,
+            totalBets: 5,
+            bettingLimit: 1000,
+            selfExcluded: false,
+            lastLogin: "5 days ago",
+            joinDate: "Feb 12, 2026",
+          },
+          {
+            id: 7,
+            name: "Elena Villanueva",
+            email: "user007@example.com",
+            mobile: "09561234567",
+            kycStatus: "Verified",
+            ageVerified: true,
+            status: "Self-Excluded",
+            accountType: "Bettor",
+            walletBalance: 3200,
+            totalBets: 220,
+            bettingLimit: 5000,
+            selfExcluded: true,
+            lastLogin: "1 week ago",
+            joinDate: "Oct 05, 2025",
+          },
+        ],
+      };
+    },
   });
 
-  const handleAction = (_userId: string, action: string) => {
-    toast.success(`User ${action} successfully`);
-  };
+  if (isLoading) return <Spinner />;
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+    <div className="space-y-6">
+      <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary">
+          <h1 className="text-3xl font-bold text-text-primary">
             User Management
           </h1>
-          <p className="text-text-muted text-sm">
-            {MOCK_USERS.length} total users
+          <p className="text-text-muted mt-1">
+            Manage platform users and access permissions
           </p>
         </div>
+        <button className="bg-brand-red text-white px-4 py-2 rounded-xl font-medium hover:bg-brand-red-dark flex items-center gap-2 transition-colors">
+          <UserPlus size={18} />
+          Add User
+        </button>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-3">
-        <div className="flex-1">
-          <Input
-            label=""
-            placeholder="Search by name or mobile..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-        <div className="flex gap-2 flex-wrap">
-          {[
-            { key: "all", label: "All" },
-            { key: "pending_kyc", label: "Pending KYC" },
-            { key: "suspended", label: "Suspended" },
-          ].map((f) => (
-            <button
-              key={f.key}
-              onClick={() => setFilter(f.key)}
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                filter === f.key
-                  ? "bg-brand-red text-white"
-                  : "bg-surface-elevated text-text-muted"
-              }`}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
-      </div>
+      {/* Key Stats */}
+      <CardGrid>
+        <StatCard
+          label="Total Users"
+          value={usersData?.totalUsers ?? 0}
+          icon={<Users size={18} />}
+          color="blue"
+        />
+        <StatCard
+          label="Active Users"
+          value={usersData?.activeUsers ?? 0}
+          icon={<Users size={18} />}
+          color="green"
+        />
+        <StatCard
+          label="KYC Pending"
+          value={usersData?.kycPending ?? 0}
+          icon={<ShieldAlert size={18} />}
+          color="orange"
+        />
+        <StatCard
+          label="Suspended"
+          value={usersData?.suspendedUsers ?? 0}
+          icon={<Lock size={18} />}
+          color="red"
+        />
+      </CardGrid>
 
-      {/* Table - desktop */}
-      <div className="hidden md:block">
-        <Card className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-[10px] text-text-muted uppercase border-b border-border-default">
-                <th className="pb-3 pr-4">User</th>
-                <th className="pb-3 pr-4">Mobile</th>
-                <th className="pb-3 pr-4">KYC</th>
-                <th className="pb-3 pr-4">Status</th>
-                <th className="pb-3 pr-4">Bets</th>
-                <th className="pb-3 pr-4">Joined</th>
-                <th className="pb-3">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((u) => {
-                const kyc = kycBadge[u.kycStatus];
-                const status = statusBadge[u.status];
+      {/* Users DataTable */}
+      <DataTable
+        title="User List"
+        columns={
+          [
+            {
+              key: "name",
+              label: "User",
+              sortable: true,
+              render: (_: any, row: any) => (
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full bg-brand-blue/15 flex items-center justify-center text-brand-blue text-xs font-bold">
+                    {row.name[0]}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-text-primary">
+                      {row.name}
+                    </p>
+                    <p className="text-[10px] text-text-muted">{row.email}</p>
+                  </div>
+                </div>
+              ),
+            },
+            { key: "mobile", label: "Mobile", sortable: true },
+            {
+              key: "accountType",
+              label: "Type",
+              sortable: true,
+              render: (v: string) => (
+                <span className="text-[11px] font-medium px-2 py-0.5 rounded-full text-brand-blue bg-brand-blue/10">
+                  {v}
+                </span>
+              ),
+            },
+            {
+              key: "kycStatus",
+              label: "KYC",
+              sortable: true,
+              render: (v: string) => {
+                const color =
+                  v === "Verified"
+                    ? "text-brand-green bg-brand-green/10"
+                    : v === "Pending"
+                      ? "text-brand-gold bg-brand-gold/10"
+                      : v === "Rejected"
+                        ? "text-brand-red bg-brand-red/10"
+                        : "text-text-muted bg-surface-elevated";
                 return (
-                  <tr key={u.id} className="border-b border-border-default/30">
-                    <td className="py-3 pr-4">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-brand-red/20 flex items-center justify-center text-brand-red font-bold text-xs">
-                          {u.name[0]}
-                        </div>
-                        <div>
-                          <p className="text-text-primary font-medium">
-                            {u.name}
-                          </p>
-                          <p className="text-[10px] text-text-muted">
-                            {u.email}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-3 pr-4 text-text-secondary">
-                      {u.mobile}
-                    </td>
-                    <td className="py-3 pr-4">
-                      <Badge variant={kyc.variant}>{kyc.label}</Badge>
-                    </td>
-                    <td className="py-3 pr-4">
-                      <Badge variant={status.variant}>{status.label}</Badge>
-                    </td>
-                    <td className="py-3 pr-4 text-text-secondary">
-                      {u.totalBets}
-                    </td>
-                    <td className="py-3 pr-4 text-text-muted text-xs">
-                      {u.joined}
-                    </td>
-                    <td className="py-3">
-                      <div className="flex gap-1">
-                        {u.kycStatus === "pending" && (
-                          <Button
-                            size="sm"
-                            variant="green"
-                            onClick={() => handleAction(u.id, "KYC approved")}
-                          >
-                            Approve
-                          </Button>
-                        )}
-                        {u.status === "active" ? (
-                          <Button
-                            size="sm"
-                            variant="danger"
-                            onClick={() => handleAction(u.id, "suspended")}
-                          >
-                            Suspend
-                          </Button>
-                        ) : (
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={() => handleAction(u.id, "activated")}
-                          >
-                            Activate
-                          </Button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
+                  <span
+                    className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${color}`}
+                  >
+                    {v}
+                  </span>
                 );
-              })}
-            </tbody>
-          </table>
-        </Card>
-      </div>
-
-      {/* Card list - mobile */}
-      <div className="md:hidden space-y-2">
-        {filtered.map((u) => {
-          const kyc = kycBadge[u.kycStatus];
-          const status = statusBadge[u.status];
-          return (
-            <Card key={u.id}>
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 rounded-full bg-brand-red/20 flex items-center justify-center text-brand-red font-bold">
-                  {u.name[0]}
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-text-primary">
-                    {u.name}
-                  </p>
-                  <p className="text-xs text-text-muted">{u.mobile}</p>
-                </div>
-                <div className="flex flex-col items-end gap-1">
-                  <Badge variant={kyc.variant}>{kyc.label}</Badge>
-                  <Badge variant={status.variant}>{status.label}</Badge>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                {u.kycStatus === "pending" && (
-                  <Button
-                    size="sm"
-                    variant="green"
-                    onClick={() => handleAction(u.id, "KYC approved")}
+              },
+            },
+            {
+              key: "ageVerified",
+              label: "Age 18+",
+              sortable: true,
+              render: (v: boolean) => (
+                <span
+                  className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
+                    v
+                      ? "text-brand-green bg-brand-green/10"
+                      : "text-brand-red bg-brand-red/10"
+                  }`}
+                >
+                  {v ? "Yes" : "No"}
+                </span>
+              ),
+            },
+            {
+              key: "status",
+              label: "Status",
+              sortable: true,
+              render: (v: string) => {
+                const color =
+                  v === "Active"
+                    ? "text-brand-green bg-brand-green/10"
+                    : v === "Self-Excluded"
+                      ? "text-brand-gold bg-brand-gold/10"
+                      : v === "Suspended"
+                        ? "text-brand-red bg-brand-red/10"
+                        : "text-text-muted bg-surface-elevated";
+                return (
+                  <span
+                    className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${color}`}
                   >
-                    Approve KYC
-                  </Button>
-                )}
-                {u.status === "active" ? (
-                  <Button
-                    size="sm"
-                    variant="danger"
-                    onClick={() => handleAction(u.id, "suspended")}
-                  >
-                    Suspend
-                  </Button>
-                ) : (
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => handleAction(u.id, "activated")}
-                  >
-                    Activate
-                  </Button>
-                )}
-              </div>
-            </Card>
-          );
-        })}
-      </div>
+                    {v}
+                  </span>
+                );
+              },
+            },
+            {
+              key: "walletBalance",
+              label: "Balance",
+              align: "right" as const,
+              sortable: true,
+              render: (v: number) => (
+                <span className="text-brand-gold-light font-medium">
+                  ₱{v.toLocaleString()}
+                </span>
+              ),
+            },
+            {
+              key: "bettingLimit",
+              label: "Bet Limit",
+              align: "right" as const,
+              sortable: true,
+              render: (v: number) => `₱${v.toLocaleString()}`,
+            },
+            {
+              key: "totalBets",
+              label: "Total Bets",
+              align: "right" as const,
+              sortable: true,
+            },
+            { key: "lastLogin", label: "Last Login", sortable: true },
+            { key: "joinDate", label: "Joined", sortable: true },
+          ] satisfies DataTableColumn[]
+        }
+        data={usersData?.users || []}
+        pageSize={10}
+        exportable
+        actions={(row: any) => (
+          <>
+            {row.kycStatus === "Pending" && (
+              <>
+                <button
+                  className="text-xs px-2.5 py-1 bg-brand-green/10 text-brand-green-light rounded-lg hover:bg-brand-green/15 flex items-center gap-1 transition-colors"
+                  onClick={() => toast.success(`KYC approved for ${row.name}`)}
+                >
+                  <CheckCircle size={14} />
+                  Approve KYC
+                </button>
+                <button
+                  className="text-xs px-2.5 py-1 bg-brand-red/10 text-brand-red-light rounded-lg hover:bg-brand-red/15 flex items-center gap-1 transition-colors"
+                  onClick={() => toast.error(`KYC rejected for ${row.name}`)}
+                >
+                  <ShieldAlert size={14} />
+                  Reject KYC
+                </button>
+              </>
+            )}
+            <button className="text-xs px-2.5 py-1 bg-brand-blue/10 text-brand-blue-light rounded-lg hover:bg-brand-blue/15 flex items-center gap-1 transition-colors">
+              <Edit2 size={14} />
+              Edit
+            </button>
+            {row.status === "Active" ? (
+              <button
+                className="text-xs px-2.5 py-1 bg-brand-red/10 text-brand-red-light rounded-lg hover:bg-brand-red/15 flex items-center gap-1 transition-colors"
+                onClick={() => toast.success(`${row.name} suspended`)}
+              >
+                <Ban size={14} />
+                Suspend
+              </button>
+            ) : row.status === "Suspended" ? (
+              <button
+                className="text-xs px-2.5 py-1 bg-brand-green/10 text-brand-green-light rounded-lg hover:bg-brand-green/15 flex items-center gap-1 transition-colors"
+                onClick={() => toast.success(`${row.name} activated`)}
+              >
+                <CheckCircle size={14} />
+                Activate
+              </button>
+            ) : null}
+          </>
+        )}
+      />
     </div>
   );
 }

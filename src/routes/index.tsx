@@ -103,7 +103,7 @@ const router = createBrowserRouter([
     children: [
       { path: "/agent", element: <AgentDashboard /> },
       { path: "/agent/customers", element: <AgentCustomers /> },
-      { path: "/agent/collect", element: <CollectBet /> },
+      { path: "/agent/collect-bet", element: <CollectBet /> },
       { path: "/agent/commissions", element: <AgentCommissions /> },
       { path: "/agent/wallet", element: <AgentWallet /> },
     ],

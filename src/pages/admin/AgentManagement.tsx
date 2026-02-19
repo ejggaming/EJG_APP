@@ -1,5 +1,14 @@
-import { useState } from "react";
-import { Card, Badge, Button, Input } from "../../components";
+import { CardGrid, StatCard, DataTable } from "../../components/bento";
+import type { DataTableColumn } from "../../components/bento";
+import {
+  Users,
+  UserPlus,
+  Banknote,
+  Edit2,
+  Ban,
+  CheckCircle,
+  Clock,
+} from "lucide-react";
 import { formatCurrency } from "../../utils";
 import toast from "react-hot-toast";
 
@@ -8,12 +17,15 @@ interface AgentRow {
   name: string;
   mobile: string;
   role: string;
+  tier: string;
   territory: string;
-  status: "ACTIVE" | "SUSPENDED" | "INACTIVE";
+  status: "ACTIVE" | "SUSPENDED" | "INACTIVE" | "PENDING";
   commissionRate: number;
   totalCollected: number;
+  collectionTarget: number;
   totalCommission: number;
   customers: number;
+  activeCustomers: number;
   joined: string;
 }
 
@@ -23,12 +35,15 @@ const MOCK_AGENTS: AgentRow[] = [
     name: "Ricardo Dalisay",
     mobile: "09171112233",
     role: "COBRADOR",
+    tier: "Gold",
     territory: "Tondo, Manila",
     status: "ACTIVE",
     commissionRate: 0.15,
     totalCollected: 125000,
+    collectionTarget: 150000,
     totalCommission: 18750,
     customers: 45,
+    activeCustomers: 38,
     joined: "Oct 2025",
   },
   {
@@ -36,12 +51,15 @@ const MOCK_AGENTS: AgentRow[] = [
     name: "Lorna Tolentino",
     mobile: "09182223344",
     role: "COBRADOR",
+    tier: "Silver",
     territory: "Quiapo, Manila",
     status: "ACTIVE",
     commissionRate: 0.15,
     totalCollected: 98000,
+    collectionTarget: 120000,
     totalCommission: 14700,
     customers: 32,
+    activeCustomers: 25,
     joined: "Nov 2025",
   },
   {
@@ -49,12 +67,15 @@ const MOCK_AGENTS: AgentRow[] = [
     name: "Bong Revilla",
     mobile: "09193334455",
     role: "CABO",
+    tier: "Gold",
     territory: "Manila District",
     status: "ACTIVE",
     commissionRate: 0.05,
     totalCollected: 450000,
+    collectionTarget: 500000,
     totalCommission: 22500,
     customers: 0,
+    activeCustomers: 0,
     joined: "Sep 2025",
   },
   {
@@ -62,12 +83,15 @@ const MOCK_AGENTS: AgentRow[] = [
     name: "Manny Villar",
     mobile: "09204445566",
     role: "CAPITALISTA",
+    tier: "Platinum",
     territory: "NCR",
     status: "ACTIVE",
     commissionRate: 0.25,
     totalCollected: 1200000,
+    collectionTarget: 1000000,
     totalCommission: 300000,
     customers: 0,
+    activeCustomers: 0,
     joined: "Aug 2025",
   },
   {
@@ -75,12 +99,15 @@ const MOCK_AGENTS: AgentRow[] = [
     name: "Jun Arroyo",
     mobile: "09215556677",
     role: "COBRADOR",
+    tier: "Bronze",
     territory: "Sampaloc, Manila",
     status: "SUSPENDED",
     commissionRate: 0.15,
     totalCollected: 45000,
+    collectionTarget: 100000,
     totalCommission: 6750,
     customers: 18,
+    activeCustomers: 8,
     joined: "Dec 2025",
   },
   {
@@ -88,178 +115,318 @@ const MOCK_AGENTS: AgentRow[] = [
     name: "Nora Aunor",
     mobile: "09226667788",
     role: "PAGADOR",
+    tier: "Silver",
     territory: "Tondo, Manila",
     status: "ACTIVE",
     commissionRate: 0.0,
     totalCollected: 0,
+    collectionTarget: 0,
     totalCommission: 0,
     customers: 0,
+    activeCustomers: 0,
     joined: "Jan 2026",
+  },
+  {
+    id: "7",
+    name: "Danny Reyes",
+    mobile: "09237778899",
+    role: "BOLADOR",
+    tier: "Silver",
+    territory: "Quezon City",
+    status: "ACTIVE",
+    commissionRate: 0.02,
+    totalCollected: 280000,
+    collectionTarget: 300000,
+    totalCommission: 5600,
+    customers: 0,
+    activeCustomers: 0,
+    joined: "Nov 2025",
+  },
+  {
+    id: "8",
+    name: "Teresa Aquino",
+    mobile: "09248889900",
+    role: "COBRADOR",
+    tier: "Bronze",
+    territory: "Pasig City",
+    status: "PENDING",
+    commissionRate: 0.15,
+    totalCollected: 0,
+    collectionTarget: 50000,
+    totalCommission: 0,
+    customers: 0,
+    activeCustomers: 0,
+    joined: "Feb 2026",
+  },
+  {
+    id: "9",
+    name: "Ramon Santos",
+    mobile: "09259990011",
+    role: "OPERATOR",
+    tier: "Platinum",
+    territory: "Metro Manila",
+    status: "ACTIVE",
+    commissionRate: 0.3,
+    totalCollected: 3500000,
+    collectionTarget: 3000000,
+    totalCommission: 1050000,
+    customers: 0,
+    activeCustomers: 0,
+    joined: "Jul 2025",
   },
 ];
 
-const roleBadge: Record<
-  string,
-  { variant: "red" | "gold" | "green" | "blue" | "gray" }
-> = {
-  COBRADOR: { variant: "gold" },
-  CABO: { variant: "blue" },
-  CAPITALISTA: { variant: "green" },
-  PAGADOR: { variant: "red" },
-  BOLADOR: { variant: "gray" },
-  OPERATOR: { variant: "gray" },
-};
-
-const statusBadge = {
-  ACTIVE: { variant: "green" as const, label: "Active" },
-  SUSPENDED: { variant: "red" as const, label: "Suspended" },
-  INACTIVE: { variant: "gray" as const, label: "Inactive" },
-};
-
 export default function AgentManagement() {
-  const [search, setSearch] = useState("");
-
-  const filtered = MOCK_AGENTS.filter(
-    (a) =>
-      a.name.toLowerCase().includes(search.toLowerCase()) ||
-      a.mobile.includes(search),
-  );
+  const activeAgents = MOCK_AGENTS.filter((a) => a.status === "ACTIVE").length;
+  const pendingApproval = MOCK_AGENTS.filter(
+    (a) => a.status === "PENDING",
+  ).length;
+  const totalComm = MOCK_AGENTS.reduce((a, c) => a + c.totalCommission, 0);
+  const totalAgents = MOCK_AGENTS.length;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary">
+          <h1 className="text-3xl font-bold text-text-primary">
             Agent Management
           </h1>
-          <p className="text-text-muted text-sm">
-            {MOCK_AGENTS.length} agents registered
+          <p className="text-text-muted mt-1">
+            {totalAgents} agents registered · {pendingApproval} pending approval
           </p>
         </div>
-        <Button variant="gold" size="sm">
-          + Register Agent
-        </Button>
+        <button className="bg-brand-red text-white px-4 py-2 rounded-xl font-medium hover:bg-brand-red-dark flex items-center gap-2 transition-colors">
+          <UserPlus size={18} />
+          Register Agent
+        </button>
       </div>
 
-      <Input
-        label=""
-        placeholder="Search agents..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-      />
+      {/* Agent Summary */}
+      <CardGrid>
+        <StatCard
+          label="Total Agents"
+          value={totalAgents}
+          icon={<Users size={18} />}
+          color="blue"
+        />
+        <StatCard
+          label="Active"
+          value={activeAgents}
+          icon={<CheckCircle size={18} />}
+          color="green"
+        />
+        <StatCard
+          label="Pending Approval"
+          value={pendingApproval}
+          icon={<Clock size={18} />}
+          color="orange"
+        />
+        <StatCard
+          label="Total Commissions"
+          value={formatCurrency(totalComm)}
+          icon={<Banknote size={18} />}
+          color="purple"
+        />
+      </CardGrid>
 
-      {/* Summary */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card>
-          <p className="text-xl font-bold text-text-primary">
-            {MOCK_AGENTS.filter((a) => a.role === "COBRADOR").length}
-          </p>
-          <p className="text-xs text-text-muted">Cobradors</p>
-        </Card>
-        <Card>
-          <p className="text-xl font-bold text-brand-blue">
-            {MOCK_AGENTS.filter((a) => a.role === "CABO").length}
-          </p>
-          <p className="text-xs text-text-muted">Cabos</p>
-        </Card>
-        <Card>
-          <p className="text-xl font-bold text-brand-green">
-            {MOCK_AGENTS.filter((a) => a.role === "CAPITALISTA").length}
-          </p>
-          <p className="text-xs text-text-muted">Capitalistas</p>
-        </Card>
-        <Card>
-          <p className="text-xl font-bold text-brand-gold">
-            {formatCurrency(
-              MOCK_AGENTS.reduce((a, c) => a + c.totalCommission, 0),
-            )}
-          </p>
-          <p className="text-xs text-text-muted">Total Commissions</p>
-        </Card>
-      </div>
-
-      {/* Agent Cards */}
-      <div className="space-y-2">
-        {filtered.map((agent) => {
-          const roleStyle = roleBadge[agent.role] ?? {
-            variant: "gray" as const,
-          };
-          const status = statusBadge[agent.status];
-          return (
-            <Card key={agent.id}>
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-brand-gold/20 flex items-center justify-center text-brand-gold font-bold">
-                    {agent.name[0]}
+      {/* Agent DataTable */}
+      <DataTable
+        title="All Agents"
+        columns={
+          [
+            {
+              key: "name",
+              label: "Agent",
+              sortable: true,
+              render: (_: unknown, row: AgentRow) => (
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full bg-brand-gold/15 flex items-center justify-center text-brand-gold text-xs font-bold">
+                    {row.name[0]}
                   </div>
                   <div>
                     <p className="text-sm font-medium text-text-primary">
-                      {agent.name}
+                      {row.name}
                     </p>
-                    <p className="text-xs text-text-muted">{agent.mobile}</p>
+                    <p className="text-[10px] text-text-muted">{row.mobile}</p>
                   </div>
                 </div>
-                <div className="flex flex-col items-end gap-1">
-                  <Badge variant={roleStyle.variant}>{agent.role}</Badge>
-                  <Badge variant={status.variant}>{status.label}</Badge>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs mt-2 pt-2 border-t border-border-default">
-                <div>
-                  <p className="text-text-muted">Territory</p>
-                  <p className="text-text-primary font-medium">
-                    {agent.territory}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-text-muted">Commission Rate</p>
-                  <p className="text-text-primary font-medium">
-                    {(agent.commissionRate * 100).toFixed(0)}%
-                  </p>
-                </div>
-                <div>
-                  <p className="text-text-muted">Total Collected</p>
-                  <p className="text-brand-gold font-medium">
-                    {formatCurrency(agent.totalCollected)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-text-muted">Total Commission</p>
-                  <p className="text-brand-green font-medium">
-                    {formatCurrency(agent.totalCommission)}
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-2 mt-3">
-                {agent.status === "ACTIVE" ? (
-                  <Button
-                    size="sm"
-                    variant="danger"
-                    onClick={() => toast.success("Agent suspended")}
+              ),
+            },
+            {
+              key: "role",
+              label: "Role",
+              sortable: true,
+              render: (v: string) => {
+                const color =
+                  v === "COBRADOR"
+                    ? "text-brand-gold bg-brand-gold/10"
+                    : v === "CABO"
+                      ? "text-brand-blue bg-brand-blue/10"
+                      : v === "CAPITALISTA"
+                        ? "text-brand-green bg-brand-green/10"
+                        : v === "BOLADOR"
+                          ? "text-purple-400 bg-purple-400/10"
+                          : v === "OPERATOR"
+                            ? "text-cyan-400 bg-cyan-400/10"
+                            : "text-brand-red bg-brand-red/10";
+                return (
+                  <span
+                    className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${color}`}
                   >
-                    Suspend
-                  </Button>
-                ) : (
-                  <Button
-                    size="sm"
-                    variant="green"
-                    onClick={() => toast.success("Agent activated")}
+                    {v}
+                  </span>
+                );
+              },
+            },
+            {
+              key: "tier",
+              label: "Tier",
+              sortable: true,
+              render: (v: string) => {
+                const color =
+                  v === "Platinum"
+                    ? "text-cyan-400 bg-cyan-400/10"
+                    : v === "Gold"
+                      ? "text-brand-gold bg-brand-gold/10"
+                      : v === "Silver"
+                        ? "text-gray-400 bg-gray-400/10"
+                        : "text-amber-700 bg-amber-700/10";
+                return (
+                  <span
+                    className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${color}`}
                   >
-                    Activate
-                  </Button>
-                )}
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => toast.success("Details opened")}
-                >
-                  View Details
-                </Button>
-              </div>
-            </Card>
-          );
-        })}
-      </div>
+                    {v}
+                  </span>
+                );
+              },
+            },
+            { key: "territory", label: "Territory", sortable: true },
+            {
+              key: "status",
+              label: "Status",
+              sortable: true,
+              render: (v: string) => {
+                const color =
+                  v === "ACTIVE"
+                    ? "text-brand-green bg-brand-green/10"
+                    : v === "SUSPENDED"
+                      ? "text-brand-red bg-brand-red/10"
+                      : v === "PENDING"
+                        ? "text-brand-gold bg-brand-gold/10"
+                        : "text-text-muted bg-white/5";
+                return (
+                  <span
+                    className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${color}`}
+                  >
+                    {v}
+                  </span>
+                );
+              },
+            },
+            {
+              key: "commissionRate",
+              label: "Comm. Rate",
+              align: "right" as const,
+              sortable: true,
+              render: (v: number) => `${(v * 100).toFixed(0)}%`,
+            },
+            {
+              key: "totalCollected",
+              label: "Collected",
+              align: "right" as const,
+              sortable: true,
+              render: (_: number, row: AgentRow) => {
+                const pct =
+                  row.collectionTarget > 0
+                    ? Math.round(
+                        (row.totalCollected / row.collectionTarget) * 100,
+                      )
+                    : 0;
+                return (
+                  <div>
+                    <span className="text-brand-gold font-medium">
+                      {formatCurrency(row.totalCollected)}
+                    </span>
+                    {row.collectionTarget > 0 && (
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <span
+                          className="inline-block w-10 h-1.5 rounded-full overflow-hidden"
+                          style={{ background: "var(--glass-divider)" }}
+                        >
+                          <span
+                            className={`block h-full rounded-full ${pct >= 100 ? "bg-brand-green" : pct >= 75 ? "bg-brand-gold" : "bg-brand-red"}`}
+                            style={{ width: `${Math.min(pct, 100)}%` }}
+                          />
+                        </span>
+                        <span className="text-[9px] text-text-muted">
+                          {pct}%
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                );
+              },
+            },
+            {
+              key: "totalCommission",
+              label: "Commission",
+              align: "right" as const,
+              sortable: true,
+              render: (v: number) => (
+                <span className="text-brand-green font-medium">
+                  {formatCurrency(v)}
+                </span>
+              ),
+            },
+            {
+              key: "customers",
+              label: "Customers",
+              align: "right" as const,
+              sortable: true,
+              render: (_: number, row: AgentRow) => (
+                <span>
+                  <span className="text-brand-green font-medium">
+                    {row.activeCustomers}
+                  </span>
+                  <span className="text-text-muted">/{row.customers}</span>
+                </span>
+              ),
+            },
+            { key: "joined", label: "Joined", sortable: true },
+          ] satisfies DataTableColumn[]
+        }
+        data={MOCK_AGENTS}
+        pageSize={10}
+        exportable
+        actions={(row: AgentRow) => (
+          <>
+            <button
+              className="text-xs px-2.5 py-1 bg-brand-blue/10 text-brand-blue-light rounded-lg hover:bg-brand-blue/15 flex items-center gap-1 transition-colors"
+              onClick={() => toast.success("Details opened")}
+            >
+              <Edit2 size={14} />
+              Edit
+            </button>
+            {row.status === "ACTIVE" ? (
+              <button
+                className="text-xs px-2.5 py-1 bg-brand-red/10 text-brand-red-light rounded-lg hover:bg-brand-red/15 flex items-center gap-1 transition-colors"
+                onClick={() => toast.success("Agent suspended")}
+              >
+                <Ban size={14} />
+                Suspend
+              </button>
+            ) : (
+              <button
+                className="text-xs px-2.5 py-1 bg-brand-green/10 text-brand-green-light rounded-lg hover:bg-brand-green/15 flex items-center gap-1 transition-colors"
+                onClick={() => toast.success("Agent activated")}
+              >
+                <CheckCircle size={14} />
+                Activate
+              </button>
+            )}
+          </>
+        )}
+      />
     </div>
   );
 }

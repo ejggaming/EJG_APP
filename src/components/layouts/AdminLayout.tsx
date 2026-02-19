@@ -1,6 +1,8 @@
 import { Outlet, useLocation, Link } from "react-router-dom";
 import { cn } from "../../utils";
 import { useAppStore } from "../../store/useAppStore";
+import { useThemeStore } from "../../store/useThemeStore";
+import { Sun, Moon } from "lucide-react";
 
 const sidebarSections = [
   {
@@ -172,15 +174,17 @@ const sidebarSections = [
 export default function AdminLayout() {
   const location = useLocation();
   const { user, logout } = useAppStore();
-
-  const allItems = sidebarSections.flatMap((s) => s.items);
+  const { theme, toggleTheme } = useThemeStore();
 
   return (
-    <div className="min-h-screen bg-surface flex">
-      {/* Sidebar */}
-      <aside className="hidden md:flex md:w-64 flex-col bg-surface-card border-r border-gray-700/50 fixed inset-y-0 z-30">
+    <div
+      className="min-h-screen flex pl-4 pr-4 py-3 gap-3"
+      style={{ background: "var(--admin-outer-bg)" }}
+    >
+      {/* Sidebar — floating card */}
+      <aside className="hidden md:flex md:w-60 shrink-0 flex-col bg-surface-card border border-border-subtle rounded-2xl sticky top-3 h-[calc(100vh-1.5rem)] z-30">
         {/* Logo */}
-        <div className="h-16 flex items-center gap-2 px-4 border-b border-gray-700/50">
+        <div className="h-16 flex items-center gap-2 px-4 border-b border-border-subtle">
           <div className="w-9 h-9 rounded-full bg-brand-red flex items-center justify-center">
             <span className="text-white font-bold text-sm">J</span>
           </div>
@@ -197,7 +201,7 @@ export default function AdminLayout() {
         <nav className="flex-1 py-4 overflow-y-auto">
           {sidebarSections.map((section) => (
             <div key={section.label} className="mb-4">
-              <p className="px-4 text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1">
+              <p className="px-4 text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-1">
                 {section.label}
               </p>
               <div className="px-2 space-y-0.5">
@@ -214,7 +218,7 @@ export default function AdminLayout() {
                         "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
                         isActive
                           ? "bg-brand-red/10 text-brand-red"
-                          : "text-gray-400 hover:bg-surface-elevated hover:text-white",
+                          : "text-text-muted hover:bg-surface-elevated hover:text-text-primary",
                       )}
                     >
                       {item.icon}
@@ -228,16 +232,16 @@ export default function AdminLayout() {
         </nav>
 
         {/* Admin user / logout */}
-        <div className="p-4 border-t border-gray-700/50">
+        <div className="p-4 border-t border-border-subtle">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-8 h-8 rounded-full bg-brand-blue flex items-center justify-center text-white font-bold text-xs">
               {user?.name?.[0]?.toUpperCase() ?? "A"}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">
+              <p className="text-sm font-medium text-text-primary truncate">
                 {user?.name ?? "Admin"}
               </p>
-              <p className="text-[10px] text-gray-500 uppercase">
+              <p className="text-[10px] text-text-muted uppercase">
                 {user?.role}
               </p>
             </div>
@@ -247,7 +251,7 @@ export default function AdminLayout() {
               logout();
               window.location.href = "/login";
             }}
-            className="flex items-center gap-2 text-sm text-gray-400 hover:text-red-400 transition-colors w-full"
+            className="flex items-center gap-2 text-sm text-text-muted hover:text-brand-red-light transition-colors w-full"
           >
             <svg
               className="w-5 h-5"
@@ -264,43 +268,27 @@ export default function AdminLayout() {
             </svg>
             Logout
           </button>
+          <button
+            onClick={toggleTheme}
+            className="flex items-center gap-2 text-sm text-text-muted hover:text-brand-gold transition-colors w-full mt-2 cursor-pointer"
+            aria-label="Toggle theme"
+          >
+            {theme === "dark" ? (
+              <Sun className="w-5 h-5" />
+            ) : (
+              <Moon className="w-5 h-5" />
+            )}
+            {theme === "dark" ? "Light Mode" : "Dark Mode"}
+          </button>
         </div>
       </aside>
 
-      {/* Main area */}
-      <div className="flex-1 md:ml-64">
-        {/* Top bar */}
-        <header className="sticky top-0 z-20 bg-surface-card/90 backdrop-blur-lg border-b border-gray-700/50 h-14 flex items-center justify-between px-4 md:px-6">
-          <div className="flex items-center gap-2 md:hidden">
-            <div className="w-8 h-8 rounded-full bg-brand-red flex items-center justify-center">
-              <span className="text-white font-bold text-xs">J</span>
-            </div>
-            <span className="font-bold text-sm text-brand-blue">Admin</span>
-          </div>
-          <h1 className="hidden md:block text-sm font-semibold text-white">
-            {allItems.find((n) =>
-              n.path === "/admin"
-                ? location.pathname === "/admin"
-                : location.pathname.startsWith(n.path),
-            )?.label ?? "Admin"}
-          </h1>
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-gray-400 hidden md:block">
-              {new Date().toLocaleDateString("en-PH", {
-                weekday: "short",
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              })}
-            </span>
-          </div>
-        </header>
-
-        {/* Content */}
-        <main className="p-4 md:p-6">
+      {/* Main content — floating card, fixed viewport height with inner scroll */}
+      <main className="flex-1 min-w-0 h-[calc(100vh-1.5rem)]">
+        <div className="bg-surface-card rounded-2xl border border-border-subtle p-4 md:p-6 h-full overflow-y-auto custom-scrollbar">
           <Outlet />
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }
