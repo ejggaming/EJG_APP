@@ -75,7 +75,7 @@ export default function HomePage() {
               <p className="text-white/80 text-sm">Welcome back,</p>
             </div>
             <h2 className="text-xl font-bold text-white">
-              {user?.name || "Player"}
+              {user?.person?.firstName || "Player"}
             </h2>
             <div className="mt-4 bg-black/20 rounded-lg p-3">
               <p className="text-brand-gold-light/80 text-[10px] uppercase tracking-widest">

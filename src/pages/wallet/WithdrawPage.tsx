@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, Button, Input } from "../../components";
 import { useAppStore } from "../../store/useAppStore";
 import { formatCurrency } from "../../utils";
-import toast from "react-hot-toast";
+import { useWithdrawMutation } from "../../hooks/useWallet";
 import {
   Smartphone,
   CreditCard,
@@ -25,43 +25,30 @@ const WITHDRAW_METHODS = [
 
 export default function WithdrawPage() {
   const navigate = useNavigate();
-  const { balance, setBalance } = useAppStore();
+  const balance = useAppStore((s) => s.balance);
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
   const [accountName, setAccountName] = useState("");
-  const [isProcessing, setIsProcessing] = useState(false);
+
+  const withdrawMutation = useWithdrawMutation();
 
   const numAmount = parseFloat(amount) || 0;
 
-  const handleWithdraw = async () => {
-    if (!selectedMethod) {
-      toast.error("Select a withdrawal method");
-      return;
-    }
-    if (numAmount < 100) {
-      toast.error("Minimum withdrawal is ₱100");
-      return;
-    }
-    if (numAmount > balance) {
-      toast.error("Insufficient balance");
-      return;
-    }
-    if (!accountNumber.trim()) {
-      toast.error("Enter account number");
-      return;
-    }
-    if (!accountName.trim()) {
-      toast.error("Enter account name");
-      return;
-    }
+  const handleWithdraw = () => {
+    if (!selectedMethod) return;
+    if (numAmount < 100 || numAmount > balance) return;
+    if (!accountNumber.trim() || !accountName.trim()) return;
 
-    setIsProcessing(true);
-    await new Promise((r) => setTimeout(r, 1500));
-    setBalance(balance - numAmount);
-    toast.success(`Withdrawal of ${formatCurrency(numAmount)} submitted!`);
-    setIsProcessing(false);
-    navigate("/wallet");
+    withdrawMutation.mutate(
+      {
+        amount: numAmount,
+        paymentMethod: selectedMethod,
+        accountNumber: accountNumber.trim(),
+        accountName: accountName.trim(),
+      },
+      { onSuccess: () => navigate("/wallet") },
+    );
   };
 
   return (
@@ -192,7 +179,7 @@ export default function WithdrawPage() {
         variant="primary"
         fullWidth
         disabled={!selectedMethod || numAmount < 100 || numAmount > balance}
-        isLoading={isProcessing}
+        isLoading={withdrawMutation.isPending}
         onClick={handleWithdraw}
       >
         <ArrowUpRight className="w-4 h-4 inline mr-1" /> Withdraw{" "}

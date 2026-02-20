@@ -149,7 +149,7 @@ export default function AgentDashboard() {
                 ✦ Agent Portal ✦
               </p>
               <h1 className="text-2xl sm:text-3xl font-extrabold text-white mt-1">
-                Welcome, {user?.name ?? "Agent"}
+                Welcome, {user?.person?.firstName ?? "Agent"}
               </h1>
               <div className="flex items-center gap-2 mt-1">
                 <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase bg-white/15 text-white/80">

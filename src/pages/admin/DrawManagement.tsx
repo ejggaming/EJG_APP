@@ -165,7 +165,7 @@ export default function DrawManagement() {
   const published = MOCK_DRAWS.filter((d) => d.status === "published").length;
   const open = MOCK_DRAWS.filter((d) => d.status === "open").length;
   const scheduled = MOCK_DRAWS.filter((d) => d.status === "scheduled").length;
-  const locked = MOCK_DRAWS.filter((d) => d.status === "locked").length;
+
   const totalStake = MOCK_DRAWS.reduce((a, d) => a + d.totalStake, 0);
   const totalPayout = MOCK_DRAWS.reduce((a, d) => a + d.totalPayout, 0);
   const totalDisputes = MOCK_DRAWS.reduce((a, d) => a + d.disputes, 0);

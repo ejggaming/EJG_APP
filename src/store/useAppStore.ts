@@ -1,14 +1,7 @@
 import { create } from "zustand";
+import type { MeUser } from "../services/authService";
 
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  mobile: string;
-  role: string;
-  kycStatus: "pending" | "approved" | "rejected" | "none";
-  isVerified: boolean;
-}
+export type User = MeUser;
 
 export interface BetSlipItem {
   id: string;
@@ -22,10 +15,12 @@ interface AppState {
   // Auth
   user: User | null;
   isAuthenticated: boolean;
+  isInitialized: boolean;
   setUser: (user: User | null) => void;
+  setInitialized: (v: boolean) => void;
   logout: () => void;
 
-  // Wallet
+  // Wallet (synced from user.wallet on setUser)
   balance: number;
   setBalance: (balance: number) => void;
 
@@ -44,11 +39,16 @@ export const useAppStore = create<AppState>((set) => ({
   // Auth
   user: null,
   isAuthenticated: false,
-  setUser: (user) => set({ user, isAuthenticated: !!user }),
-  logout: () => {
-    localStorage.removeItem("token");
-    set({ user: null, isAuthenticated: false, balance: 0, betSlip: [] });
-  },
+  isInitialized: false,
+  setUser: (user) =>
+    set({
+      user,
+      isAuthenticated: !!user,
+      balance: user?.wallet?.balance ?? 0,
+    }),
+  setInitialized: (v) => set({ isInitialized: v }),
+  // Server clears the cookie via POST /api/auth/logout — we only clear local state
+  logout: () => set({ user: null, isAuthenticated: false, balance: 0, betSlip: [] }),
 
   // Wallet
   balance: 0,

@@ -1,29 +1,35 @@
 import { z } from "zod";
 
 export const loginSchema = z.object({
-  mobile: z
-    .string()
-    .min(10, "Mobile number must be at least 10 digits")
-    .max(13, "Mobile number is too long")
-    .regex(/^(\+?63|0)?9\d{9}$/, "Enter a valid Philippine mobile number"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  email: z.email("Enter a valid email address"),
+  password: z.string().min(1, "Password is required"),
 });
 
 export type LoginInput = z.infer<typeof loginSchema>;
 
 export const registerSchema = z
   .object({
-    name: z.string().min(2, "Name must be at least 2 characters"),
-    mobile: z
+    firstName: z.string().min(1, "First name is required"),
+    lastName: z.string().min(1, "Last name is required"),
+    email: z.email("Enter a valid email address"),
+    userName: z
       .string()
-      .min(10, "Mobile number must be at least 10 digits")
-      .max(13, "Mobile number is too long")
-      .regex(/^(\+?63|0)?9\d{9}$/, "Enter a valid Philippine mobile number"),
+      .min(3, "Username must be at least 3 characters")
+      .optional()
+      .or(z.literal("")),
+    phoneNumber: z
+      .string()
+      .regex(/^\+?[1-9]\d{7,14}$/, "Invalid phone number")
+      .optional()
+      .or(z.literal("")),
     password: z
       .string()
       .min(8, "Password must be at least 8 characters")
-      .regex(/[A-Z]/, "Password must have at least one uppercase letter")
-      .regex(/[0-9]/, "Password must have at least one number"),
+      .max(128)
+      .regex(/[A-Z]/, "Must contain at least one uppercase letter")
+      .regex(/[a-z]/, "Must contain at least one lowercase letter")
+      .regex(/[0-9]/, "Must contain at least one number")
+      .regex(/[^A-Za-z0-9]/, "Must contain at least one special character"),
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -33,11 +39,13 @@ export const registerSchema = z
 
 export type RegisterInput = z.infer<typeof registerSchema>;
 
-export const otpSchema = z.object({
-  otp: z
+export const verifyOtpSchema = z.object({
+  email: z.email(),
+  code: z
     .string()
     .length(6, "OTP must be 6 digits")
     .regex(/^\d+$/, "OTP must be numeric"),
+  type: z.literal("EMAIL_VERIFICATION"),
 });
 
-export type OtpInput = z.infer<typeof otpSchema>;
+export type VerifyOtpInput = z.infer<typeof verifyOtpSchema>;

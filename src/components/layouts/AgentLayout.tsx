@@ -132,9 +132,9 @@ export default function AgentLayout() {
         {/* Agent Info */}
         <div className="px-4 py-3 border-b border-border-subtle">
           <p className="text-sm font-medium text-text-primary truncate">
-            {user?.name ?? "Agent"}
+            {[user?.person?.firstName, user?.person?.lastName].filter(Boolean).join(" ") || "Agent"}
           </p>
-          <p className="text-xs text-text-muted">{user?.mobile}</p>
+          <p className="text-xs text-text-muted">{user?.phoneNumber}</p>
           <p className="text-sm font-bold text-brand-gold mt-1">
             {formatCurrency(balance)}
           </p>

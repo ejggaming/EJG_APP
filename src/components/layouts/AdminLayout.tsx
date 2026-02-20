@@ -235,11 +235,11 @@ export default function AdminLayout() {
         <div className="p-4 border-t border-border-subtle">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-8 h-8 rounded-full bg-brand-blue flex items-center justify-center text-white font-bold text-xs">
-              {user?.name?.[0]?.toUpperCase() ?? "A"}
+              {user?.person?.firstName?.[0]?.toUpperCase() ?? "A"}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-text-primary truncate">
-                {user?.name ?? "Admin"}
+                {[user?.person?.firstName, user?.person?.lastName].filter(Boolean).join(" ") || "Admin"}
               </p>
               <p className="text-[10px] text-text-muted uppercase">
                 {user?.role}

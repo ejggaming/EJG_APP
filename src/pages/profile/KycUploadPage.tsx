@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, Button, Input } from "../../components";
-import { useAppStore } from "../../store/useAppStore";
-import toast from "react-hot-toast";
 import { Info, Camera, UserCheck, Upload } from "lucide-react";
+import { useSubmitKycMutation } from "../../hooks/useKyc";
+import toast from "react-hot-toast";
 
 const ID_TYPES = [
   { id: "national_id", name: "Philippine National ID (PhilSys)" },
@@ -16,43 +16,22 @@ const ID_TYPES = [
 
 export default function KycUploadPage() {
   const navigate = useNavigate();
-  const user = useAppStore((s) => s.user);
-  const setUser = useAppStore((s) => s.setUser);
   const [idType, setIdType] = useState("");
   const [idNumber, setIdNumber] = useState("");
   const [idFront, setIdFront] = useState<File | null>(null);
   const [selfie, setSelfie] = useState<File | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const submitKyc = useSubmitKycMutation();
 
-  const handleSubmit = async () => {
-    if (!idType) {
-      toast.error("Select an ID type");
-      return;
-    }
-    if (!idNumber.trim()) {
-      toast.error("Enter your ID number");
-      return;
-    }
-    if (!idFront) {
-      toast.error("Upload front of your ID");
-      return;
-    }
-    if (!selfie) {
-      toast.error("Upload a selfie with your ID");
-      return;
-    }
+  const handleSubmit = () => {
+    if (!idType) { toast.error("Select an ID type"); return; }
+    if (!idNumber.trim()) { toast.error("Enter your ID number"); return; }
+    if (!idFront) { toast.error("Upload front of your ID"); return; }
+    if (!selfie) { toast.error("Upload a selfie with your ID"); return; }
 
-    setIsSubmitting(true);
-    // Mock API call
-    await new Promise((r) => setTimeout(r, 2000));
-
-    if (user) {
-      setUser({ ...user, kycStatus: "pending" });
-    }
-
-    toast.success("KYC documents submitted for review!");
-    setIsSubmitting(false);
-    navigate("/profile");
+    submitKyc.mutate(
+      { idType: `${idType}:${idNumber}`, idFront, selfie },
+      { onSuccess: () => navigate("/profile") },
+    );
   };
 
   return (
@@ -138,7 +117,7 @@ export default function KycUploadPage() {
           )}
           <input
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp"
             className="hidden"
             onChange={(e) => setIdFront(e.target.files?.[0] ?? null)}
           />
@@ -170,7 +149,7 @@ export default function KycUploadPage() {
           )}
           <input
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp"
             capture="user"
             className="hidden"
             onChange={(e) => setSelfie(e.target.files?.[0] ?? null)}
@@ -181,8 +160,8 @@ export default function KycUploadPage() {
       <Button
         variant="primary"
         fullWidth
-        isLoading={isSubmitting}
-        disabled={!idType || !idNumber || !idFront || !selfie}
+        isLoading={submitKyc.isPending}
+        disabled={!idType || !idNumber || !idFront || !selfie || submitKyc.isPending}
         onClick={handleSubmit}
       >
         <Upload className="w-4 h-4 inline mr-1" /> Submit for Verification

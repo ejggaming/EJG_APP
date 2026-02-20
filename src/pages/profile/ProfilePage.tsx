@@ -85,8 +85,8 @@ export default function ProfilePage() {
   const navigate = useNavigate();
   const { user, balance, logout } = useAppStore();
 
-  const kycStatus = user?.kycStatus ?? "none";
-  const kyc = kycStatusMap[kycStatus];
+  const kycStatus = (user?.kyc?.status?.toLowerCase() ?? "none") as keyof typeof kycStatusMap;
+  const kyc = kycStatusMap[kycStatus] ?? kycStatusMap.none;
 
   const handleLogout = () => {
     logout();
@@ -114,14 +114,14 @@ export default function ProfilePage() {
                 boxShadow: "0 0 15px rgba(220, 38, 38, 0.25)",
               }}
             >
-              {user?.name?.[0]?.toUpperCase() ?? "U"}
+              {user?.person?.firstName?.[0]?.toUpperCase() ?? "U"}
             </div>
             <div className="flex-1">
               <h2 className="text-lg font-extrabold text-white">
-                {user?.name ?? "Guest User"}
+                {[user?.person?.firstName, user?.person?.lastName].filter(Boolean).join(" ") || "Guest User"}
               </h2>
               <p className="text-sm text-white/70">
-                {user?.mobile ?? "No mobile"}
+                {user?.phoneNumber ?? "No phone number"}
               </p>
               <div className="mt-1">
                 <Badge variant={kyc.badge}>{kyc.label}</Badge>
