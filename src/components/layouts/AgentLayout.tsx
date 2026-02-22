@@ -3,6 +3,7 @@ import { cn } from "../../utils";
 import { useAppStore } from "../../store/useAppStore";
 import { useThemeStore } from "../../store/useThemeStore";
 import { formatCurrency } from "../../utils";
+import { useLogoutMutation } from "../../hooks/useAuth";
 import { Sun, Moon } from "lucide-react";
 
 const navItems = [
@@ -105,7 +106,8 @@ const navItems = [
 
 export default function AgentLayout() {
   const location = useLocation();
-  const { user, balance, logout } = useAppStore();
+  const { user, balance } = useAppStore();
+  const logoutMutation = useLogoutMutation();
   const { theme, toggleTheme } = useThemeStore();
 
   return (
@@ -168,10 +170,8 @@ export default function AgentLayout() {
         {/* Logout + Theme toggle */}
         <div className="p-4 border-t border-border-subtle">
           <button
-            onClick={() => {
-              logout();
-              window.location.href = "/login";
-            }}
+            onClick={() => logoutMutation.mutate()}
+            disabled={logoutMutation.isPending}
             className="flex items-center gap-2 text-sm text-text-muted hover:text-brand-red-light transition-colors w-full"
           >
             <svg
@@ -187,7 +187,7 @@ export default function AgentLayout() {
                 d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
               />
             </svg>
-            Logout
+            {logoutMutation.isPending ? "Logging out..." : "Logout"}
           </button>
           <button
             onClick={toggleTheme}

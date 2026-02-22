@@ -33,6 +33,9 @@ import WithdrawPage from "../pages/wallet/WithdrawPage";
 import ProfilePage from "../pages/profile/ProfilePage";
 import KycUploadPage from "../pages/profile/KycUploadPage";
 
+// Player - Notifications
+import NotificationsPage from "../pages/notifications/NotificationsPage";
+
 // Agent Portal
 import AgentDashboard from "../pages/agent/AgentDashboard";
 import AgentCustomers from "../pages/agent/AgentCustomers";
@@ -46,6 +49,7 @@ import UserManagement from "../pages/admin/UserManagement";
 import AgentManagement from "../pages/admin/AgentManagement";
 import DrawManagement from "../pages/admin/DrawManagement";
 import FinanceManagement from "../pages/admin/FinanceManagement";
+import KycManagement from "../pages/admin/KycManagement";
 import Reports from "../pages/admin/Reports";
 import SystemSettings from "../pages/admin/SystemSettings";
 
@@ -83,7 +87,7 @@ const router = createBrowserRouter([
       { path: "/profile/kyc", element: <KycUploadPage /> },
 
       // Redirects
-      { path: "/notifications", element: <Navigate to="/" replace /> },
+      { path: "/notifications", element: <NotificationsPage /> },
       { path: "/help", element: <Navigate to="/" replace /> },
       { path: "/terms", element: <Navigate to="/" replace /> },
       {
@@ -119,6 +123,7 @@ const router = createBrowserRouter([
     children: [
       { path: "/admin", element: <AdminDashboard /> },
       { path: "/admin/users", element: <UserManagement /> },
+      { path: "/admin/kyc", element: <KycManagement /> },
       { path: "/admin/agents", element: <AgentManagement /> },
       { path: "/admin/draws", element: <DrawManagement /> },
       { path: "/admin/finance", element: <FinanceManagement /> },

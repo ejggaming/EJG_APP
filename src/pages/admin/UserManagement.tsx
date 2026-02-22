@@ -20,6 +20,7 @@ export default function UserManagement() {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("");
+  const [hiddenKycIds, setHiddenKycIds] = useState<Set<string>>(new Set());
 
   // Debounce search — only update query after 400ms of no typing
   useEffect(() => {
@@ -39,7 +40,11 @@ export default function UserManagement() {
   });
 
   // Real KYC pending submissions
-  const { data: kycData, isLoading: isKycLoading } = useKycListQuery({
+  const {
+    data: kycData,
+    isLoading: isKycLoading,
+    refetch: refetchKyc,
+  } = useKycListQuery({
     filter: '[{"status":"PENDING"}]',
     pagination: "true",
     document: "true",
@@ -51,7 +56,10 @@ export default function UserManagement() {
   const totalUsers = usersData?.count ?? 0;
   const activeUsers = users.filter((u) => u.status === "active").length;
   const suspendedUsers = users.filter((u) => u.status === "suspended").length;
-  const kycPending = kycData?.count ?? 0;
+  const pendingKycs = (kycData?.kycs ?? []).filter(
+    (k) => !hiddenKycIds.has(k.id),
+  );
+  const kycPending = pendingKycs.length;
 
   if (isLoading) return <Spinner />;
 
@@ -122,13 +130,13 @@ export default function UserManagement() {
           <div className="flex justify-center py-8">
             <div className="w-6 h-6 rounded-full border-2 border-brand-gold border-t-transparent animate-spin" />
           </div>
-        ) : !kycData?.kycs?.length ? (
+        ) : !pendingKycs.length ? (
           <p className="text-center text-text-muted text-sm py-8">
             No pending KYC submissions
           </p>
         ) : (
           <div className="space-y-2">
-            {kycData.kycs.map((kyc) => (
+            {pendingKycs.map((kyc) => (
               <div
                 key={kyc.id}
                 className="flex items-center justify-between p-3 bg-surface-elevated rounded-xl"
@@ -174,7 +182,15 @@ export default function UserManagement() {
                     onClick={() =>
                       updateKyc.mutate(
                         { id: kyc.id, status: "APPROVED" },
-                        { onSuccess: () => refetchUsers() },
+                        {
+                          onSuccess: () => {
+                            setHiddenKycIds((prev) =>
+                              new Set([...prev, kyc.id]),
+                            );
+                            refetchKyc();
+                            refetchUsers();
+                          },
+                        },
                       )
                     }
                   >
@@ -187,7 +203,15 @@ export default function UserManagement() {
                     onClick={() =>
                       updateKyc.mutate(
                         { id: kyc.id, status: "REJECTED" },
-                        { onSuccess: () => refetchUsers() },
+                        {
+                          onSuccess: () => {
+                            setHiddenKycIds((prev) =>
+                              new Set([...prev, kyc.id]),
+                            );
+                            refetchKyc();
+                            refetchUsers();
+                          },
+                        },
                       )
                     }
                   >
@@ -377,7 +401,15 @@ export default function UserManagement() {
                   onClick={() =>
                     updateKyc.mutate(
                       { id: row.kyc!.id, status: "APPROVED" },
-                      { onSuccess: () => refetchUsers() },
+                      {
+                        onSuccess: () => {
+                          setHiddenKycIds((prev) =>
+                            new Set([...prev, row.kyc!.id]),
+                          );
+                          refetchKyc();
+                          refetchUsers();
+                        },
+                      },
                     )
                   }
                 >
@@ -390,7 +422,15 @@ export default function UserManagement() {
                   onClick={() =>
                     updateKyc.mutate(
                       { id: row.kyc!.id, status: "REJECTED" },
-                      { onSuccess: () => refetchUsers() },
+                      {
+                        onSuccess: () => {
+                          setHiddenKycIds((prev) =>
+                            new Set([...prev, row.kyc!.id]),
+                          );
+                          refetchKyc();
+                          refetchUsers();
+                        },
+                      },
                     )
                   }
                 >

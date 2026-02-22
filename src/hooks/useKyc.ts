@@ -67,7 +67,7 @@ export function useKycListQuery(params?: Record<string, string>) {
       const res = await kycService.list(params);
       return res.data.data!;
     },
-    staleTime: 30_000,
+    staleTime: 0,
   });
 }
 

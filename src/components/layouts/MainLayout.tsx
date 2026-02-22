@@ -12,6 +12,8 @@ import {
   Moon,
 } from "lucide-react";
 import { useThemeStore } from "../../store/useThemeStore";
+import { useUnreadCountQuery } from "../../hooks/useNotification";
+import { usePlayerSocket } from "../../hooks/usePlayerSocket";
 
 const navItems = [
   { path: "/", label: "Home", icon: Home },
@@ -24,6 +26,8 @@ const navItems = [
 export default function MainLayout() {
   const location = useLocation();
   const { theme, toggleTheme } = useThemeStore();
+  const { data: unreadCount = 0 } = useUnreadCountQuery();
+  usePlayerSocket();
 
   return (
     <div className="min-h-screen bg-surface flex flex-col">
@@ -61,9 +65,14 @@ export default function MainLayout() {
               className="relative text-brand-gold/70 hover:text-brand-gold transition-colors"
             >
               <Bell className="w-5 h-5" />
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-brand-red rounded-full text-[10px] flex items-center justify-center font-bold text-white border border-brand-gold/50">
-                3
-              </span>
+              {unreadCount > 0 && (
+                <>
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-brand-red rounded-full text-[10px] flex items-center justify-center font-bold text-white border border-brand-gold/50">
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-brand-red rounded-full animate-ping opacity-60" />
+                </>
+              )}
             </Link>
           </div>
         </div>

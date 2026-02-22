@@ -50,7 +50,13 @@ export function useLoginMutation() {
       queryClient.setQueryData(authKeys.me, user);
       setUser(user);
       toast.success("Welcome back!");
-      navigate(getRoleHome(user.role));
+      // If user had a pending bet before login, redirect to /bet
+      const pendingBet = useAppStore.getState().pendingBet;
+      if (pendingBet) {
+        navigate("/bet");
+      } else {
+        navigate(getRoleHome(user.role));
+      }
     },
     onError: (err) => {
       toast.error(err.response?.data?.message ?? "Invalid credentials");
@@ -94,6 +100,24 @@ export function useVerifyOtpMutation() {
     },
     onError: (err) => {
       toast.error(err.response?.data?.message ?? "Invalid OTP. Please try again.");
+    },
+  });
+}
+
+// ─── Logout ───────────────────────────────────────────────────────────────────
+
+export function useLogoutMutation() {
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const logout = useAppStore((s) => s.logout);
+
+  return useMutation<void, AxiosError<{ message: string }>, void>({
+    mutationFn: () => authService.logout().then(() => undefined),
+    onSettled: () => {
+      // Always clear local state even if server call fails
+      logout();
+      queryClient.clear();
+      navigate("/login");
     },
   });
 }

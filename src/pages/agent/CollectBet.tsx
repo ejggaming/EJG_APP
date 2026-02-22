@@ -233,8 +233,8 @@ export default function CollectBet() {
       id: crypto.randomUUID(),
       numbers: [numbers[0], numbers[1]],
       amount: betAmount,
-      drawScheduleId: selectedDraw,
-      drawScheduleLabel: `${drawLabel} ${drawType}`,
+      drawId: selectedDraw,
+      drawLabel: `${drawLabel} ${drawType}`,
     };
     addToBetSlip(item);
     resetForm();

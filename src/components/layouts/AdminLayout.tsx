@@ -1,8 +1,17 @@
-import { Outlet, useLocation, Link } from "react-router-dom";
+import { useEffect, useState, useRef } from "react";
+import { Outlet, useLocation, Link, useNavigate } from "react-router-dom";
 import { cn } from "../../utils";
 import { useAppStore } from "../../store/useAppStore";
 import { useThemeStore } from "../../store/useThemeStore";
-import { Sun, Moon } from "lucide-react";
+import { useLogoutMutation } from "../../hooks/useAuth";
+import { useAdminSocket } from "../../hooks/useSocket";
+import {
+  useUnreadCountQuery,
+  useNotificationsQuery,
+  useMarkAllAsReadMutation,
+  useMarkAsReadMutation,
+} from "../../hooks/useNotification";
+import { Sun, Moon, Bell, Check, CheckCheck } from "lucide-react";
 
 const sidebarSections = [
   {
@@ -47,6 +56,25 @@ const sidebarSections = [
               strokeLinejoin="round"
               strokeWidth={2}
               d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+            />
+          </svg>
+        ),
+      },
+      {
+        path: "/admin/kyc",
+        label: "KYC",
+        icon: (
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
             />
           </svg>
         ),
@@ -173,8 +201,83 @@ const sidebarSections = [
 
 export default function AdminLayout() {
   const location = useLocation();
-  const { user, logout } = useAppStore();
+  const { user } = useAppStore();
+  const logoutMutation = useLogoutMutation();
   const { theme, toggleTheme } = useThemeStore();
+  const pendingFinancePing = useAppStore((s) => s.pendingFinancePing);
+  const clearFinancePing = useAppStore((s) => s.clearFinancePing);
+  const pendingKycPing = useAppStore((s) => s.pendingKycPing);
+  const clearKycPing = useAppStore((s) => s.clearKycPing);
+
+  // Notification state
+  const [showNotifPanel, setShowNotifPanel] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
+  const { data: unreadCount = 0 } = useUnreadCountQuery();
+  const { data: notifData } = useNotificationsQuery({ page: 1, limit: 20 });
+  const markAllRead = useMarkAllAsReadMutation();
+  const markRead = useMarkAsReadMutation();
+  const notifications = notifData?.notifications ?? [];
+
+  // Real-time admin notifications via Socket.IO
+  useAdminSocket();
+
+  // Clear pings when admin navigates to the relevant page
+  useEffect(() => {
+    if (
+      location.pathname.startsWith("/admin/finance") &&
+      pendingFinancePing > 0
+    ) {
+      clearFinancePing();
+    }
+    if (location.pathname.startsWith("/admin/kyc") && pendingKycPing > 0) {
+      clearKycPing();
+    }
+  }, [
+    location.pathname,
+    pendingFinancePing,
+    pendingKycPing,
+    clearFinancePing,
+    clearKycPing,
+  ]);
+
+  // Close notification panel on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setShowNotifPanel(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const navigate = useNavigate();
+
+  const getNotifRoute = (type: string) => {
+    switch (type) {
+      case "TRANSACTION":
+        return "/admin/finance";
+      case "KYC_UPDATE":
+        return "/admin/kyc";
+      case "PAYOUT":
+        return "/admin/finance";
+      case "COMMISSION":
+        return "/admin/finance";
+      default:
+        return "/admin";
+    }
+  };
+
+  const formatTimeAgo = (dateStr: string) => {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return "just now";
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    return `${days}d ago`;
+  };
 
   return (
     <div
@@ -183,17 +286,105 @@ export default function AdminLayout() {
     >
       {/* Sidebar — floating card */}
       <aside className="hidden md:flex md:w-60 shrink-0 flex-col bg-surface-card border border-border-subtle rounded-2xl sticky top-3 h-[calc(100vh-1.5rem)] z-30">
-        {/* Logo */}
+        {/* Logo + Notification Bell */}
         <div className="h-16 flex items-center gap-2 px-4 border-b border-border-subtle">
           <div className="w-9 h-9 rounded-full bg-brand-red flex items-center justify-center">
             <span className="text-white font-bold text-sm">J</span>
           </div>
-          <div>
+          <div className="flex-1">
             <span className="font-bold text-sm">
               <span className="text-brand-red">Jueteng</span>
               <span className="text-brand-gold">PH</span>
             </span>
             <p className="text-[10px] text-brand-blue">Admin Panel</p>
+          </div>
+
+          {/* Notification Bell */}
+          <div className="relative" ref={notifRef}>
+            <button
+              onClick={() => setShowNotifPanel((v) => !v)}
+              className="relative p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors cursor-pointer"
+              aria-label="Notifications"
+            >
+              <Bell className="w-5 h-5" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center">
+                  <span className="animate-ping absolute inline-flex h-3.5 w-3.5 rounded-full bg-green-400 opacity-75" />
+                  <span className="relative inline-flex items-center justify-center h-3.5 w-3.5 rounded-full bg-green-500 text-[8px] font-bold text-white">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                </span>
+              )}
+            </button>
+
+            {/* Notification Dropdown */}
+            {showNotifPanel && (
+              <div className="absolute left-0 top-full mt-2 w-72 bg-surface-card border border-border-subtle rounded-xl shadow-2xl z-50 overflow-hidden">
+                {/* Header */}
+                <div className="flex items-center justify-between px-4 py-3 border-b border-border-subtle">
+                  <h3 className="text-sm font-semibold text-text-primary">
+                    Notifications
+                  </h3>
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={() => markAllRead.mutate()}
+                      disabled={markAllRead.isPending}
+                      className="flex items-center gap-1 text-[10px] text-brand-blue hover:text-brand-gold transition-colors cursor-pointer"
+                    >
+                      <CheckCheck className="w-3 h-3" />
+                      Mark all read
+                    </button>
+                  )}
+                </div>
+
+                {/* List */}
+                <div className="max-h-80 overflow-y-auto custom-scrollbar">
+                  {notifications.length === 0 ? (
+                    <div className="px-4 py-8 text-center text-text-muted text-xs">
+                      No notifications yet
+                    </div>
+                  ) : (
+                    notifications.map((n) => (
+                      <button
+                        key={n.id}
+                        onClick={() => {
+                          if (n.status !== "READ") markRead.mutate(n.id);
+                          setShowNotifPanel(false);
+                          navigate(getNotifRoute(n.type));
+                        }}
+                        className={cn(
+                          "w-full text-left px-4 py-3 border-b border-border-subtle/50 hover:bg-surface-elevated transition-colors flex gap-3 items-start cursor-pointer",
+                          n.status !== "READ" && "bg-brand-blue/5",
+                        )}
+                      >
+                        {/* Indicator dot */}
+                        <div className="mt-1.5 shrink-0">
+                          {n.status !== "READ" ? (
+                            <span className="relative flex h-2 w-2">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+                            </span>
+                          ) : (
+                            <Check className="w-3 h-3 text-text-muted/40" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-text-primary truncate">
+                            {n.title}
+                          </p>
+                          <p className="text-[11px] text-text-muted line-clamp-2">
+                            {n.body}
+                          </p>
+                          <p className="text-[10px] text-text-muted/60 mt-0.5">
+                            {formatTimeAgo(n.createdAt)}
+                          </p>
+                        </div>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -215,7 +406,7 @@ export default function AdminLayout() {
                       key={item.path}
                       to={item.path}
                       className={cn(
-                        "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                        "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors relative",
                         isActive
                           ? "bg-brand-red/10 text-brand-red"
                           : "text-text-muted hover:bg-surface-elevated hover:text-text-primary",
@@ -223,6 +414,31 @@ export default function AdminLayout() {
                     >
                       {item.icon}
                       {item.label}
+                      {/* Ping badge for Finance */}
+                      {item.path === "/admin/finance" &&
+                        pendingFinancePing > 0 && (
+                          <span className="ml-auto flex items-center gap-1">
+                            <span className="relative flex h-2.5 w-2.5">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-red opacity-75" />
+                              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-brand-red" />
+                            </span>
+                            <span className="text-[10px] font-bold text-brand-red">
+                              {pendingFinancePing}
+                            </span>
+                          </span>
+                        )}
+                      {/* Ping badge for KYC */}
+                      {item.path === "/admin/kyc" && pendingKycPing > 0 && (
+                        <span className="ml-auto flex items-center gap-1">
+                          <span className="relative flex h-2.5 w-2.5">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-gold opacity-75" />
+                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-brand-gold" />
+                          </span>
+                          <span className="text-[10px] font-bold text-brand-gold">
+                            {pendingKycPing}
+                          </span>
+                        </span>
+                      )}
                     </Link>
                   );
                 })}
@@ -239,7 +455,9 @@ export default function AdminLayout() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-text-primary truncate">
-                {[user?.person?.firstName, user?.person?.lastName].filter(Boolean).join(" ") || "Admin"}
+                {[user?.person?.firstName, user?.person?.lastName]
+                  .filter(Boolean)
+                  .join(" ") || "Admin"}
               </p>
               <p className="text-[10px] text-text-muted uppercase">
                 {user?.role}
@@ -247,10 +465,8 @@ export default function AdminLayout() {
             </div>
           </div>
           <button
-            onClick={() => {
-              logout();
-              window.location.href = "/login";
-            }}
+            onClick={() => logoutMutation.mutate()}
+            disabled={logoutMutation.isPending}
             className="flex items-center gap-2 text-sm text-text-muted hover:text-brand-red-light transition-colors w-full"
           >
             <svg
@@ -266,7 +482,7 @@ export default function AdminLayout() {
                 d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
               />
             </svg>
-            Logout
+            {logoutMutation.isPending ? "Logging out..." : "Logout"}
           </button>
           <button
             onClick={toggleTheme}

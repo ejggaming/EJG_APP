@@ -12,51 +12,32 @@ import {
   Clock,
   Dices,
 } from "lucide-react";
-
-const MOCK_DRAWS = [
-  {
-    id: "1",
-    label: "11:00 AM Draw",
-    time: "11:00 AM",
-    status: "open" as const,
-  },
-  { id: "2", label: "4:00 PM Draw", time: "4:00 PM", status: "open" as const },
-  {
-    id: "3",
-    label: "9:00 PM Draw",
-    time: "9:00 PM",
-    status: "upcoming" as const,
-  },
-];
-
-const MOCK_RECENT_RESULTS = [
-  {
-    id: "1",
-    draw: "11:00 AM",
-    date: "Feb 19",
-    numbers: [15, 32],
-    prize: "₱50,000",
-  },
-  {
-    id: "2",
-    draw: "4:00 PM",
-    date: "Feb 18",
-    numbers: [7, 23],
-    prize: "₱50,000",
-  },
-  {
-    id: "3",
-    draw: "9:00 PM",
-    date: "Feb 18",
-    numbers: [3, 29],
-    prize: "₱50,000",
-  },
-];
+import {
+  useTodaysDrawsQuery,
+  useDrawResultsQuery,
+  useGameConfigQuery,
+  drawLabel,
+  drawTypeLabel,
+  drawUIStatus,
+} from "../hooks/useBet";
 
 export default function HomePage() {
   const user = useAppStore((s) => s.user);
   const balance = useAppStore((s) => s.balance);
   const isAuthenticated = useAppStore((s) => s.isAuthenticated);
+
+  // Real API data
+  const { data: todaysDraws = [] } = useTodaysDrawsQuery();
+  const { data: resultsData } = useDrawResultsQuery({ limit: 3 });
+  const { data: gameConfig } = useGameConfigQuery();
+
+  const recentResults = resultsData?.draws ?? [];
+
+  const topPrize = gameConfig
+    ? formatCurrency(gameConfig.maxBet * gameConfig.payoutMultiplier)
+    : "₱50K";
+  const minBet = gameConfig ? formatCurrency(gameConfig.minBet) : "₱5";
+  const maxNumber = gameConfig?.maxNumber ?? 37;
 
   return (
     <div className="space-y-6">
@@ -141,21 +122,23 @@ export default function HomePage() {
       <div className="grid grid-cols-3 gap-3">
         <Card bento delay={100} className="text-center lantern-card">
           <Trophy className="w-5 h-5 text-brand-gold/60 mx-auto mb-1.5" />
-          <p className="text-brand-gold text-xl font-extrabold">₱50K</p>
+          <p className="text-brand-gold text-xl font-extrabold">{topPrize}</p>
           <p className="text-text-muted text-[10px] mt-0.5 uppercase tracking-wider">
             Top Prize
           </p>
         </Card>
         <Card bento delay={200} className="text-center lantern-card">
           <Coins className="w-5 h-5 text-brand-green/60 mx-auto mb-1.5" />
-          <p className="text-brand-green text-xl font-extrabold">₱5</p>
+          <p className="text-brand-green text-xl font-extrabold">{minBet}</p>
           <p className="text-text-muted text-[10px] mt-0.5 uppercase tracking-wider">
             Min Bet
           </p>
         </Card>
         <Card bento delay={300} className="text-center lantern-card">
           <CircleDot className="w-5 h-5 text-brand-red/60 mx-auto mb-1.5" />
-          <p className="text-brand-red-light text-xl font-extrabold">1-37</p>
+          <p className="text-brand-red-light text-xl font-extrabold">
+            1-{maxNumber}
+          </p>
           <p className="text-text-muted text-[10px] mt-0.5 uppercase tracking-wider">
             Numbers
           </p>
@@ -176,46 +159,67 @@ export default function HomePage() {
           </Link>
         </div>
         <div className="space-y-2">
-          {MOCK_DRAWS.map((draw, idx) => (
-            <Card
-              key={draw.id}
-              hover
-              bento
-              delay={200 + idx * 100}
-              className="flex items-center justify-between lantern-card"
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-lg"
-                  style={{
-                    background:
-                      "radial-gradient(circle at 40% 35%, rgba(220,38,38,0.3) 0%, rgba(220,38,38,0.1) 100%)",
-                    border: "1px solid rgba(220,38,38,0.3)",
-                  }}
-                >
-                  <Clock className="w-5 h-5 text-brand-red/70" />
-                </div>
-                <div>
-                  <p className="font-semibold text-text-primary text-sm">
-                    {draw.label}
-                  </p>
-                  <p className="text-text-muted text-xs">Feb 19, 2026</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge variant={draw.status === "open" ? "green" : "gold"}>
-                  {draw.status === "open" ? "Open" : "Upcoming"}
-                </Badge>
-                {draw.status === "open" && (
-                  <Link to="/bet">
-                    <Button size="sm" variant="primary">
-                      Bet Now
-                    </Button>
-                  </Link>
-                )}
-              </div>
+          {todaysDraws.length === 0 ? (
+            <Card className="text-center py-6 lantern-card">
+              <p className="text-text-muted text-sm">
+                No draws scheduled for today
+              </p>
             </Card>
-          ))}
+          ) : (
+            todaysDraws.map((draw, idx) => {
+              const uiStatus = drawUIStatus(draw.status);
+              return (
+                <Card
+                  key={draw.id}
+                  hover
+                  bento
+                  delay={200 + idx * 100}
+                  className="flex items-center justify-between lantern-card"
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-10 h-10 rounded-full flex items-center justify-center text-lg"
+                      style={{
+                        background:
+                          "radial-gradient(circle at 40% 35%, rgba(220,38,38,0.3) 0%, rgba(220,38,38,0.1) 100%)",
+                        border: "1px solid rgba(220,38,38,0.3)",
+                      }}
+                    >
+                      <Clock className="w-5 h-5 text-brand-red/70" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-text-primary text-sm">
+                        {drawLabel(draw)}
+                      </p>
+                      <p className="text-text-muted text-xs">
+                        {new Date(draw.drawDate).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={uiStatus === "open" ? "green" : "gold"}>
+                      {uiStatus === "open"
+                        ? "Open"
+                        : uiStatus === "upcoming"
+                          ? "Upcoming"
+                          : "Closed"}
+                    </Badge>
+                    {uiStatus === "open" && (
+                      <Link to="/bet">
+                        <Button size="sm" variant="primary">
+                          Bet Now
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
+                </Card>
+              );
+            })
+          )}
         </div>
       </section>
 
@@ -236,35 +240,53 @@ export default function HomePage() {
           </Link>
         </div>
         <div className="space-y-2">
-          {MOCK_RECENT_RESULTS.map((result, idx) => (
-            <Card
-              key={result.id}
-              bento
-              delay={350 + idx * 100}
-              className="flex items-center justify-between lantern-card"
-            >
-              <div>
-                <p className="text-sm font-medium text-text-primary">
-                  {result.draw} Draw
-                </p>
-                <p className="text-xs text-text-muted">{result.date}</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex gap-1.5">
-                  {result.numbers.map((num) => (
-                    <span key={num} className="lottery-ball w-9 h-9 text-sm">
-                      {num}
-                    </span>
-                  ))}
-                </div>
-                <div className="text-right">
-                  <p className="text-brand-gold font-bold text-sm">
-                    {result.prize}
+          {recentResults.length === 0 ? (
+            <Card className="text-center py-6 lantern-card">
+              <p className="text-text-muted text-sm">
+                No results yet — stay tuned!
+              </p>
+            </Card>
+          ) : (
+            recentResults.map((result, idx) => (
+              <Card
+                key={result.id}
+                bento
+                delay={350 + idx * 100}
+                className="flex items-center justify-between lantern-card"
+              >
+                <div>
+                  <p className="text-sm font-medium text-text-primary">
+                    {drawTypeLabel(result.drawType)} Draw
+                  </p>
+                  <p className="text-xs text-text-muted">
+                    {new Date(result.drawDate).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    })}
                   </p>
                 </div>
-              </div>
-            </Card>
-          ))}
+                <div className="flex items-center gap-3">
+                  <div className="flex gap-1.5">
+                    {[result.number1, result.number2]
+                      .filter((n): n is number => n != null)
+                      .map((num) => (
+                        <span
+                          key={num}
+                          className="lottery-ball w-9 h-9 text-sm"
+                        >
+                          {num}
+                        </span>
+                      ))}
+                  </div>
+                  <div className="text-right">
+                    <p className="text-brand-gold font-bold text-sm">
+                      {formatCurrency(result.totalPayout)}
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            ))
+          )}
         </div>
       </section>
 
@@ -279,13 +301,13 @@ export default function HomePage() {
               {
                 step: 1,
                 title: "Pick 2 Numbers",
-                desc: "Choose any 2 numbers from 1 to 37",
+                desc: `Choose any 2 numbers from 1 to ${maxNumber}`,
                 Icon: Target,
               },
               {
                 step: 2,
                 title: "Place Your Bet",
-                desc: "Minimum bet is ₱5 per combination",
+                desc: `Minimum bet is ${minBet} per combination`,
                 Icon: Coins,
               },
               {

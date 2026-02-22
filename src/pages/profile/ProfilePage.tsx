@@ -1,7 +1,8 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Card, Badge, Button } from "../../components";
 import { useAppStore } from "../../store/useAppStore";
 import { formatCurrency } from "../../utils";
+import { useLogoutMutation } from "../../hooks/useAuth";
 import {
   BadgeCheck,
   ScrollText,
@@ -82,15 +83,14 @@ const kycStatusMap = {
 };
 
 export default function ProfilePage() {
-  const navigate = useNavigate();
-  const { user, balance, logout } = useAppStore();
+  const { user, balance } = useAppStore();
+  const logoutMutation = useLogoutMutation();
 
   const kycStatus = (user?.kyc?.status?.toLowerCase() ?? "none") as keyof typeof kycStatusMap;
   const kyc = kycStatusMap[kycStatus] ?? kycStatusMap.none;
 
   const handleLogout = () => {
-    logout();
-    navigate("/login");
+    logoutMutation.mutate();
   };
 
   return (
@@ -191,7 +191,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Logout */}
-      <Button variant="danger" fullWidth onClick={handleLogout}>
+      <Button variant="danger" fullWidth onClick={handleLogout} isLoading={logoutMutation.isPending}>
         Logout
       </Button>
 

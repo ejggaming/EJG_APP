@@ -1,68 +1,176 @@
 import apiClient from "./apiClient";
 
-export interface PlaceBetPayload {
-  numbers: [number, number];
-  amount: number;
-  drawScheduleId: string;
+// ─── Backend model types (match Prisma / buildSuccessResponse wrapper) ────────
+
+interface ApiSuccess<T> {
+  status: "success";
+  message: string;
+  data?: T;
+  code: number;
+  timestamp: string;
 }
 
-export interface BetResponse {
+// JuetengConfig (active game settings)
+export interface GameConfig {
   id: string;
-  numbers: [number, number];
-  amount: number;
-  drawScheduleId: string;
-  drawScheduleLabel: string;
-  status: "pending" | "won" | "lost";
-  reference: string;
-  createdAt: string;
+  maxNumber: number;
+  minBet: number;
+  maxBet: number;
+  payoutMultiplier: number;
+  cobradorRate: number;
+  caboRate: number;
+  capitalistaRate: number;
+  isActive: boolean;
 }
 
+// JuetengDraw (a specific draw instance for a given day)
+export interface JuetengDraw {
+  id: string;
+  scheduleId: string;
+  drawDate: string;
+  drawType: "MORNING" | "AFTERNOON";
+  status: "SCHEDULED" | "OPEN" | "CLOSED" | "DRAWN" | "SETTLED" | "CANCELLED";
+  scheduledAt: string;
+  openedAt?: string | null;
+  closedAt?: string | null;
+  drawnAt?: string | null;
+  settledAt?: string | null;
+  number1?: number | null;
+  number2?: number | null;
+  combinationKey?: string | null;
+  totalBets: number;
+  totalStake: number;
+  totalPayout: number;
+  grossProfit: number;
+  schedule?: DrawSchedule;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// DrawSchedule (recurring template e.g. MORNING at 11:00)
 export interface DrawSchedule {
   id: string;
-  label: string;
-  drawTime: string;
-  status: "open" | "closed" | "upcoming";
+  drawType: "MORNING" | "AFTERNOON";
+  scheduledTime: string;
+  cutoffMinutes: number;
+  timeZone: string;
+  isActive: boolean;
 }
 
-export interface DrawResult {
+// JuetengBet
+export interface JuetengBet {
   id: string;
-  drawScheduleId: string;
-  drawTime: string;
-  date: string;
-  winningNumbers: [number, number];
-  prize: number;
-  totalBets: number;
-  winners: number;
+  drawId: string;
+  bettorId: string;
+  cobradorId?: string | null;
+  caboId?: string | null;
+  number1: number;
+  number2: number;
+  combinationKey: string;
+  amount: number;
+  currency: string;
+  status: "PENDING" | "WON" | "LOST" | "VOID" | "REFUNDED";
+  isWinner: boolean;
+  payoutAmount?: number | null;
+  reference: string;
+  placedAt: string;
+  settledAt?: string | null;
+  draw?: JuetengDraw;
+  createdAt: string;
+  updatedAt: string;
 }
+
+// ─── Service ─────────────────────────────────────────────────────────────────
 
 export const betService = {
-  placeBet: (data: PlaceBetPayload) =>
-    apiClient.post<BetResponse>("/bets", data),
+  /** Get active game configuration */
+  getGameConfig: () =>
+    apiClient.get<ApiSuccess<{ juetengConfigs: GameConfig[]; count?: number }>>(
+      "/juetengConfig",
+      {
+        params: {
+          filter: JSON.stringify([{ isActive: true }]),
+          document: "true",
+        },
+      },
+    ),
 
-  placeBulkBets: (bets: PlaceBetPayload[]) =>
-    apiClient.post<BetResponse[]>("/bets/bulk", { bets }),
-
-  getBetHistory: (params?: {
-    page?: number;
-    limit?: number;
-    status?: string;
-  }) =>
-    apiClient.get<{ data: BetResponse[]; total: number }>("/bets/history", {
-      params,
+  /** Get today's draws (or draws by filter) */
+  getDraws: (params?: Record<string, string>) =>
+    apiClient.get<
+      ApiSuccess<{
+        juetengDraws: JuetengDraw[];
+        count?: number;
+        pagination?: {
+          page: number;
+          limit: number;
+          totalPages: number;
+          total: number;
+        };
+      }>
+    >("/juetengDraw", {
+      params: { document: "true", count: "true", ...params },
     }),
 
-  getBetById: (id: string) => apiClient.get<BetResponse>(`/bets/${id}`),
+  /** Get draw schedules (recurring templates) */
+  getDrawSchedules: () =>
+    apiClient.get<ApiSuccess<{ drawSchedules: DrawSchedule[] }>>(
+      "/drawSchedule",
+      {
+        params: { document: "true" },
+      },
+    ),
 
-  getDrawSchedules: () => apiClient.get<DrawSchedule[]>("/draws/schedules"),
+  /** Place a single bet */
+  placeBet: (data: {
+    drawId: string;
+    number1: number;
+    number2: number;
+    amount: number;
+  }) => apiClient.post<ApiSuccess<JuetengBet>>("/juetengBet", data),
 
-  getDrawResults: (params?: {
-    page?: number;
-    limit?: number;
-    drawTime?: string;
-  }) =>
-    apiClient.get<{ data: DrawResult[]; total: number }>("/draws/results", {
-      params,
+  /** Get bet history for the logged-in user (bettor) */
+  getBetHistory: (params?: Record<string, string>) =>
+    apiClient.get<
+      ApiSuccess<{
+        juetengBets: JuetengBet[];
+        count?: number;
+        pagination?: {
+          page: number;
+          limit: number;
+          totalPages: number;
+          total: number;
+        };
+      }>
+    >("/juetengBet", {
+      params: {
+        document: "true",
+        count: "true",
+        pagination: "true",
+        ...params,
+      },
     }),
 
-  getLatestResult: () => apiClient.get<DrawResult>("/draws/results/latest"),
+  /** Get a single bet by ID */
+  getBetById: (id: string) =>
+    apiClient.get<ApiSuccess<{ juetengBet: JuetengBet }>>(`/juetengBet/${id}`),
+
+  /** Update a draw (admin — encode result, change status, etc.) */
+  updateDraw: (id: string, data: Partial<JuetengDraw>) =>
+    apiClient.patch<ApiSuccess<{ juetengDraw: JuetengDraw }>>(
+      `/juetengDraw/${id}`,
+      data,
+    ),
+
+  /** Create a new draw */
+  createDraw: (data: {
+    scheduleId: string;
+    drawDate: string;
+    drawType: "MORNING" | "AFTERNOON";
+    scheduledAt: string;
+  }) =>
+    apiClient.post<ApiSuccess<{ juetengDraw: JuetengDraw }>>(
+      "/juetengDraw",
+      data,
+    ),
 };

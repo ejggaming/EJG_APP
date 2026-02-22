@@ -6,137 +6,80 @@ import {
   CheckCircle,
   Clock,
   Lock,
+  LockOpen,
   CalendarDays,
   Dices,
-  AlertTriangle,
   Banknote,
+  Loader2,
+  BarChart3,
+  Plus,
 } from "lucide-react";
 import { Button } from "../../components";
 import toast from "react-hot-toast";
+import {
+  useAdminDrawsQuery,
+  useUpdateDrawMutation,
+  useCreateDrawMutation,
+  useDrawSchedulesQuery,
+  drawTypeLabel,
+} from "../../hooks/useBet";
+import type { JuetengDraw } from "../../services/betService";
 
-interface Draw {
-  id: string;
-  time: string;
-  date: string;
-  status: "scheduled" | "open" | "closed" | "drawn" | "published" | "locked";
-  winningNumbers?: [number, number];
-  totalBets: number;
-  totalStake: number;
-  totalPayout: number;
-  winners: number;
-  disputes: number;
-  cutoffTime: string;
-  encodedBy?: string;
-  approvedBy?: string;
-}
-
-const MOCK_DRAWS: Draw[] = [
-  {
-    id: "1",
-    time: "11:00 AM",
-    date: "Feb 19, 2026",
-    status: "published",
-    winningNumbers: [12, 35],
-    totalBets: 1245,
-    totalStake: 62250,
-    totalPayout: 21000,
-    winners: 3,
-    disputes: 1,
-    cutoffTime: "10:45 AM",
-    encodedBy: "Admin Juan",
-    approvedBy: "Admin Maria",
-  },
-  {
-    id: "2",
-    time: "4:00 PM",
-    date: "Feb 19, 2026",
-    status: "open",
-    totalBets: 892,
-    totalStake: 44600,
-    totalPayout: 0,
-    winners: 0,
-    disputes: 0,
-    cutoffTime: "3:45 PM",
-  },
-  {
-    id: "3",
-    time: "9:00 PM",
-    date: "Feb 19, 2026",
-    status: "scheduled",
-    totalBets: 0,
-    totalStake: 0,
-    totalPayout: 0,
-    winners: 0,
-    disputes: 0,
-    cutoffTime: "8:45 PM",
-  },
-  {
-    id: "4",
-    time: "11:00 AM",
-    date: "Feb 18, 2026",
-    status: "published",
-    winningNumbers: [7, 22],
-    totalBets: 1580,
-    totalStake: 79000,
-    totalPayout: 35000,
-    winners: 5,
-    disputes: 0,
-    cutoffTime: "10:45 AM",
-    encodedBy: "Admin Juan",
-    approvedBy: "Admin Maria",
-  },
-  {
-    id: "5",
-    time: "4:00 PM",
-    date: "Feb 18, 2026",
-    status: "published",
-    winningNumbers: [19, 31],
-    totalBets: 1120,
-    totalStake: 56000,
-    totalPayout: 14000,
-    winners: 2,
-    disputes: 2,
-    cutoffTime: "3:45 PM",
-    encodedBy: "Admin Pedro",
-    approvedBy: "Admin Juan",
-  },
-  {
-    id: "6",
-    time: "9:00 PM",
-    date: "Feb 18, 2026",
-    status: "published",
-    winningNumbers: [3, 28],
-    totalBets: 980,
-    totalStake: 49000,
-    totalPayout: 7000,
-    winners: 1,
-    disputes: 0,
-    cutoffTime: "8:45 PM",
-    encodedBy: "Admin Maria",
-    approvedBy: "Admin Juan",
-  },
-  {
-    id: "7",
-    time: "11:00 AM",
-    date: "Feb 20, 2026",
-    status: "scheduled",
-    totalBets: 0,
-    totalStake: 0,
-    totalPayout: 0,
-    winners: 0,
-    disputes: 0,
-    cutoffTime: "10:45 AM",
-  },
-];
+const STATUS_COLORS: Record<string, string> = {
+  SETTLED: "text-brand-green bg-brand-green/10",
+  DRAWN: "text-brand-blue bg-brand-blue/10",
+  OPEN: "text-brand-gold bg-brand-gold/10",
+  CLOSED: "text-brand-red bg-brand-red/10",
+  SCHEDULED: "text-text-muted bg-white/5",
+  CANCELLED: "text-orange-400 bg-orange-400/10",
+};
 
 export default function DrawManagement() {
+  const [page, setPage] = useState(1);
+  const { data, isLoading } = useAdminDrawsQuery({ page, limit: 20 });
+  const updateDraw = useUpdateDrawMutation();
+  const createDraw = useCreateDrawMutation();
+  const { data: schedules = [] } = useDrawSchedulesQuery();
+
   const [showEncode, setShowEncode] = useState(false);
-  const [selectedDraw, setSelectedDraw] = useState<Draw | null>(null);
+  const [selectedDraw, setSelectedDraw] = useState<JuetengDraw | null>(null);
   const [num1, setNum1] = useState("");
   const [num2, setNum2] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleEncode = (draw: Draw) => {
+  // Create draw state
+  const [showCreate, setShowCreate] = useState(false);
+  const [createDate, setCreateDate] = useState(
+    () => new Date().toISOString().slice(0, 10),
+  );
+  const [createType, setCreateType] = useState<"MORNING" | "AFTERNOON">(
+    "MORNING",
+  );
+
+  const draws = data?.draws ?? [];
+
+  const handleCreate = () => {
+    const schedule = schedules.find((s) => s.drawType === createType);
+    if (!schedule) {
+      toast.error("No active schedule found for the selected draw type");
+      return;
+    }
+    // Combine selected date + schedule time → ISO string
+    const scheduledAt = new Date(
+      `${createDate}T${schedule.scheduledTime}:00`,
+    ).toISOString();
+
+    createDraw.mutate(
+      { scheduleId: schedule.id, drawDate: createDate, drawType: createType, scheduledAt },
+      {
+        onSuccess: () => {
+          toast.success(`${drawTypeLabel(createType)} draw created for ${createDate}`);
+          setShowCreate(false);
+        },
+      },
+    );
+  };
+
+  const handleEncode = (draw: JuetengDraw) => {
     setSelectedDraw(draw);
     setNum1("");
     setNum2("");
@@ -144,6 +87,7 @@ export default function DrawManagement() {
   };
 
   const handleSubmitResult = async () => {
+    if (!selectedDraw) return;
     const n1 = parseInt(num1);
     const n2 = parseInt(num2);
     if (!n1 || !n2 || n1 < 1 || n1 > 37 || n2 < 1 || n2 > 37) {
@@ -155,37 +99,63 @@ export default function DrawManagement() {
       return;
     }
 
-    setIsSubmitting(true);
-    await new Promise((r) => setTimeout(r, 1500));
-    toast.success(`Draw result encoded: ${n1} - ${n2}`);
-    setIsSubmitting(false);
-    setShowEncode(false);
+    const combinationKey = [n1, n2].sort((a, b) => a - b).join("-");
+
+    updateDraw.mutate(
+      {
+        id: selectedDraw.id,
+        data: {
+          number1: n1,
+          number2: n2,
+          combinationKey,
+          status: "DRAWN",
+        } as Partial<JuetengDraw>,
+      },
+      {
+        onSuccess: () => {
+          toast.success(`Draw result encoded: ${n1} - ${n2}`);
+          setShowEncode(false);
+        },
+      },
+    );
   };
 
-  const published = MOCK_DRAWS.filter((d) => d.status === "published").length;
-  const open = MOCK_DRAWS.filter((d) => d.status === "open").length;
-  const scheduled = MOCK_DRAWS.filter((d) => d.status === "scheduled").length;
-
-  const totalStake = MOCK_DRAWS.reduce((a, d) => a + d.totalStake, 0);
-  const totalPayout = MOCK_DRAWS.reduce((a, d) => a + d.totalPayout, 0);
-  const totalDisputes = MOCK_DRAWS.reduce((a, d) => a + d.disputes, 0);
+  // Stats
+  const settled = draws.filter(
+    (d) => d.status === "SETTLED" || d.status === "DRAWN",
+  ).length;
+  const open = draws.filter((d) => d.status === "OPEN").length;
+  const scheduled = draws.filter((d) => d.status === "SCHEDULED").length;
+  const totalStake = draws.reduce((a, d) => a + d.totalStake, 0);
+  const totalPayout = draws.reduce((a, d) => a + d.totalPayout, 0);
+  const totalBetsCount = draws.reduce((a, d) => a + d.totalBets, 0);
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-text-primary">
-          Draw Management
-        </h1>
-        <p className="text-text-muted mt-1">
-          Manage draw schedules, encode results, and handle disputes
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-text-primary">
+            Draw Management
+          </h1>
+          <p className="text-text-muted mt-1">
+            Manage draw schedules, encode results, and monitor bets
+          </p>
+        </div>
+        <Button
+          variant="primary"
+          size="sm"
+          onClick={() => setShowCreate(true)}
+        >
+          <Plus size={15} />
+          Create Draw
+        </Button>
       </div>
 
       {/* Summary Stats */}
       <CardGrid columns={6}>
         <StatCard
-          label="Published"
-          value={published}
+          label="Settled / Drawn"
+          value={settled}
           icon={<CheckCircle size={18} />}
           color="green"
         />
@@ -214,197 +184,332 @@ export default function DrawManagement() {
           color="red"
         />
         <StatCard
-          label="Disputes"
-          value={totalDisputes}
-          icon={<AlertTriangle size={18} />}
-          color="red"
+          label="Total Bets"
+          value={totalBetsCount.toLocaleString()}
+          icon={<BarChart3 size={18} />}
+          color="blue"
         />
       </CardGrid>
 
       {/* Draws DataTable */}
-      <DataTable
-        title="All Draws"
-        columns={
-          [
-            {
-              key: "date",
-              label: "Date",
-              sortable: true,
-            },
-            {
-              key: "time",
-              label: "Draw Time",
-              sortable: true,
-            },
-            {
-              key: "status",
-              label: "Status",
-              sortable: true,
-              render: (v: string) => {
-                const color =
-                  v === "published"
-                    ? "text-brand-green bg-brand-green/10"
-                    : v === "open"
-                      ? "text-brand-gold bg-brand-gold/10"
-                      : v === "closed"
-                        ? "text-brand-red bg-brand-red/10"
-                        : v === "locked"
-                          ? "text-orange-400 bg-orange-400/10"
-                          : v === "drawn"
-                            ? "text-brand-blue bg-brand-blue/10"
-                            : "text-text-muted bg-white/5";
-                return (
-                  <span
-                    className={`text-[11px] font-medium px-2 py-0.5 rounded-full capitalize ${color}`}
-                  >
-                    {v}
-                  </span>
-                );
+      {isLoading ? (
+        <div className="flex justify-center py-12">
+          <Loader2 className="w-6 h-6 animate-spin text-brand-gold" />
+        </div>
+      ) : (
+        <DataTable
+          title="All Draws"
+          columns={
+            [
+              {
+                key: "drawDate",
+                label: "Date",
+                sortable: true,
+                render: (v: string) =>
+                  new Date(v).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  }),
               },
-            },
-            {
-              key: "winningNumbers",
-              label: "Result",
-              searchable: false,
-              sortable: false,
-              render: (v: [number, number] | undefined) =>
-                v ? (
-                  <div className="flex gap-1">
-                    {v.map((n) => (
-                      <span
-                        key={n}
-                        className="w-7 h-7 rounded-full bg-brand-red text-white text-xs font-bold flex items-center justify-center border border-brand-gold"
-                      >
-                        {n}
+              {
+                key: "drawType",
+                label: "Draw Time",
+                sortable: true,
+                render: (v: "MORNING" | "AFTERNOON") =>
+                  `${drawTypeLabel(v)} Draw`,
+              },
+              {
+                key: "status",
+                label: "Status",
+                sortable: true,
+                render: (v: string) => {
+                  const color =
+                    STATUS_COLORS[v] ?? "text-text-muted bg-white/5";
+                  return (
+                    <span
+                      className={`text-[11px] font-medium px-2 py-0.5 rounded-full capitalize ${color}`}
+                    >
+                      {v.toLowerCase()}
+                    </span>
+                  );
+                },
+              },
+              {
+                key: "number1",
+                label: "Result",
+                searchable: false,
+                sortable: false,
+                render: (_v: number | null, row: JuetengDraw) =>
+                  row.number1 != null && row.number2 != null ? (
+                    <div className="flex gap-1">
+                      <span className="w-7 h-7 rounded-full bg-brand-red text-white text-xs font-bold flex items-center justify-center border border-brand-gold">
+                        {row.number1}
                       </span>
-                    ))}
-                  </div>
-                ) : (
-                  <span className="text-text-muted text-xs">—</span>
+                      <span className="w-7 h-7 rounded-full bg-brand-red text-white text-xs font-bold flex items-center justify-center border border-brand-gold">
+                        {row.number2}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-text-muted text-xs">—</span>
+                  ),
+              },
+              {
+                key: "totalBets",
+                label: "Bets",
+                align: "right" as const,
+                sortable: true,
+                render: (v: number) => v.toLocaleString(),
+              },
+              {
+                key: "totalStake",
+                label: "Stake",
+                align: "right" as const,
+                sortable: true,
+                render: (v: number) => (
+                  <span className="text-brand-gold font-medium">
+                    ₱{v.toLocaleString()}
+                  </span>
                 ),
-            },
-            {
-              key: "totalBets",
-              label: "Bets",
-              align: "right" as const,
-              sortable: true,
-              render: (v: number) => v.toLocaleString(),
-            },
-            {
-              key: "totalStake",
-              label: "Stake",
-              align: "right" as const,
-              sortable: true,
-              render: (v: number) => (
+              },
+              {
+                key: "totalPayout",
+                label: "Payout",
+                align: "right" as const,
+                sortable: true,
+                render: (v: number) => (
+                  <span
+                    className={
+                      v > 0
+                        ? "text-brand-red-light font-medium"
+                        : "text-text-muted"
+                    }
+                  >
+                    {v > 0 ? `-₱${v.toLocaleString()}` : "—"}
+                  </span>
+                ),
+              },
+              {
+                key: "grossProfit",
+                label: "Profit",
+                align: "right" as const,
+                sortable: true,
+                render: (v: number) => (
+                  <span
+                    className={
+                      v > 0
+                        ? "text-brand-green font-medium"
+                        : v < 0
+                          ? "text-brand-red-light font-medium"
+                          : "text-text-muted"
+                    }
+                  >
+                    {v !== 0
+                      ? `${v > 0 ? "+" : "-"}₱${Math.abs(v).toLocaleString()}`
+                      : "—"}
+                  </span>
+                ),
+              },
+              {
+                key: "scheduledAt",
+                label: "Scheduled",
+                sortable: true,
+                render: (v: string) =>
+                  new Date(v).toLocaleTimeString("en-US", {
+                    hour: "numeric",
+                    minute: "2-digit",
+                    hour12: true,
+                  }),
+              },
+            ] satisfies DataTableColumn[]
+          }
+          data={draws}
+          pageSize={20}
+          exportable
+          actions={(row: JuetengDraw) => (
+            <>
+              {/* SCHEDULED → Open for bets */}
+              {row.status === "SCHEDULED" && (
+                <button
+                  className="text-xs px-2.5 py-1 bg-brand-green/10 text-brand-green rounded-lg hover:bg-brand-green/15 flex items-center gap-1 transition-colors"
+                  onClick={() =>
+                    updateDraw.mutate(
+                      {
+                        id: row.id,
+                        data: {
+                          status: "OPEN",
+                          openedAt: new Date().toISOString(),
+                        } as Partial<JuetengDraw>,
+                      },
+                      { onSuccess: () => toast.success("Draw opened for bets") },
+                    )
+                  }
+                  disabled={updateDraw.isPending}
+                >
+                  <Dices size={14} />
+                  Open
+                </button>
+              )}
+              {/* OPEN → Close (lock bets) */}
+              {row.status === "OPEN" && (
+                <button
+                  className="text-xs px-2.5 py-1 bg-brand-red/10 text-brand-red-light rounded-lg hover:bg-brand-red/15 flex items-center gap-1 transition-colors"
+                  onClick={() =>
+                    updateDraw.mutate(
+                      {
+                        id: row.id,
+                        data: {
+                          status: "CLOSED",
+                          closedAt: new Date().toISOString(),
+                        } as Partial<JuetengDraw>,
+                      },
+                      { onSuccess: () => toast.success("Draw closed — bets locked") },
+                    )
+                  }
+                  disabled={updateDraw.isPending}
+                >
+                  <Lock size={14} />
+                  Close
+                </button>
+              )}
+              {/* CLOSED → Re-open */}
+              {row.status === "CLOSED" && (
+                <button
+                  className="text-xs px-2.5 py-1 bg-brand-green/10 text-brand-green rounded-lg hover:bg-brand-green/15 flex items-center gap-1 transition-colors"
+                  onClick={() =>
+                    updateDraw.mutate(
+                      {
+                        id: row.id,
+                        data: {
+                          status: "OPEN",
+                          openedAt: new Date().toISOString(),
+                          closedAt: null,
+                        } as Partial<JuetengDraw>,
+                      },
+                      { onSuccess: () => toast.success("Draw re-opened for bets") },
+                    )
+                  }
+                  disabled={updateDraw.isPending}
+                >
+                  <LockOpen size={14} />
+                  Open
+                </button>
+              )}
+              {/* OPEN or CLOSED → Encode result */}
+              {(row.status === "OPEN" || row.status === "CLOSED") && (
+                <button
+                  className="text-xs px-2.5 py-1 bg-brand-gold/10 text-brand-gold-light rounded-lg hover:bg-brand-gold/15 flex items-center gap-1 transition-colors"
+                  onClick={() => handleEncode(row)}
+                >
+                  <Dices size={14} />
+                  Encode
+                </button>
+              )}
+            </>
+          )}
+        />
+      )}
+
+      {/* Pagination */}
+      {data?.pagination && data.pagination.totalPages > 1 && (
+        <div className="flex items-center justify-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page <= 1}
+            onClick={() => setPage((p) => p - 1)}
+          >
+            Prev
+          </Button>
+          <span className="text-sm text-text-muted">
+            Page {page} of {data.pagination.totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page >= data.pagination.totalPages}
+            onClick={() => setPage((p) => p + 1)}
+          >
+            Next
+          </Button>
+        </div>
+      )}
+
+      {/* Create Draw Modal */}
+      <Modal
+        isOpen={showCreate}
+        onClose={() => setShowCreate(false)}
+        title="Create Draw"
+      >
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              label="Date"
+              type="date"
+              value={createDate}
+              onChange={(e) => setCreateDate(e.target.value)}
+            />
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-text-muted font-medium">
+                Draw Type
+              </label>
+              <div className="flex gap-2">
+                {(["MORNING", "AFTERNOON"] as const).map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => setCreateType(type)}
+                    className={`flex-1 text-xs py-2 px-3 rounded-lg border transition-colors ${
+                      createType === type
+                        ? "bg-brand-gold/15 text-brand-gold border-brand-gold/40"
+                        : "bg-white/5 text-text-muted border-white/10 hover:bg-white/10"
+                    }`}
+                  >
+                    {drawTypeLabel(type)}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {schedules.find((s) => s.drawType === createType) && (
+            <div className="card-3d p-3 text-center">
+              <p className="text-xs text-text-muted">
+                Scheduled at{" "}
                 <span className="text-brand-gold font-medium">
-                  ₱{v.toLocaleString()}
+                  {drawTypeLabel(createType)}
+                </span>{" "}
+                on{" "}
+                <span className="text-text-primary font-medium">
+                  {new Date(createDate).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
                 </span>
-              ),
-            },
-            {
-              key: "totalPayout",
-              label: "Payout",
-              align: "right" as const,
-              sortable: true,
-              render: (v: number) => (
-                <span
-                  className={
-                    v > 0
-                      ? "text-brand-red-light font-medium"
-                      : "text-text-muted"
-                  }
-                >
-                  {v > 0 ? `-₱${v.toLocaleString()}` : "—"}
-                </span>
-              ),
-            },
-            {
-              key: "winners",
-              label: "Winners",
-              align: "right" as const,
-              sortable: true,
-              render: (v: number) => (
-                <span
-                  className={
-                    v > 0 ? "text-brand-green font-medium" : "text-text-muted"
-                  }
-                >
-                  {v}
-                </span>
-              ),
-            },
-            {
-              key: "disputes",
-              label: "Disputes",
-              align: "right" as const,
-              sortable: true,
-              render: (v: number) => (
-                <span
-                  className={
-                    v > 0
-                      ? "text-brand-red-light font-medium"
-                      : "text-text-muted"
-                  }
-                >
-                  {v > 0 ? v : "—"}
-                </span>
-              ),
-            },
-            {
-              key: "cutoffTime",
-              label: "Cutoff",
-              sortable: true,
-            },
-            {
-              key: "encodedBy",
-              label: "Encoded By",
-              sortable: true,
-              render: (v: string | undefined) => (
-                <span className={v ? "text-text-primary" : "text-text-muted"}>
-                  {v || "—"}
-                </span>
-              ),
-            },
-            {
-              key: "approvedBy",
-              label: "Approved By",
-              sortable: true,
-              render: (v: string | undefined) => (
-                <span
-                  className={v ? "text-brand-green-light" : "text-text-muted"}
-                >
-                  {v || "—"}
-                </span>
-              ),
-            },
-          ] satisfies DataTableColumn[]
-        }
-        data={MOCK_DRAWS}
-        pageSize={10}
-        exportable
-        actions={(row: Draw) => (
-          <>
-            {row.status === "open" && (
-              <button
-                className="text-xs px-2.5 py-1 bg-brand-red/10 text-brand-red-light rounded-lg hover:bg-brand-red/15 flex items-center gap-1 transition-colors"
-                onClick={() => toast.success("Bets locked")}
-              >
-                <Lock size={14} />
-                Lock
-              </button>
-            )}
-            {(row.status === "open" || row.status === "closed") && (
-              <button
-                className="text-xs px-2.5 py-1 bg-brand-gold/10 text-brand-gold-light rounded-lg hover:bg-brand-gold/15 flex items-center gap-1 transition-colors"
-                onClick={() => handleEncode(row)}
-              >
-                <Dices size={14} />
-                Encode
-              </button>
-            )}
-          </>
-        )}
-      />
+              </p>
+            </div>
+          )}
+
+          <div className="flex gap-2">
+            <Button
+              variant="secondary"
+              fullWidth
+              onClick={() => setShowCreate(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              fullWidth
+              isLoading={createDraw.isPending}
+              onClick={handleCreate}
+            >
+              Create Draw
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Encode Modal */}
       <Modal
@@ -415,7 +520,15 @@ export default function DrawManagement() {
         <div className="space-y-4">
           <div className="card-3d p-4 text-center">
             <p className="text-sm text-text-muted">
-              {selectedDraw?.time} Draw — {selectedDraw?.date}
+              {selectedDraw
+                ? `${drawTypeLabel(selectedDraw.drawType)} Draw — ${new Date(
+                    selectedDraw.drawDate,
+                  ).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })}`
+                : ""}
             </p>
             <p className="text-xs text-text-muted mt-1">
               {selectedDraw?.totalBets.toLocaleString()} bets · ₱
@@ -470,7 +583,7 @@ export default function DrawManagement() {
             <Button
               variant="primary"
               fullWidth
-              isLoading={isSubmitting}
+              isLoading={updateDraw.isPending}
               onClick={handleSubmitResult}
             >
               Publish Result

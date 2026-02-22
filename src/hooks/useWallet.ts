@@ -9,6 +9,7 @@ import {
   type WithdrawPayload,
 } from "../services/walletService";
 import { useAppStore } from "../store/useAppStore";
+import { adminKeys } from "./useAdmin";
 import toast from "react-hot-toast";
 
 // ─── Query Keys ───────────────────────────────────────────────────────────────
@@ -122,6 +123,7 @@ export function useApproveTransactionMutation() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: walletKeys.all });
+      queryClient.invalidateQueries({ queryKey: adminKeys.transactions() });
       toast.success("Transaction approved");
     },
     onError: (err) => {
@@ -146,6 +148,7 @@ export function useRejectTransactionMutation() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: walletKeys.all });
+      queryClient.invalidateQueries({ queryKey: adminKeys.transactions() });
       toast.success("Transaction rejected");
     },
     onError: (err) => {

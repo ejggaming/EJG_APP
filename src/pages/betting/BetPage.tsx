@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button, Card, NumberBall, Modal } from "../../components";
 import { useAppStore } from "../../store/useAppStore";
 import { formatCurrency } from "../../utils";
@@ -12,35 +13,82 @@ import {
   X,
   Check,
 } from "lucide-react";
-
-const DRAW_SCHEDULES = [
-  { id: "draw-11am", label: "11:00 AM Draw", time: "11:00 AM", status: "open" },
-  { id: "draw-4pm", label: "4:00 PM Draw", time: "4:00 PM", status: "open" },
-  {
-    id: "draw-9pm",
-    label: "9:00 PM Draw",
-    time: "9:00 PM",
-    status: "upcoming",
-  },
-];
-
-const QUICK_AMOUNTS = [5, 10, 20, 50, 100, 500];
-const NUMBERS = Array.from({ length: 37 }, (_, i) => i + 1);
+import {
+  useTodaysDrawsQuery,
+  useGameConfigQuery,
+  usePlaceBetMutation,
+  drawLabel,
+  drawTypeLabel,
+} from "../../hooks/useBet";
+import { useMyWalletQuery } from "../../hooks/useWallet";
 
 export default function BetPage() {
+  const navigate = useNavigate();
+  const isAuthenticated = useAppStore((s) => s.isAuthenticated);
   const balance = useAppStore((s) => s.balance);
   const betSlip = useAppStore((s) => s.betSlip);
   const addToBetSlip = useAppStore((s) => s.addToBetSlip);
   const removeFromBetSlip = useAppStore((s) => s.removeFromBetSlip);
   const clearBetSlip = useAppStore((s) => s.clearBetSlip);
-  const setBalance = useAppStore((s) => s.setBalance);
+  const pendingBet = useAppStore((s) => s.pendingBet);
+  const setPendingBet = useAppStore((s) => s.setPendingBet);
 
   const [selectedNumbers, setSelectedNumbers] = useState<number[]>([]);
   const [amount, setAmount] = useState<number>(5);
   const [customAmount, setCustomAmount] = useState("");
-  const [selectedDraw, setSelectedDraw] = useState(DRAW_SCHEDULES[0].id);
+  const [selectedDraw, setSelectedDraw] = useState<string>("");
   const [showConfirm, setShowConfirm] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+
+  // Real API data
+  const { data: todaysDraws = [] } = useTodaysDrawsQuery();
+  const { data: gameConfig } = useGameConfigQuery();
+  const placeBet = usePlaceBetMutation();
+  const { refetch: refetchWallet } = useMyWalletQuery();
+
+  const maxNumber = gameConfig?.maxNumber ?? 37;
+  const minBet = gameConfig?.minBet ?? 5;
+  const maxBet = gameConfig?.maxBet ?? 1000;
+  const NUMBERS = Array.from({ length: maxNumber }, (_, i) => i + 1);
+  const QUICK_AMOUNTS = [5, 10, 20, 50, 100, 500].filter(
+    (a) => a >= minBet && a <= maxBet,
+  );
+
+  // Only show OPEN draws for selection
+  const openDraws = todaysDraws.filter((d) => d.status === "OPEN");
+
+  // Auto-select first open draw if none selected
+  const effectiveDraw =
+    selectedDraw && openDraws.find((d) => d.id === selectedDraw)
+      ? selectedDraw
+      : openDraws[0]?.id ?? "";
+
+  // Restore pending bet after successful login redirect
+  useEffect(() => {
+    if (pendingBet && isAuthenticated && openDraws.length > 0) {
+      setSelectedNumbers(pendingBet.numbers);
+      setAmount(pendingBet.amount);
+      // Try to match the draw from pending bet, otherwise use first open
+      const matchingDraw = openDraws.find((d) => d.id === pendingBet.drawId);
+      if (matchingDraw) setSelectedDraw(matchingDraw.id);
+
+      // Auto-add to bet slip
+      const draw = matchingDraw ?? openDraws[0];
+      if (draw) {
+        addToBetSlip({
+          id: `${Date.now()}-${Math.random()}`,
+          numbers: pendingBet.numbers,
+          amount: pendingBet.amount,
+          drawId: draw.id,
+          drawLabel: drawLabel(draw),
+        });
+        toast.success(
+          `Added ${pendingBet.numbers[0]}-${pendingBet.numbers[1]} to bet slip`,
+        );
+      }
+      setPendingBet(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, openDraws.length]);
 
   const handleNumberClick = (num: number) => {
     if (selectedNumbers.includes(num)) {
@@ -53,7 +101,7 @@ export default function BetPage() {
   const handleQuickPick = () => {
     const nums: number[] = [];
     while (nums.length < 2) {
-      const rand = Math.floor(Math.random() * 37) + 1;
+      const rand = Math.floor(Math.random() * maxNumber) + 1;
       if (!nums.includes(rand)) nums.push(rand);
     }
     setSelectedNumbers(nums.sort((a, b) => a - b));
@@ -67,7 +115,7 @@ export default function BetPage() {
   const handleCustomAmount = (val: string) => {
     setCustomAmount(val);
     const parsed = parseInt(val);
-    if (!isNaN(parsed) && parsed >= 5) {
+    if (!isNaN(parsed) && parsed >= minBet) {
       setAmount(parsed);
     }
   };
@@ -77,18 +125,36 @@ export default function BetPage() {
       toast.error("Select exactly 2 numbers");
       return;
     }
-    if (amount < 5) {
-      toast.error("Minimum bet is ₱5");
+    if (amount < minBet) {
+      toast.error(`Minimum bet is ₱${minBet}`);
+      return;
+    }
+    if (!effectiveDraw) {
+      toast.error("No open draw available");
       return;
     }
 
-    const draw = DRAW_SCHEDULES.find((d) => d.id === selectedDraw)!;
+    // If not logged in, save selections and redirect to login
+    if (!isAuthenticated) {
+      const draw = openDraws.find((d) => d.id === effectiveDraw)!;
+      setPendingBet({
+        numbers: [selectedNumbers[0], selectedNumbers[1]],
+        amount,
+        drawId: draw.id,
+        drawLabel: drawLabel(draw),
+      });
+      toast("Please login to place your bet", { icon: "🔒" });
+      navigate("/login");
+      return;
+    }
+
+    const draw = openDraws.find((d) => d.id === effectiveDraw)!;
     addToBetSlip({
       id: `${Date.now()}-${Math.random()}`,
       numbers: [selectedNumbers[0], selectedNumbers[1]],
       amount,
-      drawScheduleId: draw.id,
-      drawScheduleLabel: draw.label,
+      drawId: draw.id,
+      drawLabel: drawLabel(draw),
     });
 
     toast.success(
@@ -106,17 +172,21 @@ export default function BetPage() {
       return;
     }
 
-    setSubmitting(true);
     try {
-      await new Promise((r) => setTimeout(r, 1500));
-      setBalance(balance - totalBet);
+      for (const bet of betSlip) {
+        await placeBet.mutateAsync({
+          drawId: bet.drawId,
+          number1: bet.numbers[0],
+          number2: bet.numbers[1],
+          amount: bet.amount,
+        });
+      }
       clearBetSlip();
       setShowConfirm(false);
-      toast.success("Bets placed successfully! Good luck! 🎊");
+      refetchWallet();
+      toast.success("Bets placed successfully! Good luck!");
     } catch {
       toast.error("Failed to place bets");
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -129,7 +199,7 @@ export default function BetPage() {
         </h1>
         <p className="text-text-muted text-sm mt-1">
           <Target className="w-3.5 h-3.5 inline mr-1" />
-          Pick 2 numbers from 1-37, min ₱5
+          Pick 2 numbers from 1-{maxNumber}, min ₱{minBet}
         </p>
       </div>
 
@@ -148,7 +218,7 @@ export default function BetPage() {
           </p>
         </div>
         <span className="fortune-badge">
-          {balance >= 5 ? (
+          {balance >= minBet ? (
             <>
               <Sparkles className="w-3 h-3 inline mr-1" />
               Ready to Bet
@@ -167,27 +237,28 @@ export default function BetPage() {
         <h3 className="text-sm font-semibold text-text-secondary mb-2">
           ✦ Select Draw
         </h3>
-        <div className="grid grid-cols-3 gap-2">
-          {DRAW_SCHEDULES.map((draw) => (
-            <button
-              key={draw.id}
-              type="button"
-              onClick={() => setSelectedDraw(draw.id)}
-              disabled={draw.status !== "open"}
-              className={`rounded-xl p-3 border-2 text-center transition-all cursor-pointer ${
-                selectedDraw === draw.id
-                  ? "border-brand-gold bg-brand-gold/10 text-brand-gold shadow-[0_0_12px_rgba(217,119,6,0.15)]"
-                  : draw.status === "open"
-                    ? "border-brand-gold/20 bg-surface-card text-text-muted hover:border-brand-gold/40"
-                    : "border-border-default bg-surface-card text-text-muted opacity-50 cursor-not-allowed"
-              }`}
-            >
-              <p className="text-xs font-bold">{draw.time}</p>
-              <p className="text-[10px] mt-0.5">
-                {draw.status === "open" ? "● Open" : "○ Soon"}
-              </p>
-            </button>
-          ))}
+        <div className="grid grid-cols-2 gap-2">
+          {openDraws.length === 0 ? (
+            <p className="text-text-muted text-sm col-span-full text-center py-4">
+              No open draws available right now
+            </p>
+          ) : (
+            openDraws.map((draw) => (
+              <button
+                key={draw.id}
+                type="button"
+                onClick={() => setSelectedDraw(draw.id)}
+                className={`rounded-xl p-3 border-2 text-center transition-all cursor-pointer ${
+                  effectiveDraw === draw.id
+                    ? "border-brand-gold bg-brand-gold/10 text-brand-gold shadow-[0_0_12px_rgba(217,119,6,0.15)]"
+                    : "border-brand-gold/20 bg-surface-card text-text-muted hover:border-brand-gold/40"
+                }`}
+              >
+                <p className="text-xs font-bold">{drawTypeLabel(draw.drawType)}</p>
+                <p className="text-[10px] mt-0.5">● Open</p>
+              </button>
+            ))
+          )}
         </div>
       </section>
 
@@ -273,7 +344,7 @@ export default function BetPage() {
           </span>
           <input
             type="number"
-            placeholder="Custom amount (min ₱5)"
+            placeholder={`Custom amount (min ₱${minBet})`}
             value={customAmount}
             onChange={(e) => handleCustomAmount(e.target.value)}
             min={5}
@@ -288,7 +359,7 @@ export default function BetPage() {
         size="lg"
         variant="primary"
         onClick={handleAddToBetSlip}
-        disabled={selectedNumbers.length !== 2 || amount < 5}
+        disabled={selectedNumbers.length !== 2 || amount < minBet || !effectiveDraw}
       >
         <Target className="w-4 h-4 inline mr-1" /> Add to Bet Slip —{" "}
         {formatCurrency(amount)}
@@ -331,7 +402,7 @@ export default function BetPage() {
                       {bet.numbers[0]} - {bet.numbers[1]}
                     </p>
                     <p className="text-[10px] text-text-muted">
-                      {bet.drawScheduleLabel}
+                      {bet.drawLabel}
                     </p>
                   </div>
                 </div>
@@ -401,7 +472,7 @@ export default function BetPage() {
                   ))}
                 </div>
                 <span className="text-xs text-text-muted">
-                  {bet.drawScheduleLabel}
+                  {bet.drawLabel}
                 </span>
               </div>
               <span className="text-brand-gold font-bold text-sm">
@@ -433,7 +504,7 @@ export default function BetPage() {
             <Button
               fullWidth
               variant="green"
-              isLoading={submitting}
+              isLoading={placeBet.isPending}
               onClick={handleConfirmAll}
             >
               <Check className="w-4 h-4 inline mr-1" /> Confirm
