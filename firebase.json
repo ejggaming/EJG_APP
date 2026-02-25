@@ -4,20 +4,6 @@
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
       {
-        "source": "api/**",
-        "run": {
-          "serviceId": "ejg-api-backend-dev",
-          "region": "us-central1"
-        }
-      },
-      {
-        "source": "socket.io/**",
-        "run": {
-          "serviceId": "ejg-api-backend-dev",
-          "region": "us-central1"
-        }
-      },
-      {
         "source": "**",
         "destination": "/index.html"
       }
