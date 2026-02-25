@@ -104,7 +104,7 @@ export function useBetHistoryQuery(params?: {
     sort: "placedAt",
     order: "desc",
     fields:
-      "id,drawId,number1,number2,combinationKey,amount,currency,status,isWinner,payoutAmount,reference,placedAt,settledAt,createdAt,draw.drawType,draw.drawDate",
+      "id,drawId,number1,number2,combinationKey,amount,currency,status,isWinner,payoutAmount,reference,placedAt,settledAt,createdAt,draw.drawType,draw.drawDate,draw.status,draw.scheduledAt",
   };
   if (params?.status) queryParams.filter = `status:${params.status}`;
   if (params?.limit) queryParams.limit = String(params.limit);
@@ -180,6 +180,24 @@ export function drawUIStatus(
     default:
       return "closed";
   }
+}
+
+// ─── Upcoming SCHEDULED draws (player-visible) ────────────────────────────────
+
+export function useScheduledDrawsQuery() {
+  return useQuery({
+    queryKey: betKeys.draws({ status: "SCHEDULED" }),
+    queryFn: async () => {
+      const res = await betService.getDraws({
+        filter: "status:SCHEDULED",
+        sort: "scheduledAt",
+        order: "asc",
+        document: "true",
+      });
+      return res.data.data?.juetengDraws ?? [];
+    },
+    staleTime: 30_000,
+  });
 }
 
 // ─── Admin: All Draws ─────────────────────────────────────────────────────────

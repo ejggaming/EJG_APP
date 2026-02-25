@@ -9,6 +9,7 @@ import {
   Bell,
   Sun,
   Moon,
+  CalendarDays,
 } from "lucide-react";
 import { useThemeStore } from "../../store/useThemeStore";
 import { useUnreadCountQuery } from "../../hooks/useNotification";
@@ -18,6 +19,7 @@ import appLogo from "../../assets/logo.png";
 const navItems = [
   { path: "/", label: "Home", icon: Home },
   { path: "/bet", label: "Bet", icon: Target },
+  { path: "/bet/auto", label: "Auto", icon: CalendarDays },
   { path: "/results", label: "Results", icon: Trophy },
   { path: "/wallet", label: "Wallet", icon: Wallet },
   { path: "/profile", label: "Profile", icon: User },
@@ -96,7 +98,9 @@ export default function MainLayout() {
             const isActive =
               item.path === "/"
                 ? location.pathname === "/"
-                : location.pathname.startsWith(item.path);
+                : item.path === "/bet"
+                  ? location.pathname === "/bet"
+                  : location.pathname.startsWith(item.path);
 
             return (
               <Link
