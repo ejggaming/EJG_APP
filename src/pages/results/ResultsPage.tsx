@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Card } from "../../components";
-import { Trophy, Flame, Loader2 } from "lucide-react";
+import { Trophy, Flame } from "lucide-react";
+import { ResultsSkeleton } from "../../components/ChineseSkeleton";
 import { useDrawResultsQuery, drawTypeLabel } from "../../hooks/useBet";
 import { formatCurrency } from "../../utils";
 
@@ -18,6 +19,8 @@ export default function ResultsPage() {
     limit: 20,
   });
   const results = data?.draws ?? [];
+
+  if (isLoading) return <ResultsSkeleton />;
 
   return (
     <div className="space-y-4">
@@ -48,11 +51,7 @@ export default function ResultsPage() {
         ))}
       </div>
 
-      {isLoading ? (
-        <div className="flex justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-brand-gold" />
-        </div>
-      ) : results.length === 0 ? (
+      {results.length === 0 ? (
         <Card bento className="text-center py-8 lantern-card">
           <p className="text-text-muted text-sm">No results available</p>
         </Card>

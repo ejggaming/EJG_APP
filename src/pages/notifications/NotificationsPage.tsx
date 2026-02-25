@@ -17,6 +17,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { cn } from "../../utils";
+import { NotificationsSkeleton } from "../../components/ChineseSkeleton";
 import { Link } from "react-router-dom";
 import type { Notification } from "../../services/notificationService";
 
@@ -82,19 +83,7 @@ export default function NotificationsPage() {
 
       {/* List */}
       {isLoading ? (
-        <div className="space-y-3">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Card key={i} className="p-4 animate-pulse">
-              <div className="flex gap-3">
-                <div className="w-10 h-10 rounded-full bg-surface-alt" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-4 bg-surface-alt rounded w-3/4" />
-                  <div className="h-3 bg-surface-alt rounded w-full" />
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
+        <NotificationsSkeleton />
       ) : isError ? (
         <Card className="p-8 text-center">
           <p className="text-subtle">Failed to load notifications.</p>

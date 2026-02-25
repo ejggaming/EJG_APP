@@ -5,6 +5,8 @@ import {
   betService,
   type JuetengDraw,
   type JuetengBet,
+  type DrawSchedule,
+  type GameConfig,
 } from "../services/betService";
 import toast from "react-hot-toast";
 
@@ -39,13 +41,14 @@ export function useGameConfigQuery() {
 
 /** Fetch today's JuetengDraw instances */
 export function useTodaysDrawsQuery() {
-  const today = new Date().toISOString().slice(0, 10); // "2026-02-20"
+  const today = new Date().toISOString().slice(0, 10); // "2026-02-23"
 
   return useQuery({
     queryKey: betKeys.draws({ today }),
     queryFn: async () => {
       const res = await betService.getDraws({
-        filter: JSON.stringify([{ drawDate: today }]),
+        // Backend buildFilterConditions expects "key:value" format, not JSON
+        filter: `drawDate:${today}`,
         sort: "scheduledAt",
         order: "asc",
       });
@@ -62,17 +65,13 @@ export function useDrawResultsQuery(params?: {
   limit?: number;
   page?: number;
 }) {
-  const filterArr: Record<string, string>[] = [];
-  // Show draws that have results (DRAWN or SETTLED)
-  if (params?.drawType) {
-    filterArr.push({ drawType: params.drawType });
-  }
+  // Backend uses "key:value,key:value" format; multiple values for same key = OR
+  // "status:DRAWN,status:SETTLED" → OR[{ status: DRAWN }, { status: SETTLED }]
+  const filterParts = ["status:DRAWN", "status:SETTLED"];
+  if (params?.drawType) filterParts.unshift(`drawType:${params.drawType}`);
 
   const queryParams: Record<string, string> = {
-    filter: JSON.stringify([
-      ...filterArr,
-      { status: { in: ["DRAWN", "SETTLED"] } },
-    ]),
+    filter: filterParts.join(","),
     sort: "drawnAt",
     order: "desc",
     pagination: "true",
@@ -101,16 +100,13 @@ export function useBetHistoryQuery(params?: {
   limit?: number;
   page?: number;
 }) {
-  const filterArr: Record<string, string>[] = [];
-  if (params?.status) filterArr.push({ status: params.status });
-
   const queryParams: Record<string, string> = {
     sort: "placedAt",
     order: "desc",
     fields:
       "id,drawId,number1,number2,combinationKey,amount,currency,status,isWinner,payoutAmount,reference,placedAt,settledAt,createdAt,draw.drawType,draw.drawDate",
   };
-  if (filterArr.length > 0) queryParams.filter = JSON.stringify(filterArr);
+  if (params?.status) queryParams.filter = `status:${params.status}`;
   if (params?.limit) queryParams.limit = String(params.limit);
   if (params?.page) queryParams.page = String(params.page);
 
@@ -158,8 +154,10 @@ export function usePlaceBetMutation() {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /** Format draw type to readable label */
-export function drawTypeLabel(drawType: "MORNING" | "AFTERNOON"): string {
-  return drawType === "MORNING" ? "11:00 AM" : "4:00 PM";
+export function drawTypeLabel(drawType: "MORNING" | "AFTERNOON" | "EVENING"): string {
+  if (drawType === "MORNING") return "11:00 AM";
+  if (drawType === "AFTERNOON") return "4:00 PM";
+  return "9:00 PM";
 }
 
 /** Format draw to full label */
@@ -191,9 +189,6 @@ export function useAdminDrawsQuery(params?: {
   limit?: number;
   status?: string;
 }) {
-  const filterArr: Record<string, unknown>[] = [];
-  if (params?.status) filterArr.push({ status: params.status });
-
   const queryParams: Record<string, string> = {
     sort: "drawDate",
     order: "desc",
@@ -201,8 +196,7 @@ export function useAdminDrawsQuery(params?: {
     count: "true",
     pagination: "true",
   };
-  if (filterArr.length > 0)
-    queryParams.filter = JSON.stringify(filterArr);
+  if (params?.status) queryParams.filter = `status:${params.status}`;
   if (params?.limit) queryParams.limit = String(params.limit);
   if (params?.page) queryParams.page = String(params.page);
 
@@ -241,7 +235,7 @@ export function useCreateDrawMutation() {
   return useMutation<
     JuetengDraw,
     AxiosError<{ message: string }>,
-    { scheduleId: string; drawDate: string; drawType: "MORNING" | "AFTERNOON"; scheduledAt: string }
+    { scheduleId: string; drawDate: string; drawType: "MORNING" | "AFTERNOON" | "EVENING"; scheduledAt: string }
   >({
     mutationFn: async (data) => {
       const res = await betService.createDraw(data);
@@ -278,6 +272,118 @@ export function useUpdateDrawMutation() {
     },
     onError: (err) => {
       toast.error(err.response?.data?.message ?? "Failed to update draw");
+    },
+  });
+}
+
+// ─── Admin: Draw Schedule CRUD ────────────────────────────────────────────────
+
+export function useCreateDrawScheduleMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    DrawSchedule,
+    AxiosError<{ message: string }>,
+    { drawType: "MORNING" | "AFTERNOON" | "EVENING"; scheduledTime: string; cutoffMinutes?: number; isActive?: boolean }
+  >({
+    mutationFn: async (data) => {
+      const res = await betService.createDrawSchedule(data);
+      return res.data.data!.drawSchedule;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["drawSchedules"] });
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message ?? "Failed to create draw schedule");
+    },
+  });
+}
+
+export function useUpdateDrawScheduleMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    DrawSchedule,
+    AxiosError<{ message: string }>,
+    { id: string; data: Partial<Omit<DrawSchedule, "id">> }
+  >({
+    mutationFn: async ({ id, data }) => {
+      const res = await betService.updateDrawSchedule(id, data);
+      return res.data.data!.drawSchedule;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["drawSchedules"] });
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message ?? "Failed to update draw schedule");
+    },
+  });
+}
+
+export function useDeleteDrawScheduleMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    void,
+    AxiosError<{ message: string }>,
+    string
+  >({
+    mutationFn: async (id) => {
+      await betService.deleteDrawSchedule(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["drawSchedules"] });
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message ?? "Failed to delete draw schedule");
+    },
+  });
+}
+
+// ─── Admin: Settle Draw ───────────────────────────────────────────────────────
+
+export function useSettleDrawMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    JuetengDraw,
+    AxiosError<{ message: string }>,
+    string
+  >({
+    mutationFn: async (id) => {
+      const res = await betService.settleDraw(id);
+      return res.data.data!.draw;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "draws"] });
+      queryClient.invalidateQueries({ queryKey: betKeys.draws() });
+      queryClient.invalidateQueries({ queryKey: betKeys.results() });
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message ?? "Failed to settle draw");
+    },
+  });
+}
+
+// ─── Admin: Game Config Update ────────────────────────────────────────────────
+
+export function useUpdateGameConfigMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    GameConfig,
+    AxiosError<{ message: string }>,
+    { id: string; data: Partial<Omit<GameConfig, "id">> }
+  >({
+    mutationFn: async ({ id, data }) => {
+      const res = await betService.updateGameConfig(id, data);
+      return res.data.data!.juetengConfig;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: betKeys.config() });
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message ?? "Failed to save configuration");
     },
   });
 }

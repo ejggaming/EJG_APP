@@ -5,6 +5,7 @@ import { useThemeStore } from "../../store/useThemeStore";
 import { formatCurrency } from "../../utils";
 import { useLogoutMutation } from "../../hooks/useAuth";
 import { Sun, Moon } from "lucide-react";
+import appLogo from "../../assets/logo.png";
 
 const navItems = [
   {
@@ -119,14 +120,11 @@ export default function AgentLayout() {
       <aside className="hidden md:flex md:w-60 shrink-0 flex-col bg-surface-card border border-border-subtle rounded-2xl sticky top-3 h-[calc(100vh-1.5rem)] z-30">
         {/* Logo */}
         <div className="h-16 flex items-center gap-2 px-4 border-b border-border-subtle">
-          <div className="w-9 h-9 rounded-full bg-brand-gold flex items-center justify-center">
-            <span className="text-white font-bold text-sm">A</span>
+          <div className="w-10 h-10 rounded-full bg-brand-red/20 border border-brand-gold/40 shadow-lg shadow-brand-red/20 flex items-center justify-center">
+            <img src={appLogo} alt="JuetengPH" className="h-8 w-auto" />
           </div>
           <div>
-            <span className="font-bold text-sm">
-              <span className="text-brand-red">Jueteng</span>
-              <span className="text-brand-gold">PH</span>
-            </span>
+            <span className="font-bold text-sm">JuetengPH</span>
             <p className="text-[10px] text-brand-gold">Agent Portal</p>
           </div>
         </div>

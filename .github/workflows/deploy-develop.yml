@@ -1,0 +1,43 @@
+name: Deploy Develop
+
+on:
+  push:
+    branches: [develop]
+
+permissions:
+  checks: write
+  contents: read
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Set environment variables
+        run: |
+          cp .env.develop .env
+          echo "Environment variables set for develop"
+          cat .env
+
+      - name: Build project
+        run: npm run build
+
+      - name: Deploy to Firebase Develop
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: "${{ secrets.GITHUB_TOKEN }}"
+          firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT_EJG_PLATFORM }}"
+          projectId: ejg-platform
+          channelId: live

@@ -2,135 +2,83 @@ import { useState } from "react";
 import { Button, Input } from "../../components";
 import { DataTable } from "../../components/bento";
 import type { DataTableColumn } from "../../components/bento";
-import { useAppStore } from "../../store/useAppStore";
 import { formatCurrency } from "../../utils";
 import toast from "react-hot-toast";
 import { ShieldCheck, Gift } from "lucide-react";
+import { AgentWalletSkeleton } from "../../components/ChineseSkeleton";
+import { useMyWalletQuery, useTransactionsQuery, useWithdrawMutation } from "../../hooks/useWallet";
+import type { Transaction } from "../../services/walletService";
 
 const METHODS = [
-  { id: "gcash", name: "GCash", icon: "📱" },
-  { id: "maya", name: "Maya", icon: "💳" },
-  { id: "bank", name: "Bank Transfer", icon: "🏦" },
+  { id: "GCASH", name: "GCash", icon: "📱" },
+  { id: "MAYA", name: "Maya", icon: "💳" },
+  { id: "BANK_TRANSFER", name: "Bank Transfer", icon: "🏦" },
 ];
 
-/* ── Wallet Info (from /api/wallet) ── */
-const WALLET_INFO = {
-  currency: "PHP",
-  bonus: 250,
-  status: "ACTIVE" as const,
+const txTypeColors: Record<string, string> = {
+  COMMISSION_PAYOUT: "bg-brand-green/20 text-brand-green",
+  JUETENG_PAYOUT: "bg-brand-green/20 text-brand-green",
+  DEPOSIT: "bg-blue-500/20 text-blue-400",
+  WITHDRAWAL: "bg-brand-red/20 text-brand-red",
+  JUETENG_BET: "bg-orange-500/20 text-orange-400",
+  ADJUSTMENT: "bg-gray-500/20 text-gray-400",
 };
 
-/* ── Transaction History (from combined commission + payout + withdrawal data) ── */
-const MOCK_TX = [
-  {
-    id: "1",
-    type: "commission",
-    amount: 480,
-    label: "11:00 AM MORNING Draw Commission",
-    reference: "COM-20260219-001",
-    date: "Feb 19, 2026",
-    status: "PENDING" as const,
-  },
-  {
-    id: "2",
-    type: "commission",
-    amount: 420,
-    label: "4:00 PM AFTERNOON Draw Commission",
-    reference: "COM-20260218-003",
-    date: "Feb 18, 2026",
-    status: "PAID" as const,
-  },
-  {
-    id: "3",
-    type: "withdraw",
-    amount: -2000,
-    label: "GCash Withdrawal",
-    reference: "WD-20260217-001",
-    date: "Feb 17, 2026",
-    status: "PAID" as const,
-  },
-  {
-    id: "4",
-    type: "commission",
-    amount: 615,
-    label: "11:00 AM MORNING Draw Commission",
-    reference: "COM-20260218-002",
-    date: "Feb 18, 2026",
-    status: "PAID" as const,
-  },
-  {
-    id: "5",
-    type: "commission",
-    amount: 292.5,
-    label: "4:00 PM AFTERNOON Draw Commission",
-    reference: "COM-20260218-001",
-    date: "Feb 18, 2026",
-    status: "PAID" as const,
-  },
-  {
-    id: "6",
-    type: "bonus",
-    amount: 250,
-    label: "Referral Bonus — Carlos Mendoza",
-    reference: "BNS-20260218-001",
-    date: "Feb 18, 2026",
-    status: "PAID" as const,
-  },
-  {
-    id: "7",
-    type: "withdraw",
-    amount: -1500,
-    label: "Maya Withdrawal",
-    reference: "WD-20260215-001",
-    date: "Feb 15, 2026",
-    status: "PAID" as const,
-  },
-];
+const txTypeLabel: Record<string, string> = {
+  COMMISSION_PAYOUT: "Commission",
+  JUETENG_PAYOUT: "Winnings",
+  DEPOSIT: "Deposit",
+  WITHDRAWAL: "Withdrawal",
+  JUETENG_BET: "Bet",
+  ADJUSTMENT: "Adjustment",
+};
 
 const txStatusColors: Record<string, string> = {
   PENDING: "bg-brand-gold/20 text-brand-gold",
-  PAID: "bg-brand-green/20 text-brand-green",
+  COMPLETED: "bg-brand-green/20 text-brand-green",
   FAILED: "bg-brand-red/20 text-brand-red",
+  REVERSED: "bg-orange-500/20 text-orange-400",
 };
 
 export default function AgentWallet() {
-  const { balance, setBalance } = useAppStore();
+  const { data: walletData, isLoading: walletLoading } = useMyWalletQuery();
+  const { data: txData, isLoading: txLoading } = useTransactionsQuery({ limit: 50 });
+  const withdraw = useWithdrawMutation();
+
+  const wallet = walletData?.wallet;
+  const transactions = txData?.transactions ?? [];
+
   const [showWithdraw, setShowWithdraw] = useState(false);
   const [method, setMethod] = useState("");
   const [amount, setAmount] = useState("");
   const [account, setAccount] = useState("");
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [accountName, setAccountName] = useState("");
 
   const numAmount = parseFloat(amount) || 0;
+  const balance = wallet?.balance ?? 0;
 
-  const handleWithdraw = async () => {
-    if (!method) {
-      toast.error("Select a method");
-      return;
-    }
-    if (numAmount < 100) {
-      toast.error("Minimum ₱100");
-      return;
-    }
-    if (numAmount > balance) {
-      toast.error("Insufficient balance");
-      return;
-    }
-    if (!account.trim()) {
-      toast.error("Enter account number");
-      return;
-    }
+  const handleWithdraw = () => {
+    if (!method) { toast.error("Select a method"); return; }
+    if (numAmount < 100) { toast.error("Minimum ₱100"); return; }
+    if (numAmount > balance) { toast.error("Insufficient balance"); return; }
+    if (!account.trim()) { toast.error("Enter account number"); return; }
+    if (!accountName.trim()) { toast.error("Enter account name"); return; }
 
-    setIsProcessing(true);
-    await new Promise((r) => setTimeout(r, 1500));
-    setBalance(balance - numAmount);
-    toast.success(`${formatCurrency(numAmount)} withdrawal submitted!`);
-    setIsProcessing(false);
-    setShowWithdraw(false);
-    setAmount("");
-    setAccount("");
-    setMethod("");
+    withdraw.mutate(
+      { amount: numAmount, paymentMethod: method, accountNumber: account, accountName },
+      {
+        onSuccess: () => {
+          setShowWithdraw(false);
+          setAmount("");
+          setAccount("");
+          setAccountName("");
+          setMethod("");
+        },
+      },
+    );
   };
+
+  if (walletLoading || txLoading) return <AgentWalletSkeleton />;
 
   return (
     <div className="space-y-6">
@@ -151,33 +99,35 @@ export default function AgentWallet() {
                 </p>
                 <span
                   className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${
-                    WALLET_INFO.status === "ACTIVE"
+                    wallet?.status === "ACTIVE"
                       ? "bg-emerald-500/30 text-emerald-300"
-                      : WALLET_INFO.status === "FROZEN"
+                      : wallet?.status === "FROZEN"
                         ? "bg-red-500/30 text-red-300"
                         : "bg-gray-500/30 text-gray-300"
                   }`}
                 >
-                  {WALLET_INFO.status}
+                  {wallet?.status ?? "ACTIVE"}
                 </span>
               </div>
               <p className="text-3xl sm:text-4xl font-extrabold gold-shimmer mt-2">
                 {formatCurrency(balance)}
               </p>
               <div className="flex items-center gap-4 mt-2">
-                <div className="flex items-center gap-1.5">
-                  <Gift size={12} className="text-amber-300" />
-                  <span className="text-xs text-white/70">
-                    Bonus: {formatCurrency(WALLET_INFO.bonus)}
-                  </span>
-                </div>
+                {(wallet?.bonus ?? 0) > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <Gift size={12} className="text-amber-300" />
+                    <span className="text-xs text-white/70">
+                      Bonus: {formatCurrency(wallet?.bonus ?? 0)}
+                    </span>
+                  </div>
+                )}
                 <span className="text-[10px] text-white/40">
-                  {WALLET_INFO.currency}
+                  {wallet?.currency ?? "PHP"}
                 </span>
               </div>
               <button
                 onClick={() => setShowWithdraw(!showWithdraw)}
-                disabled={WALLET_INFO.status !== "ACTIVE"}
+                disabled={wallet?.status !== "ACTIVE"}
                 className="mt-3 px-5 py-2 rounded-lg bg-white/10 text-white text-sm font-medium hover:bg-white/20 transition-colors border border-white/10 disabled:opacity-40"
               >
                 {showWithdraw ? "Cancel" : "Withdraw Funds"}
@@ -189,9 +139,6 @@ export default function AgentWallet() {
               </p>
               <p className="text-2xl font-extrabold text-emerald-300">
                 {formatCurrency(balance)}
-              </p>
-              <p className="text-xs text-white/40 mt-1">
-                + {formatCurrency(WALLET_INFO.bonus)} bonus
               </p>
             </div>
           </div>
@@ -221,6 +168,12 @@ export default function AgentWallet() {
             ))}
           </div>
           <Input
+            label="Account Name"
+            placeholder="Full name on account"
+            value={accountName}
+            onChange={(e) => setAccountName(e.target.value)}
+          />
+          <Input
             label="Account Number / Mobile"
             placeholder="09XX XXX XXXX"
             value={account}
@@ -243,7 +196,7 @@ export default function AgentWallet() {
           <Button
             variant="gold"
             fullWidth
-            isLoading={isProcessing}
+            isLoading={withdraw.isPending}
             disabled={numAmount < 100}
             onClick={handleWithdraw}
           >
@@ -254,69 +207,85 @@ export default function AgentWallet() {
 
       {/* Transaction History DataTable */}
       <DataTable
-        title="Transaction History"
-        columns={
-          [
-            {
-              key: "type",
-              label: "Type",
-              sortable: true,
-              render: (v: string) => (
-                <span
-                  className={`px-2 py-0.5 rounded-full text-[10px] font-semibold capitalize ${
-                    v === "commission"
-                      ? "bg-brand-green/20 text-brand-green"
-                      : v === "bonus"
-                        ? "bg-purple-500/20 text-purple-400"
-                        : "bg-brand-red/20 text-brand-red"
-                  }`}
-                >
-                  {v}
-                </span>
-              ),
-            },
-            { key: "label", label: "Description", sortable: true },
-            {
-              key: "reference",
-              label: "Reference",
-              sortable: true,
-              render: (v: string) => (
-                <span className="font-mono text-xs text-text-muted">{v}</span>
-              ),
-            },
-            { key: "date", label: "Date", sortable: true },
-            {
-              key: "status",
-              label: "Status",
-              sortable: true,
-              render: (v: string) => (
-                <span
-                  className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${txStatusColors[v] ?? ""}`}
-                >
-                  {v}
-                </span>
-              ),
-            },
-            {
-              key: "amount",
-              label: "Amount",
-              align: "right" as const,
-              sortable: true,
-              render: (v: number) => (
-                <span
-                  className={`font-bold ${v >= 0 ? "text-brand-green" : "text-brand-red"}`}
-                >
-                  {v >= 0 ? "+" : ""}
-                  {formatCurrency(Math.abs(v))}
-                </span>
-              ),
-            },
-          ] satisfies DataTableColumn[]
-        }
-        data={MOCK_TX}
-        pageSize={10}
-        exportable
-      />
+          title="Transaction History"
+          columns={
+            [
+              {
+                key: "type",
+                label: "Type",
+                sortable: true,
+                render: (v: string) => (
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-semibold capitalize ${
+                      txTypeColors[v] ?? "bg-gray-500/20 text-gray-400"
+                    }`}
+                  >
+                    {txTypeLabel[v] ?? v}
+                  </span>
+                ),
+              },
+              {
+                key: "description",
+                label: "Description",
+                sortable: false,
+                render: (v: string | null, row: Transaction) => (
+                  <span className="text-sm text-text-secondary">
+                    {v ?? row.type}
+                  </span>
+                ),
+              },
+              {
+                key: "reference",
+                label: "Reference",
+                sortable: true,
+                render: (v: string) => (
+                  <span className="font-mono text-xs text-text-muted">{v}</span>
+                ),
+              },
+              {
+                key: "createdAt",
+                label: "Date",
+                sortable: true,
+                render: (v: string) =>
+                  new Date(v).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  }),
+              },
+              {
+                key: "status",
+                label: "Status",
+                sortable: true,
+                render: (v: string) => (
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${txStatusColors[v] ?? ""}`}
+                  >
+                    {v}
+                  </span>
+                ),
+              },
+              {
+                key: "amount",
+                label: "Amount",
+                align: "right" as const,
+                sortable: true,
+                render: (v: number, row: Transaction) => {
+                  const isCredit = row.type === "COMMISSION_PAYOUT" || row.type === "JUETENG_PAYOUT" || row.type === "DEPOSIT";
+                  return (
+                    <span className={`font-bold ${isCredit ? "text-brand-green" : "text-brand-red"}`}>
+                      {isCredit ? "+" : "-"}
+                      {formatCurrency(Math.abs(v))}
+                    </span>
+                  );
+                },
+              },
+            ] satisfies DataTableColumn[]
+          }
+          data={transactions}
+          pageSize={10}
+          exportable
+        />
     </div>
   );
 }

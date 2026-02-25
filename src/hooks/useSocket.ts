@@ -6,9 +6,11 @@ import { useAppStore } from "../store/useAppStore";
 import { adminKeys } from "./useAdmin";
 import { notificationKeys } from "./useNotification";
 
-const SOCKET_URL =
-  import.meta.env.VITE_API_BASE_URL?.replace(/\/api$/, "") ||
-  "http://localhost:3001";
+const rawBase = import.meta.env.VITE_API_BASE_URL || "";
+// If it's a relative path (/api) we're behind a proxy — connect to the current origin
+const SOCKET_URL = rawBase.startsWith("/")
+  ? window.location.origin
+  : rawBase.replace(/\/api$/, "") || "http://localhost:3001";
 
 /**
  * Hook that connects a Socket.IO client for the current authenticated user.

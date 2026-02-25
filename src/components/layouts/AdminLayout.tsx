@@ -11,7 +11,8 @@ import {
   useMarkAllAsReadMutation,
   useMarkAsReadMutation,
 } from "../../hooks/useNotification";
-import { Sun, Moon, Bell, Check, CheckCheck } from "lucide-react";
+import { Sun, Moon, Bell, Check, CheckCheck, Menu, X } from "lucide-react";
+import appLogo from "../../assets/logo.png";
 
 const sidebarSections = [
   {
@@ -165,6 +166,25 @@ const sidebarSections = [
           </svg>
         ),
       },
+      {
+        path: "/admin/audit-log",
+        label: "Audit Log",
+        icon: (
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+            />
+          </svg>
+        ),
+      },
     ],
   },
   {
@@ -211,6 +231,7 @@ export default function AdminLayout() {
 
   // Notification state
   const [showNotifPanel, setShowNotifPanel] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
   const { data: unreadCount = 0 } = useUnreadCountQuery();
   const { data: notifData } = useNotificationsQuery({ page: 1, limit: 20 });
@@ -251,6 +272,10 @@ export default function AdminLayout() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [location.pathname]);
+
   const navigate = useNavigate();
 
   const getNotifRoute = (type: string) => {
@@ -284,18 +309,101 @@ export default function AdminLayout() {
       className="min-h-screen flex pl-4 pr-4 py-3 gap-3"
       style={{ background: "var(--admin-outer-bg)" }}
     >
+      {mobileNavOpen && (
+        <>
+          <button
+            type="button"
+            className="md:hidden fixed inset-0 bg-black/50 z-40"
+            aria-label="Close menu backdrop"
+            onClick={() => setMobileNavOpen(false)}
+          />
+          <aside className="md:hidden fixed left-0 top-0 bottom-0 w-72 max-w-[85vw] bg-surface-card border-r border-border-subtle z-50 flex flex-col">
+            <div className="h-14 flex items-center justify-between px-4 border-b border-border-subtle">
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 rounded-full bg-brand-red/20 border border-brand-gold/40 shadow-lg shadow-brand-red/20 flex items-center justify-center">
+                  <img src={appLogo} alt="JuetengPH" className="h-7 w-auto" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-text-primary">Admin Menu</p>
+                  <p className="text-[10px] text-brand-blue">JuetengPH</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors"
+                onClick={() => setMobileNavOpen(false)}
+                aria-label="Close menu"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <nav className="flex-1 py-4 overflow-y-auto">
+              {sidebarSections.map((section) => (
+                <div key={section.label} className="mb-4">
+                  <p className="px-4 text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-1">
+                    {section.label}
+                  </p>
+                  <div className="px-2 space-y-0.5">
+                    {section.items.map((item) => {
+                      const isActive =
+                        item.path === "/admin"
+                          ? location.pathname === "/admin"
+                          : location.pathname.startsWith(item.path);
+                      return (
+                        <Link
+                          key={item.path}
+                          to={item.path}
+                          className={cn(
+                            "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                            isActive
+                              ? "bg-brand-red/10 text-brand-red"
+                              : "text-text-muted hover:bg-surface-elevated hover:text-text-primary",
+                          )}
+                        >
+                          {item.icon}
+                          {item.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </nav>
+
+            <div className="p-4 border-t border-border-subtle">
+              <button
+                onClick={() => logoutMutation.mutate()}
+                disabled={logoutMutation.isPending}
+                className="flex items-center gap-2 text-sm text-text-muted hover:text-brand-red-light transition-colors w-full"
+              >
+                {logoutMutation.isPending ? "Logging out..." : "Logout"}
+              </button>
+              <button
+                onClick={toggleTheme}
+                className="flex items-center gap-2 text-sm text-text-muted hover:text-brand-gold transition-colors w-full mt-2"
+                aria-label="Toggle theme"
+              >
+                {theme === "dark" ? (
+                  <Sun className="w-5 h-5" />
+                ) : (
+                  <Moon className="w-5 h-5" />
+                )}
+                {theme === "dark" ? "Light Mode" : "Dark Mode"}
+              </button>
+            </div>
+          </aside>
+        </>
+      )}
       {/* Sidebar — floating card */}
       <aside className="hidden md:flex md:w-60 shrink-0 flex-col bg-surface-card border border-border-subtle rounded-2xl sticky top-3 h-[calc(100vh-1.5rem)] z-30">
         {/* Logo + Notification Bell */}
         <div className="h-16 flex items-center gap-2 px-4 border-b border-border-subtle">
-          <div className="w-9 h-9 rounded-full bg-brand-red flex items-center justify-center">
-            <span className="text-white font-bold text-sm">J</span>
+          <div className="w-10 h-10 rounded-full bg-brand-red/20 border border-brand-gold/40 shadow-lg shadow-brand-red/20 flex items-center justify-center">
+            <img src={appLogo} alt="JuetengPH" className="h-8 w-auto" />
           </div>
           <div className="flex-1">
-            <span className="font-bold text-sm">
-              <span className="text-brand-red">Jueteng</span>
-              <span className="text-brand-gold">PH</span>
-            </span>
+            <span className="font-bold text-sm">JuetengPH</span>
             <p className="text-[10px] text-brand-blue">Admin Panel</p>
           </div>
 
@@ -502,6 +610,25 @@ export default function AdminLayout() {
       {/* Main content — floating card, fixed viewport height with inner scroll */}
       <main className="flex-1 min-w-0 h-[calc(100vh-1.5rem)]">
         <div className="bg-surface-card rounded-2xl border border-border-subtle p-4 md:p-6 h-full overflow-y-auto custom-scrollbar">
+          <div className="md:hidden flex items-center justify-between mb-4">
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-border-subtle text-text-primary hover:bg-surface-elevated transition-colors"
+              onClick={() => setMobileNavOpen(true)}
+              aria-label="Open menu"
+            >
+              <Menu className="w-4 h-4" />
+              <span className="text-sm font-medium">Menu</span>
+            </button>
+            <div className="text-right">
+              <p className="text-sm font-semibold text-text-primary">Admin Panel</p>
+              <p className="text-[11px] text-text-muted">
+                {[user?.person?.firstName, user?.person?.lastName]
+                  .filter(Boolean)
+                  .join(" ") || "Admin"}
+              </p>
+            </div>
+          </div>
           <Outlet />
         </div>
       </main>

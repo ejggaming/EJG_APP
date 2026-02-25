@@ -210,10 +210,10 @@ export function DataTable<T extends Record<string, any>>({
 
       {/* ── Table ── */}
       <div
-        className="overflow-x-auto rounded-lg"
+        className="overflow-x-auto overscroll-x-contain rounded-lg touch-pan-x"
         style={{ border: "1px solid var(--glass-divider)" }}
       >
-        <table className="w-full text-sm">
+        <table className="w-full min-w-[860px] text-sm">
           <thead>
             {/* Column headers */}
             <tr style={{ borderBottom: "1px solid var(--glass-divider)" }}>
