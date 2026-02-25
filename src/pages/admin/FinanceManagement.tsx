@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import {
   CardGrid,
   StatCard,
@@ -9,175 +9,56 @@ import type { DataTableColumn } from "../../components/bento";
 import {
   TrendingUp,
   DollarSign,
-  ArrowUpRight,
   ArrowDownLeft,
-  Landmark,
-  CreditCard,
+  Clock,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
-import Spinner from "../../components/Spinner";
-import toast from "react-hot-toast";
+import { FinanceSkeleton } from "../../components/ChineseSkeleton";
 import { Button } from "../../components";
+import { useAdminTransactionsQuery } from "../../hooks/useAdmin";
+import type { AdminTransaction } from "../../hooks/useAdmin";
+import {
+  useApproveTransactionMutation,
+  useRejectTransactionMutation,
+} from "../../hooks/useWallet";
 
 export default function FinanceManagement() {
-  const { data: financeData, isLoading } = useQuery({
-    queryKey: ["admin-finance"],
-    queryFn: async () => {
-      return {
-        totalRevenue: 548290,
-        totalPayouts: 320450,
-        pendingTransfers: 89000,
-        monthlyProfit: 227840,
-        govShare: 14445,
-        operatorMargin: 55,
-        totalCommissions: 32400,
-        walletBalance: 1245800,
-        paymentMethods: {
-          gcash: { count: 1240, volume: 312000 },
-          maya: { count: 680, volume: 170000 },
-          bank: { count: 215, volume: 107500 },
-        },
-        dailySettlement: {
-          date: "Feb 19, 2026",
-          totalBets: 290850,
-          totalPayouts: 105000,
-          commissions: 8640,
-          govShare: 14445,
-          netRevenue: 162765,
-          status: "Pending" as const,
-        },
-        pendingWithdrawals: [
-          {
-            id: "1",
-            user: "Jose Garcia",
-            mobile: "09221111222",
-            amount: 15000,
-            method: "GCash",
-            account: "09221111222",
-            date: "Feb 19, 2026 10:30 AM",
-          },
-          {
-            id: "2",
-            user: "Maria Santos",
-            mobile: "09171234567",
-            amount: 5000,
-            method: "Maya",
-            account: "09171234567",
-            date: "Feb 19, 2026 9:15 AM",
-          },
-          {
-            id: "3",
-            user: "Pedro Reyes",
-            mobile: "09189876543",
-            amount: 3000,
-            method: "Bank",
-            account: "1234-5678-9012",
-            date: "Feb 18, 2026 4:00 PM",
-          },
-          {
-            id: "4",
-            user: "Luis Bautista",
-            mobile: "09331234567",
-            amount: 8500,
-            method: "GCash",
-            account: "09331234567",
-            date: "Feb 19, 2026 11:00 AM",
-          },
-        ],
-        transactions: [
-          {
-            id: 1,
-            type: "Deposit",
-            user: "Anna Cruz",
-            amount: 1000,
-            method: "GCash",
-            status: "Completed",
-            date: "Feb 19, 2026 10:45 AM",
-            reference: "TXN-20260219-001",
-          },
-          {
-            id: 2,
-            type: "Payout",
-            user: "Jose Garcia",
-            amount: 5000,
-            method: "Auto",
-            status: "Completed",
-            date: "Feb 19, 2026 11:05 AM",
-            reference: "TXN-20260219-002",
-          },
-          {
-            id: 3,
-            type: "Withdrawal",
-            user: "Rosa Bautista",
-            amount: 2000,
-            method: "Maya",
-            status: "Completed",
-            date: "Feb 19, 2026 8:30 AM",
-            reference: "TXN-20260219-003",
-          },
-          {
-            id: 4,
-            type: "Commission",
-            user: "Ricardo Dalisay",
-            amount: 480,
-            method: "Auto",
-            status: "Completed",
-            date: "Feb 19, 2026 11:05 AM",
-            reference: "TXN-20260219-004",
-          },
-          {
-            id: 5,
-            type: "Gov Share",
-            user: "PCSO Remittance",
-            amount: 14445,
-            method: "Bank",
-            status: "Pending",
-            date: "Feb 19, 2026 12:00 PM",
-            reference: "TXN-20260219-005",
-          },
-          {
-            id: 6,
-            type: "Settlement",
-            user: "Daily Settlement",
-            amount: 162765,
-            method: "System",
-            status: "Processing",
-            date: "Feb 19, 2026 11:59 PM",
-            reference: "TXN-20260219-006",
-          },
-          {
-            id: 7,
-            type: "Deposit",
-            user: "Elena Villanueva",
-            amount: 2500,
-            method: "Maya",
-            status: "Completed",
-            date: "Feb 19, 2026 7:20 AM",
-            reference: "TXN-20260219-007",
-          },
-          {
-            id: 8,
-            type: "Withdrawal",
-            user: "Carlos Mendoza",
-            amount: 10000,
-            method: "Bank",
-            status: "Failed",
-            date: "Feb 18, 2026 11:30 PM",
-            reference: "TXN-20260218-042",
-          },
-        ],
-      };
-    },
+  const [typeFilter, setTypeFilter] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
+
+  // All transactions
+  const { data: txData, isLoading } = useAdminTransactionsQuery({
+    type: typeFilter || undefined,
+    status: statusFilter || undefined,
+    limit: 100,
   });
 
-  const handleApprove = (id: string) => {
-    toast.success(`Withdrawal ${id} approved`);
-  };
+  // Pending transactions only (for the approval queue)
+  const { data: pendingData, isLoading: isPendingLoading } =
+    useAdminTransactionsQuery({ status: "PENDING", limit: 50 });
 
-  const handleReject = (id: string) => {
-    toast.error(`Withdrawal ${id} rejected`);
-  };
+  const approveMutation = useApproveTransactionMutation();
+  const rejectMutation = useRejectTransactionMutation();
 
-  if (isLoading) return <Spinner />;
+  const allTx = txData?.transactions ?? [];
+  const pendingTx = pendingData?.transactions ?? [];
+  const totalCount = txData?.count ?? 0;
+
+  // Compute stats from all transactions
+  const completedTx = allTx.filter((t) => t.status === "COMPLETED");
+  const totalDeposits = completedTx
+    .filter((t) => t.type === "DEPOSIT")
+    .reduce((s, t) => s + t.amount, 0);
+  const totalWithdrawals = completedTx
+    .filter((t) => t.type === "WITHDRAWAL")
+    .reduce((s, t) => s + t.amount, 0);
+  const totalPayouts = completedTx
+    .filter((t) => t.type === "JUETENG_PAYOUT")
+    .reduce((s, t) => s + t.amount, 0);
+  const pendingAmount = pendingTx.reduce((s, t) => s + t.amount, 0);
+
+  if (isLoading) return <FinanceSkeleton />;
 
   return (
     <div className="space-y-6">
@@ -191,97 +72,166 @@ export default function FinanceManagement() {
       </div>
 
       {/* Financial Metrics */}
-      <CardGrid columns={6}>
+      <CardGrid columns={4}>
         <StatCard
-          label="Total Revenue"
-          value={`₱${financeData?.totalRevenue?.toLocaleString()}`}
+          label="Total Deposits"
+          value={`₱${totalDeposits.toLocaleString()}`}
           icon={<DollarSign size={18} />}
-          color="blue"
-          trend={{ value: 12, isPositive: true }}
+          color="green"
         />
         <StatCard
-          label="Total Payouts"
-          value={`₱${financeData?.totalPayouts?.toLocaleString()}`}
+          label="Total Withdrawals"
+          value={`₱${totalWithdrawals.toLocaleString()}`}
           icon={<ArrowDownLeft size={18} />}
           color="red"
         />
         <StatCard
-          label="Monthly Profit"
-          value={`₱${financeData?.monthlyProfit?.toLocaleString()}`}
+          label="Total Payouts"
+          value={`₱${totalPayouts.toLocaleString()}`}
           icon={<TrendingUp size={18} />}
-          color="green"
-          trend={{ value: 8, isPositive: true }}
+          color="blue"
         />
         <StatCard
-          label="Pending Transfers"
-          value={`₱${financeData?.pendingTransfers?.toLocaleString()}`}
-          icon={<ArrowUpRight size={18} />}
+          label="Pending Amount"
+          value={`₱${pendingAmount.toLocaleString()}`}
+          icon={<Clock size={18} />}
           color="orange"
         />
-        <StatCard
-          label="Gov't Share"
-          value={`₱${financeData?.govShare?.toLocaleString()}`}
-          icon={<Landmark size={18} />}
-          color="purple"
-        />
-        <StatCard
-          label="Wallet Balance"
-          value={`₱${financeData?.walletBalance?.toLocaleString()}`}
-          icon={<CreditCard size={18} />}
-          color="green"
-        />
       </CardGrid>
 
-      {/* Charts + Settlement */}
-      <CardGrid columns={2}>
-        <ChartCard
-          title="Revenue Comparison"
-          subtitle="Deposits vs Betting Revenue"
-        >
-          <div className="h-full flex items-center justify-center text-text-muted">
-            Revenue comparison chart
+      {/* Pending Transactions Approval Queue */}
+      <div className="bg-surface-card border border-border-default rounded-2xl p-4">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-lg font-semibold text-text-primary">
+              Pending Approvals
+            </h2>
+            <p className="text-sm text-text-muted">
+              Deposits and withdrawals awaiting admin approval
+            </p>
           </div>
-        </ChartCard>
+          {pendingTx.length > 0 && (
+            <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-brand-gold/10 text-brand-gold">
+              {pendingTx.length} pending
+            </span>
+          )}
+        </div>
 
-        <ChartCard title="Payout Trends" subtitle="Last 30 days">
-          <div className="h-full flex items-center justify-center text-text-muted">
-            Payout trends chart
+        {isPendingLoading ? (
+          <div className="flex justify-center py-8">
+            <div className="w-6 h-6 rounded-full border-2 border-brand-gold border-t-transparent animate-spin" />
           </div>
-        </ChartCard>
-      </CardGrid>
+        ) : pendingTx.length === 0 ? (
+          <p className="text-center text-text-muted text-sm py-8">
+            No pending transactions
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {pendingTx.map((tx) => {
+              const isDeposit = tx.type === "DEPOSIT";
+              return (
+                <div
+                  key={tx.id}
+                  className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-4 bg-surface-elevated rounded-xl"
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold ${
+                        isDeposit
+                          ? "bg-brand-green/10 text-brand-green-light"
+                          : "bg-brand-red/10 text-brand-red-light"
+                      }`}
+                    >
+                      {tx.userName?.[0]?.toUpperCase() ?? "?"}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-text-primary">
+                        {tx.userName}
+                      </p>
+                      <p className="text-xs text-text-muted">
+                        {tx.type.replace("_", " ")} · {tx.reference}
+                      </p>
+                      <p className="text-[10px] text-text-muted">
+                        {new Date(tx.createdAt).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <p className="text-lg font-bold text-brand-gold-light">
+                      ₱{tx.amount.toLocaleString()}
+                    </p>
+                    <div className="flex gap-1">
+                      <Button
+                        size="sm"
+                        variant="green"
+                        disabled={
+                          approveMutation.isPending || rejectMutation.isPending
+                        }
+                        onClick={() => approveMutation.mutate(tx.id)}
+                      >
+                        <CheckCircle size={14} className="mr-1" />
+                        Approve
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        disabled={
+                          approveMutation.isPending || rejectMutation.isPending
+                        }
+                        onClick={() =>
+                          rejectMutation.mutate({
+                            id: tx.id,
+                            reason: "Rejected by admin",
+                          })
+                        }
+                      >
+                        <XCircle size={14} className="mr-1" />
+                        Reject
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
-      {/* Daily Settlement & Payment Method Breakdown */}
+      {/* Summary Cards */}
       <CardGrid columns={2}>
-        <ChartCard
-          title="Daily Settlement"
-          subtitle={financeData?.dailySettlement?.date}
-        >
+        <ChartCard title="Transaction Summary" subtitle="By type">
           <div className="space-y-3">
             {[
               {
-                label: "Total Bets",
-                value: financeData?.dailySettlement?.totalBets,
-                color: "text-brand-blue",
+                label: "Deposits",
+                count: allTx.filter((t) => t.type === "DEPOSIT").length,
+                color: "text-brand-green",
               },
               {
-                label: "Total Payouts",
-                value: financeData?.dailySettlement?.totalPayouts,
+                label: "Withdrawals",
+                count: allTx.filter((t) => t.type === "WITHDRAWAL").length,
                 color: "text-brand-red-light",
               },
               {
-                label: "Commissions",
-                value: financeData?.dailySettlement?.commissions,
+                label: "Bet Deductions",
+                count: allTx.filter((t) => t.type === "JUETENG_BET").length,
                 color: "text-brand-gold",
               },
               {
-                label: "Gov't Share",
-                value: financeData?.dailySettlement?.govShare,
+                label: "Payouts",
+                count: allTx.filter((t) => t.type === "JUETENG_PAYOUT").length,
+                color: "text-brand-blue",
+              },
+              {
+                label: "Commission Payouts",
+                count: allTx.filter((t) => t.type === "COMMISSION_PAYOUT")
+                  .length,
                 color: "text-purple-400",
               },
               {
-                label: "Net Revenue",
-                value: financeData?.dailySettlement?.netRevenue,
-                color: "text-brand-green",
+                label: "Adjustments",
+                count: allTx.filter((t) => t.type === "ADJUSTMENT").length,
+                color: "text-cyan-400",
               },
             ].map((item) => (
               <div
@@ -290,115 +240,88 @@ export default function FinanceManagement() {
               >
                 <span className="text-sm text-text-muted">{item.label}</span>
                 <span className={`text-sm font-semibold ${item.color}`}>
-                  ₱{item.value?.toLocaleString()}
+                  {item.count}
+                </span>
+              </div>
+            ))}
+          </div>
+        </ChartCard>
+
+        <ChartCard title="Status Breakdown" subtitle="Current batch">
+          <div className="space-y-3">
+            {[
+              {
+                label: "Completed",
+                count: allTx.filter((t) => t.status === "COMPLETED").length,
+                color: "text-brand-green",
+              },
+              {
+                label: "Pending",
+                count: allTx.filter((t) => t.status === "PENDING").length,
+                color: "text-brand-gold",
+              },
+              {
+                label: "Failed",
+                count: allTx.filter((t) => t.status === "FAILED").length,
+                color: "text-brand-red-light",
+              },
+              {
+                label: "Reversed",
+                count: allTx.filter((t) => t.status === "REVERSED").length,
+                color: "text-purple-400",
+              },
+            ].map((item) => (
+              <div
+                key={item.label}
+                className="flex justify-between items-center"
+              >
+                <span className="text-sm text-text-muted">{item.label}</span>
+                <span className={`text-sm font-semibold ${item.color}`}>
+                  {item.count}
                 </span>
               </div>
             ))}
             <div className="pt-2 border-t border-white/10 flex justify-between items-center">
-              <span className="text-sm text-text-muted">Status</span>
-              <span className="text-[11px] font-medium px-2 py-0.5 rounded-full text-brand-gold bg-brand-gold/10">
-                {financeData?.dailySettlement?.status}
+              <span className="text-sm text-text-muted">Total</span>
+              <span className="text-sm font-bold text-text-primary">
+                {totalCount}
               </span>
             </div>
           </div>
         </ChartCard>
-
-        <ChartCard title="Payment Methods" subtitle="Volume by method">
-          <div className="space-y-4">
-            {[
-              {
-                name: "GCash",
-                ...financeData?.paymentMethods?.gcash,
-                color: "bg-blue-500",
-              },
-              {
-                name: "Maya",
-                ...financeData?.paymentMethods?.maya,
-                color: "bg-green-500",
-              },
-              {
-                name: "Bank Transfer",
-                ...financeData?.paymentMethods?.bank,
-                color: "bg-purple-500",
-              },
-            ].map((m) => (
-              <div key={m.name} className="space-y-1">
-                <div className="flex justify-between text-sm">
-                  <span className="text-text-primary font-medium">
-                    {m.name}
-                  </span>
-                  <span className="text-text-muted">
-                    {m.count?.toLocaleString()} txns · ₱
-                    {m.volume?.toLocaleString()}
-                  </span>
-                </div>
-                <div className="w-full h-2 rounded-full bg-white/5">
-                  <div
-                    className={`h-full rounded-full ${m.color}`}
-                    style={{
-                      width: `${((m.volume || 0) / (financeData?.paymentMethods?.gcash?.volume || 1)) * 100}%`,
-                    }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </ChartCard>
       </CardGrid>
 
-      {/* Pending Withdrawals */}
-      <div>
-        <h2 className="text-lg font-bold text-text-primary mb-3">
-          Pending Withdrawals
-        </h2>
-        <div className="space-y-2">
-          {financeData?.pendingWithdrawals.map((w: any) => (
-            <div key={w.id} className="card-3d p-4">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-brand-red/10 flex items-center justify-center text-brand-red-light font-bold">
-                    {w.user[0]}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-text-primary">
-                      {w.user}
-                    </p>
-                    <p className="text-xs text-text-muted">
-                      {w.mobile} · {w.method} → {w.account}
-                    </p>
-                    <p className="text-[10px] text-text-muted">{w.date}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <p className="text-lg font-bold text-brand-gold-light">
-                    ₱{w.amount.toLocaleString()}
-                  </p>
-                  <div className="flex gap-1">
-                    <Button
-                      size="sm"
-                      variant="green"
-                      onClick={() => handleApprove(w.id)}
-                    >
-                      Approve
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="danger"
-                      onClick={() => handleReject(w.id)}
-                    >
-                      Reject
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+      {/* Filter Bar */}
+      <div className="flex items-center gap-3">
+        <select
+          value={typeFilter}
+          onChange={(e) => setTypeFilter(e.target.value)}
+          className="bg-surface-elevated border border-border-default rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-gold/40"
+        >
+          <option value="">All Types</option>
+          <option value="DEPOSIT">Deposit</option>
+          <option value="WITHDRAWAL">Withdrawal</option>
+          <option value="JUETENG_BET">Jueteng Bet</option>
+          <option value="JUETENG_PAYOUT">Jueteng Payout</option>
+          <option value="COMMISSION_PAYOUT">Commission Payout</option>
+          <option value="ADJUSTMENT">Adjustment</option>
+        </select>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="bg-surface-elevated border border-border-default rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-gold/40"
+        >
+          <option value="">All Statuses</option>
+          <option value="PENDING">Pending</option>
+          <option value="COMPLETED">Completed</option>
+          <option value="FAILED">Failed</option>
+          <option value="REVERSED">Reversed</option>
+        </select>
       </div>
 
       {/* Transactions DataTable */}
       <DataTable
-        title="Recent Transactions"
+        title="All Transactions"
         columns={
           [
             {
@@ -407,27 +330,31 @@ export default function FinanceManagement() {
               sortable: true,
               render: (v: string) => {
                 const color =
-                  v === "Deposit"
+                  v === "DEPOSIT"
                     ? "text-brand-green bg-brand-green/10"
-                    : v === "Withdrawal"
+                    : v === "WITHDRAWAL"
                       ? "text-brand-red bg-brand-red/10"
-                      : v === "Commission"
-                        ? "text-brand-blue bg-brand-blue/10"
-                        : v === "Gov Share"
-                          ? "text-purple-400 bg-purple-400/10"
-                          : v === "Settlement"
-                            ? "text-cyan-400 bg-cyan-400/10"
-                            : "text-brand-gold bg-brand-gold/10";
+                      : v === "JUETENG_BET"
+                        ? "text-brand-gold bg-brand-gold/10"
+                        : v === "JUETENG_PAYOUT"
+                          ? "text-brand-blue bg-brand-blue/10"
+                          : v === "COMMISSION_PAYOUT"
+                            ? "text-purple-400 bg-purple-400/10"
+                            : "text-cyan-400 bg-cyan-400/10";
                 return (
                   <span
                     className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${color}`}
                   >
-                    {v}
+                    {v.replace(/_/g, " ")}
                   </span>
                 );
               },
             },
-            { key: "user", label: "User", sortable: true },
+            {
+              key: "userName",
+              label: "User",
+              sortable: true,
+            },
             {
               key: "amount",
               label: "Amount",
@@ -437,20 +364,26 @@ export default function FinanceManagement() {
                 <span className="font-medium">₱{v.toLocaleString()}</span>
               ),
             },
-            { key: "method", label: "Method", sortable: true },
-            { key: "reference", label: "Reference", sortable: true },
+            {
+              key: "reference",
+              label: "Reference",
+              sortable: true,
+              render: (v: string) => (
+                <span className="text-xs font-mono text-text-muted">{v}</span>
+              ),
+            },
             {
               key: "status",
               label: "Status",
               sortable: true,
               render: (v: string) => {
                 const statusColor =
-                  v === "Completed"
+                  v === "COMPLETED"
                     ? "text-brand-green bg-brand-green/10"
-                    : v === "Pending"
+                    : v === "PENDING"
                       ? "text-brand-gold bg-brand-gold/10"
-                      : v === "Processing"
-                        ? "text-brand-blue bg-brand-blue/10"
+                      : v === "REVERSED"
+                        ? "text-purple-400 bg-purple-400/10"
                         : "text-brand-red bg-brand-red/10";
                 return (
                   <span
@@ -461,12 +394,44 @@ export default function FinanceManagement() {
                 );
               },
             },
-            { key: "date", label: "Date", sortable: true },
+            {
+              key: "createdAt",
+              label: "Date",
+              sortable: true,
+              render: (v: string) => new Date(v).toLocaleString(),
+            },
           ] satisfies DataTableColumn[]
         }
-        data={financeData?.transactions || []}
+        data={allTx}
         pageSize={10}
         exportable
+        actions={(row: AdminTransaction) =>
+          row.status === "PENDING" ? (
+            <>
+              <button
+                className="text-xs px-2.5 py-1 bg-brand-green/10 text-brand-green-light rounded-lg hover:bg-brand-green/15 flex items-center gap-1 transition-colors disabled:opacity-50"
+                disabled={approveMutation.isPending || rejectMutation.isPending}
+                onClick={() => approveMutation.mutate(row.id)}
+              >
+                <CheckCircle size={14} />
+                Approve
+              </button>
+              <button
+                className="text-xs px-2.5 py-1 bg-brand-red/10 text-brand-red-light rounded-lg hover:bg-brand-red/15 flex items-center gap-1 transition-colors disabled:opacity-50"
+                disabled={approveMutation.isPending || rejectMutation.isPending}
+                onClick={() =>
+                  rejectMutation.mutate({
+                    id: row.id,
+                    reason: "Rejected by admin",
+                  })
+                }
+              >
+                <XCircle size={14} />
+                Reject
+              </button>
+            </>
+          ) : null
+        }
       />
     </div>
   );

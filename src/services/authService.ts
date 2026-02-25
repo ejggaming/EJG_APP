@@ -1,43 +1,81 @@
 import apiClient from "./apiClient";
+import type { LoginInput, RegisterInput, VerifyOtpInput } from "../schema/auth.schema";
 
-export interface LoginPayload {
-  mobile: string;
-  password: string;
+type RegisterPayload = Omit<RegisterInput, "confirmPassword">;
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  userName: string | null;
+  role: "PLAYER" | "AGENT" | "ADMIN" | "SUPER_ADMIN";
+  isEmailVerified: boolean;
+  isPhoneVerified: boolean;
+  person?: { firstName: string; lastName: string } | null;
 }
 
-export interface RegisterPayload {
-  name: string;
-  mobile: string;
-  password: string;
-}
-
-export interface AuthResponse {
-  token: string;
-  user: {
+export interface MeUser extends AuthUser {
+  phoneNumber: string | null;
+  status: "active" | "inactive" | "suspended" | "archived";
+  avatar: string | null;
+  lastLogin: string | null;
+  person: {
+    firstName: string;
+    lastName: string;
+    middleName?: string;
+    dateOfBirth?: string;
+    nationality?: string;
+    gender?: string;
+  } | null;
+  wallet: {
     id: string;
-    name: string;
-    email: string;
-    mobile: string;
+    balance: number;
+    bonus: number;
+    currency: string;
+    status: string;
+  } | null;
+  kyc: { status: string; submittedAt: string; reviewedAt: string | null } | null;
+  agent: {
+    id: string;
     role: string;
-    kycStatus: "pending" | "approved" | "rejected" | "none";
-    isVerified: boolean;
-  };
+    status: string;
+    commissionRate: number;
+  } | null;
+}
+
+interface ApiSuccess<T> {
+  status: "success";
+  message: string;
+  data?: T;
+  code: number;
+  timestamp: string;
 }
 
 export const authService = {
-  login: (data: LoginPayload) =>
-    apiClient.post<AuthResponse>("/auth/login", data),
-
   register: (data: RegisterPayload) =>
-    apiClient.post<{ message: string }>("/auth/register", data),
+    apiClient.post<ApiSuccess<{ user: AuthUser; accessToken: string }>>(
+      "/auth/register",
+      data,
+    ),
 
-  verifyOtp: (mobile: string, otp: string) =>
-    apiClient.post<AuthResponse>("/auth/verify-otp", { mobile, otp }),
+  login: (data: LoginInput) =>
+    apiClient.post<ApiSuccess<{ user: AuthUser; accessToken: string }>>(
+      "/auth/login",
+      data,
+    ),
 
-  resendOtp: (mobile: string) =>
-    apiClient.post<{ message: string }>("/auth/resend-otp", { mobile }),
+  verifyOtp: (data: VerifyOtpInput) =>
+    apiClient.post<ApiSuccess<{ verified: boolean; type: string }>>(
+      "/auth/otp/verify",
+      data,
+    ),
 
-  logout: () => apiClient.post("/auth/logout"),
+  resendOtp: (email: string) =>
+    apiClient.post<ApiSuccess<{ expiresAt: string }>>("/auth/otp/request", {
+      email,
+      type: "EMAIL_VERIFICATION",
+    }),
 
-  getProfile: () => apiClient.get<AuthResponse["user"]>("/auth/profile"),
+  logout: () => apiClient.post<ApiSuccess<null>>("/auth/logout"),
+
+  me: () => apiClient.get<ApiSuccess<MeUser>>("/auth/me"),
 };

@@ -1,7 +1,8 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Card, Badge, Button } from "../../components";
 import { useAppStore } from "../../store/useAppStore";
 import { formatCurrency } from "../../utils";
+import { useLogoutMutation } from "../../hooks/useAuth";
 import {
   BadgeCheck,
   ScrollText,
@@ -82,15 +83,14 @@ const kycStatusMap = {
 };
 
 export default function ProfilePage() {
-  const navigate = useNavigate();
-  const { user, balance, logout } = useAppStore();
+  const { user, balance, isAuthenticated } = useAppStore();
+  const logoutMutation = useLogoutMutation();
 
-  const kycStatus = user?.kycStatus ?? "none";
-  const kyc = kycStatusMap[kycStatus];
+  const kycStatus = (user?.kyc?.status?.toLowerCase() ?? "none") as keyof typeof kycStatusMap;
+  const kyc = kycStatusMap[kycStatus] ?? kycStatusMap.none;
 
   const handleLogout = () => {
-    logout();
-    navigate("/login");
+    logoutMutation.mutate();
   };
 
   return (
@@ -114,14 +114,14 @@ export default function ProfilePage() {
                 boxShadow: "0 0 15px rgba(220, 38, 38, 0.25)",
               }}
             >
-              {user?.name?.[0]?.toUpperCase() ?? "U"}
+              {user?.person?.firstName?.[0]?.toUpperCase() ?? "U"}
             </div>
             <div className="flex-1">
               <h2 className="text-lg font-extrabold text-white">
-                {user?.name ?? "Guest User"}
+                {[user?.person?.firstName, user?.person?.lastName].filter(Boolean).join(" ") || "Guest User"}
               </h2>
               <p className="text-sm text-white/70">
-                {user?.mobile ?? "No mobile"}
+                {user?.phoneNumber ?? "No phone number"}
               </p>
               <div className="mt-1">
                 <Badge variant={kyc.badge}>{kyc.label}</Badge>
@@ -142,7 +142,7 @@ export default function ProfilePage() {
       </div>
 
       {/* KYC Prompt */}
-      {kycStatus !== "approved" && (
+      {isAuthenticated && kycStatus !== "approved" && (
         <Card
           bento
           delay={100}
@@ -190,10 +190,23 @@ export default function ProfilePage() {
         ))}
       </div>
 
-      {/* Logout */}
-      <Button variant="danger" fullWidth onClick={handleLogout}>
-        Logout
-      </Button>
+      {/* Auth action */}
+      {isAuthenticated ? (
+        <Button
+          variant="danger"
+          fullWidth
+          onClick={handleLogout}
+          isLoading={logoutMutation.isPending}
+        >
+          Logout
+        </Button>
+      ) : (
+        <Link to="/login">
+          <Button variant="primary" fullWidth>
+            Login to Continue
+          </Button>
+        </Link>
+      )}
 
       <p className="text-center text-[10px] text-text-muted">
         JuetengPH v1.0.0 · © 2026

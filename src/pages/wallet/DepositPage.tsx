@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, Button, Input } from "../../components";
 import { useAppStore } from "../../store/useAppStore";
 import { formatCurrency } from "../../utils";
-import toast from "react-hot-toast";
+import { useDepositMutation } from "../../hooks/useWallet";
 import { Smartphone, CreditCard, Landmark, Check, Wallet } from "lucide-react";
 
 const PAYMENT_METHODS = [
@@ -31,33 +31,22 @@ const QUICK_AMOUNTS = [100, 200, 500, 1000, 2000, 5000];
 
 export default function DepositPage() {
   const navigate = useNavigate();
-  const { balance, setBalance } = useAppStore();
+  const balance = useAppStore((s) => s.balance);
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
-  const [isProcessing, setIsProcessing] = useState(false);
+
+  const depositMutation = useDepositMutation();
 
   const numAmount = parseFloat(amount) || 0;
 
-  const handleDeposit = async () => {
-    if (!selectedMethod) {
-      toast.error("Select a payment method");
-      return;
-    }
-    if (numAmount < 50) {
-      toast.error("Minimum deposit is ₱50");
-      return;
-    }
-    if (numAmount > 50000) {
-      toast.error("Maximum deposit is ₱50,000");
-      return;
-    }
+  const handleDeposit = () => {
+    if (!selectedMethod) return;
+    if (numAmount < 50 || numAmount > 50000) return;
 
-    setIsProcessing(true);
-    await new Promise((r) => setTimeout(r, 1500));
-    setBalance(balance + numAmount);
-    toast.success(`${formatCurrency(numAmount)} deposited successfully!`);
-    setIsProcessing(false);
-    navigate("/wallet");
+    depositMutation.mutate(
+      { amount: numAmount, paymentMethod: selectedMethod },
+      { onSuccess: () => navigate("/wallet") },
+    );
   };
 
   return (
@@ -172,7 +161,7 @@ export default function DepositPage() {
         variant="primary"
         fullWidth
         disabled={!selectedMethod || numAmount < 50}
-        isLoading={isProcessing}
+        isLoading={depositMutation.isPending}
         onClick={handleDeposit}
       >
         <Wallet className="w-4 h-4 inline mr-1" /> Deposit{" "}

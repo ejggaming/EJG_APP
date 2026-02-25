@@ -7,11 +7,13 @@ import {
   Wallet,
   User,
   Bell,
-  Flame,
   Sun,
   Moon,
 } from "lucide-react";
 import { useThemeStore } from "../../store/useThemeStore";
+import { useUnreadCountQuery } from "../../hooks/useNotification";
+import { usePlayerSocket } from "../../hooks/usePlayerSocket";
+import appLogo from "../../assets/logo.png";
 
 const navItems = [
   { path: "/", label: "Home", icon: Home },
@@ -24,6 +26,8 @@ const navItems = [
 export default function MainLayout() {
   const location = useLocation();
   const { theme, toggleTheme } = useThemeStore();
+  const { data: unreadCount = 0 } = useUnreadCountQuery();
+  usePlayerSocket();
 
   return (
     <div className="min-h-screen bg-surface flex flex-col">
@@ -38,11 +42,9 @@ export default function MainLayout() {
         <div className="h-[2px] bg-gradient-to-r from-transparent via-brand-gold/60 to-transparent" />
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5">
-            <Flame className="w-6 h-6 text-brand-red" />
-            <span className="font-extrabold text-lg tracking-wide">
-              <span className="text-brand-red">Jueteng</span>
-              <span className="gold-shimmer">PH</span>
-            </span>
+            <div className="w-10 h-10 rounded-full bg-brand-red/20 border border-brand-gold/40 shadow-lg shadow-brand-red/20 flex items-center justify-center">
+              <img src={appLogo} alt="JuetengPH" className="h-8 w-auto" />
+            </div>
           </Link>
           <div className="flex items-center gap-3">
             <button
@@ -61,9 +63,14 @@ export default function MainLayout() {
               className="relative text-brand-gold/70 hover:text-brand-gold transition-colors"
             >
               <Bell className="w-5 h-5" />
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-brand-red rounded-full text-[10px] flex items-center justify-center font-bold text-white border border-brand-gold/50">
-                3
-              </span>
+              {unreadCount > 0 && (
+                <>
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-brand-red rounded-full text-[10px] flex items-center justify-center font-bold text-white border border-brand-gold/50">
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-brand-red rounded-full animate-ping opacity-60" />
+                </>
+              )}
             </Link>
           </div>
         </div>

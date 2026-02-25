@@ -3,7 +3,9 @@ import { cn } from "../../utils";
 import { useAppStore } from "../../store/useAppStore";
 import { useThemeStore } from "../../store/useThemeStore";
 import { formatCurrency } from "../../utils";
+import { useLogoutMutation } from "../../hooks/useAuth";
 import { Sun, Moon } from "lucide-react";
+import appLogo from "../../assets/logo.png";
 
 const navItems = [
   {
@@ -105,7 +107,8 @@ const navItems = [
 
 export default function AgentLayout() {
   const location = useLocation();
-  const { user, balance, logout } = useAppStore();
+  const { user, balance } = useAppStore();
+  const logoutMutation = useLogoutMutation();
   const { theme, toggleTheme } = useThemeStore();
 
   return (
@@ -117,14 +120,11 @@ export default function AgentLayout() {
       <aside className="hidden md:flex md:w-60 shrink-0 flex-col bg-surface-card border border-border-subtle rounded-2xl sticky top-3 h-[calc(100vh-1.5rem)] z-30">
         {/* Logo */}
         <div className="h-16 flex items-center gap-2 px-4 border-b border-border-subtle">
-          <div className="w-9 h-9 rounded-full bg-brand-gold flex items-center justify-center">
-            <span className="text-white font-bold text-sm">A</span>
+          <div className="w-10 h-10 rounded-full bg-brand-red/20 border border-brand-gold/40 shadow-lg shadow-brand-red/20 flex items-center justify-center">
+            <img src={appLogo} alt="JuetengPH" className="h-8 w-auto" />
           </div>
           <div>
-            <span className="font-bold text-sm">
-              <span className="text-brand-red">Jueteng</span>
-              <span className="text-brand-gold">PH</span>
-            </span>
+            <span className="font-bold text-sm">JuetengPH</span>
             <p className="text-[10px] text-brand-gold">Agent Portal</p>
           </div>
         </div>
@@ -132,9 +132,9 @@ export default function AgentLayout() {
         {/* Agent Info */}
         <div className="px-4 py-3 border-b border-border-subtle">
           <p className="text-sm font-medium text-text-primary truncate">
-            {user?.name ?? "Agent"}
+            {[user?.person?.firstName, user?.person?.lastName].filter(Boolean).join(" ") || "Agent"}
           </p>
-          <p className="text-xs text-text-muted">{user?.mobile}</p>
+          <p className="text-xs text-text-muted">{user?.phoneNumber}</p>
           <p className="text-sm font-bold text-brand-gold mt-1">
             {formatCurrency(balance)}
           </p>
@@ -168,10 +168,8 @@ export default function AgentLayout() {
         {/* Logout + Theme toggle */}
         <div className="p-4 border-t border-border-subtle">
           <button
-            onClick={() => {
-              logout();
-              window.location.href = "/login";
-            }}
+            onClick={() => logoutMutation.mutate()}
+            disabled={logoutMutation.isPending}
             className="flex items-center gap-2 text-sm text-text-muted hover:text-brand-red-light transition-colors w-full"
           >
             <svg
@@ -187,7 +185,7 @@ export default function AgentLayout() {
                 d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
               />
             </svg>
-            Logout
+            {logoutMutation.isPending ? "Logging out..." : "Logout"}
           </button>
           <button
             onClick={toggleTheme}

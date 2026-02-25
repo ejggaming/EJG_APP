@@ -1,54 +1,37 @@
 import { Card, Badge } from "../../components";
 import { formatCurrency } from "../../utils";
-import { Clock, Trophy, XCircle, PartyPopper } from "lucide-react";
-
-const MOCK_BETS = [
-  {
-    id: "1",
-    numbers: [12, 35],
-    amount: 50,
-    draw: "11:00 AM Draw",
-    date: "Feb 19, 2026",
-    status: "pending" as const,
-    reference: "BET-2026021901",
-  },
-  {
-    id: "2",
-    numbers: [7, 23],
-    amount: 100,
-    draw: "4:00 PM Draw",
-    date: "Feb 18, 2026",
-    status: "won" as const,
-    winnings: 5000,
-    reference: "BET-2026021802",
-  },
-  {
-    id: "3",
-    numbers: [3, 15],
-    amount: 20,
-    draw: "9:00 PM Draw",
-    date: "Feb 18, 2026",
-    status: "lost" as const,
-    reference: "BET-2026021803",
-  },
-  {
-    id: "4",
-    numbers: [22, 37],
-    amount: 10,
-    draw: "11:00 AM Draw",
-    date: "Feb 17, 2026",
-    status: "lost" as const,
-    reference: "BET-2026021704",
-  },
-];
+import { Clock, Trophy, XCircle, PartyPopper, Wallet } from "lucide-react";
+import { BetHistorySkeleton } from "../../components/ChineseSkeleton";
+import { useBetHistoryQuery, useGameConfigQuery, drawTypeLabel } from "../../hooks/useBet";
+import { useMyWalletQuery } from "../../hooks/useWallet";
 
 const statusBadge = {
-  pending: { variant: "gold" as const, label: "Pending", Icon: Clock },
-  won: { variant: "green" as const, label: "Won", Icon: Trophy },
-  lost: { variant: "red" as const, label: "Lost", Icon: XCircle },
+  PENDING: { variant: "gold" as const, label: "Awaiting Draw", Icon: Clock },
+  WON: { variant: "green" as const, label: "Won", Icon: Trophy },
+  LOST: { variant: "red" as const, label: "Lost", Icon: XCircle },
+  VOID: { variant: "red" as const, label: "Void", Icon: XCircle },
+  REFUNDED: { variant: "gold" as const, label: "Refunded", Icon: Clock },
 };
 
 export default function BetHistoryPage() {
+  const { data, isLoading } = useBetHistoryQuery({});
+  const { data: walletData } = useMyWalletQuery();
+  const { data: gameConfig } = useGameConfigQuery();
+
+  const multiplier = gameConfig?.payoutMultiplier ?? 0;
+  const balance = walletData?.wallet?.balance ?? 0;
+  const bets = data?.bets ?? [];
+
+  if (isLoading) return <BetHistorySkeleton />;
+  const totalBets = bets.length;
+  const wonBets = bets.filter((b) => b.status === "WON").length;
+  const totalWon = bets
+    .filter((b) => b.status === "WON")
+    .reduce((sum, b) => sum + (b.payoutAmount ?? 0), 0);
+  const pendingPotential = bets
+    .filter((b) => b.status === "PENDING")
+    .reduce((sum, b) => sum + b.amount * multiplier, 0);
+
   return (
     <div className="space-y-4">
       <div>
@@ -60,81 +43,145 @@ export default function BetHistoryPage() {
         </p>
       </div>
 
+      {/* Balance */}
+      <Card bento delay={50} className="lantern-card">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-9 h-9 rounded-full bg-brand-gold/15 flex items-center justify-center">
+              <Wallet className="w-5 h-5 text-brand-gold" />
+            </div>
+            <div>
+              <p className="text-[10px] text-text-muted uppercase tracking-wider">Current Balance</p>
+              <p className="text-xl font-extrabold gold-shimmer">{formatCurrency(balance)}</p>
+            </div>
+          </div>
+        </div>
+      </Card>
+
       {/* Summary */}
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 gap-2">
         <Card bento delay={100} className="text-center lantern-card">
-          <p className="text-lg font-extrabold text-text-primary">12</p>
+          <p className="text-lg font-extrabold text-text-primary">
+            {totalBets}
+          </p>
           <p className="text-[10px] text-text-muted uppercase tracking-wider">
             Total Bets
           </p>
         </Card>
         <Card bento delay={200} className="text-center lantern-card">
-          <p className="text-lg font-extrabold text-brand-green">2</p>
+          <p className="text-lg font-extrabold text-brand-green">{wonBets}</p>
           <p className="text-[10px] text-text-muted uppercase tracking-wider">
             Won
           </p>
         </Card>
         <Card bento delay={300} className="text-center lantern-card">
           <p className="text-lg font-extrabold gold-shimmer">
-            {formatCurrency(5000)}
+            {formatCurrency(totalWon)}
           </p>
           <p className="text-[10px] text-text-muted uppercase tracking-wider">
             Total Won
           </p>
         </Card>
+        {multiplier > 0 && pendingPotential > 0 && (
+          <Card bento delay={400} className="text-center lantern-card">
+            <p className="text-lg font-extrabold text-brand-gold">
+              {formatCurrency(pendingPotential)}
+            </p>
+            <p className="text-[10px] text-text-muted uppercase tracking-wider">
+              Pending Potential
+            </p>
+          </Card>
+        )}
       </div>
 
       {/* Cloud Divider */}
       <div className="cloud-divider" />
 
       {/* Bet List */}
-      <div className="space-y-2">
-        {MOCK_BETS.map((bet, index) => {
-          const badge = statusBadge[bet.status];
-          return (
-            <Card
-              key={bet.id}
-              bento
-              delay={350 + index * 80}
-              className="lantern-card"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <div className="flex gap-1">
-                    {bet.numbers.map((num) => (
-                      <span key={num} className="lottery-ball w-9 h-9 text-sm">
-                        {num}
+      {bets.length === 0 ? (
+        <Card bento className="text-center py-8 lantern-card">
+          <p className="text-text-muted text-sm">No bets placed yet</p>
+        </Card>
+      ) : (
+        <div className="space-y-2">
+          {bets.map((bet, index) => {
+            const badge =
+              statusBadge[bet.status as keyof typeof statusBadge] ??
+              statusBadge.PENDING;
+            const drawTime = bet.draw?.drawType
+              ? drawTypeLabel(bet.draw.drawType)
+              : "";
+            return (
+              <Card
+                key={bet.id}
+                bento
+                delay={350 + index * 80}
+                className="lantern-card"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="flex gap-1">
+                      <span className="lottery-ball w-9 h-9 text-sm">
+                        {bet.number1}
                       </span>
-                    ))}
+                      <span className="lottery-ball w-9 h-9 text-sm">
+                        {bet.number2}
+                      </span>
+                    </div>
+                    <Badge variant={badge.variant}>
+                      <badge.Icon className="w-3 h-3 inline mr-0.5" />
+                      {badge.label}
+                    </Badge>
                   </div>
-                  <Badge variant={badge.variant}>
-                    <badge.Icon className="w-3 h-3 inline mr-0.5" />
-                    {badge.label}
-                  </Badge>
+                  <span className="text-brand-gold font-bold">
+                    {formatCurrency(bet.amount)}
+                  </span>
                 </div>
-                <span className="text-brand-gold font-bold">
-                  {formatCurrency(bet.amount)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-xs text-text-muted">
-                <span>{bet.draw}</span>
-                <span>{bet.date}</span>
-              </div>
-              {bet.status === "won" && (
-                <div className="mt-2 win-glow rounded-xl p-2 text-center border border-brand-green/30 bg-brand-green/5">
-                  <p className="text-brand-green font-bold text-sm">
-                    <PartyPopper className="w-4 h-4 inline mr-1" /> Won{" "}
-                    {formatCurrency(bet.winnings!)}
-                  </p>
+                <div className="flex items-center justify-between text-xs text-text-muted">
+                  <span>{drawTime} Draw</span>
+                  <span>
+                    {new Date(bet.placedAt ?? bet.createdAt).toLocaleDateString(
+                      "en-US",
+                      { month: "short", day: "numeric", year: "numeric" },
+                    )}
+                  </span>
                 </div>
-              )}
-              <p className="text-[10px] text-text-muted mt-1">
-                {bet.reference}
-              </p>
-            </Card>
-          );
-        })}
-      </div>
+                {/* Multiplier & potential payout */}
+                {multiplier > 0 && (
+                  <div className="flex items-center justify-between text-xs mt-1.5 pt-1.5 border-t border-white/5">
+                    <span className="text-text-muted">
+                      <span className="text-brand-gold font-bold">{multiplier}×</span>
+                      {" "}multiplier
+                    </span>
+                    <span
+                      className={
+                        bet.status === "LOST" || bet.status === "VOID"
+                          ? "text-text-muted line-through"
+                          : bet.status === "WON"
+                            ? "text-brand-green font-bold"
+                            : "text-brand-gold font-bold"
+                      }
+                    >
+                      {formatCurrency(bet.amount * multiplier)}
+                    </span>
+                  </div>
+                )}
+                {bet.status === "WON" && (
+                  <div className="mt-2 win-glow rounded-xl p-2 text-center border border-brand-green/30 bg-brand-green/5">
+                    <p className="text-brand-green font-bold text-sm">
+                      <PartyPopper className="w-4 h-4 inline mr-1" /> Won{" "}
+                      {formatCurrency(bet.payoutAmount ?? 0)}
+                    </p>
+                  </div>
+                )}
+                <p className="text-[10px] text-text-muted mt-1">
+                  {bet.reference}
+                </p>
+              </Card>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

@@ -1,9 +1,21 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link, Navigate } from "react-router-dom";
 import { Card, Button, Input } from "../../components";
+import {
+  Info,
+  Camera,
+  UserCheck,
+  Upload,
+  CheckCircle,
+  Clock,
+  XCircle,
+  AlertCircle,
+  ArrowLeft,
+} from "lucide-react";
+import { useSubmitKycMutation, useMyKycQuery } from "../../hooks/useKyc";
 import { useAppStore } from "../../store/useAppStore";
+import { KycUploadSkeleton } from "../../components/ChineseSkeleton";
 import toast from "react-hot-toast";
-import { Info, Camera, UserCheck, Upload } from "lucide-react";
 
 const ID_TYPES = [
   { id: "national_id", name: "Philippine National ID (PhilSys)" },
@@ -14,65 +26,107 @@ const ID_TYPES = [
   { id: "postal", name: "Postal ID" },
 ];
 
-export default function KycUploadPage() {
+// ─── Status Screens ───────────────────────────────────────────────────────────
+
+function PendingScreen() {
+  return (
+    <div className="space-y-4">
+      <div className="chinese-header">
+        <h1 className="text-xl font-extrabold text-text-primary">KYC Verification</h1>
+      </div>
+      <Card bento delay={100} className="lantern-card border-brand-gold/20" ornate>
+        <div className="flex flex-col items-center gap-3 py-4 text-center">
+          <Clock className="w-12 h-12 text-brand-gold" />
+          <h2 className="text-lg font-bold text-text-primary">Under Review</h2>
+          <p className="text-sm text-text-muted">
+            Your documents have been submitted and are being reviewed. This usually
+            takes up to <span className="text-text-primary font-medium">24 hours</span>.
+          </p>
+        </div>
+      </Card>
+      <Link to="/profile">
+        <Button variant="outline" fullWidth>
+          <ArrowLeft className="w-4 h-4 inline mr-1" /> Back to Profile
+        </Button>
+      </Link>
+    </div>
+  );
+}
+
+function ApprovedScreen() {
+  return (
+    <div className="space-y-4">
+      <div className="chinese-header">
+        <h1 className="text-xl font-extrabold text-text-primary">KYC Verification</h1>
+      </div>
+      <Card bento delay={100} className="lantern-card border-brand-green/20" ornate>
+        <div className="flex flex-col items-center gap-3 py-4 text-center">
+          <CheckCircle className="w-12 h-12 text-brand-green-light" />
+          <h2 className="text-lg font-bold text-text-primary">Identity Verified</h2>
+          <p className="text-sm text-text-muted">
+            Your identity has been verified. You have full access to all features.
+          </p>
+        </div>
+      </Card>
+      <Link to="/profile">
+        <Button variant="outline" fullWidth>
+          <ArrowLeft className="w-4 h-4 inline mr-1" /> Back to Profile
+        </Button>
+      </Link>
+    </div>
+  );
+}
+
+// ─── Upload Form ──────────────────────────────────────────────────────────────
+
+function UploadForm({ isResubmit, notes }: { isResubmit?: boolean; notes?: string | null }) {
   const navigate = useNavigate();
-  const user = useAppStore((s) => s.user);
-  const setUser = useAppStore((s) => s.setUser);
   const [idType, setIdType] = useState("");
   const [idNumber, setIdNumber] = useState("");
   const [idFront, setIdFront] = useState<File | null>(null);
   const [selfie, setSelfie] = useState<File | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const submitKyc = useSubmitKycMutation();
 
-  const handleSubmit = async () => {
-    if (!idType) {
-      toast.error("Select an ID type");
-      return;
-    }
-    if (!idNumber.trim()) {
-      toast.error("Enter your ID number");
-      return;
-    }
-    if (!idFront) {
-      toast.error("Upload front of your ID");
-      return;
-    }
-    if (!selfie) {
-      toast.error("Upload a selfie with your ID");
-      return;
-    }
+  const handleSubmit = () => {
+    if (!idType) { toast.error("Select an ID type"); return; }
+    if (!idNumber.trim()) { toast.error("Enter your ID number"); return; }
+    if (!idFront) { toast.error("Upload front of your ID"); return; }
+    if (!selfie) { toast.error("Upload a selfie with your ID"); return; }
 
-    setIsSubmitting(true);
-    // Mock API call
-    await new Promise((r) => setTimeout(r, 2000));
-
-    if (user) {
-      setUser({ ...user, kycStatus: "pending" });
-    }
-
-    toast.success("KYC documents submitted for review!");
-    setIsSubmitting(false);
-    navigate("/profile");
+    submitKyc.mutate(
+      { idType: `${idType}:${idNumber}`, idFront, selfie },
+      { onSuccess: () => navigate("/profile") },
+    );
   };
 
   return (
     <div className="space-y-4">
       <div className="chinese-header">
         <h1 className="text-xl font-extrabold text-text-primary">
-          KYC Verification
+          {isResubmit ? "Resubmit KYC" : "KYC Verification"}
         </h1>
         <p className="text-text-muted text-sm">
-          Verify your identity to unlock all features
+          {isResubmit
+            ? "Upload new documents to replace your previous submission"
+            : "Verify your identity to unlock all features"}
         </p>
       </div>
 
+      {/* Rejection / more-info notice */}
+      {isResubmit && notes && (
+        <Card bento delay={50} className="border-brand-red/20">
+          <div className="flex items-start gap-2">
+            <XCircle className="w-4 h-4 text-brand-red-light shrink-0 mt-0.5" />
+            <p className="text-xs text-text-secondary">
+              <span className="font-medium text-text-primary">Admin note: </span>
+              {notes}
+            </p>
+          </div>
+        </Card>
+      )}
+
       {/* Info Card */}
-      <Card
-        bento
-        delay={100}
-        className="lantern-card border-brand-gold/20"
-        ornate
-      >
+      <Card bento delay={100} className="lantern-card border-brand-gold/20" ornate>
         <div className="flex items-start gap-3">
           <Info className="w-5 h-5 text-brand-gold shrink-0" />
           <div className="text-xs text-text-secondary space-y-1">
@@ -121,9 +175,7 @@ export default function KycUploadPage() {
         <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-brand-gold/20 rounded-xl cursor-pointer hover:border-brand-gold/40 transition-colors bg-surface-card">
           {idFront ? (
             <div className="text-center">
-              <p className="text-brand-green text-sm font-medium">
-                ✓ {idFront.name}
-              </p>
+              <p className="text-brand-green text-sm font-medium">✓ {idFront.name}</p>
               <p className="text-xs text-text-muted mt-1">
                 {(idFront.size / 1024 / 1024).toFixed(2)} MB
               </p>
@@ -131,14 +183,12 @@ export default function KycUploadPage() {
           ) : (
             <div className="text-center">
               <Camera className="w-8 h-8 text-text-muted mx-auto mb-1" />
-              <p className="text-xs text-text-muted">
-                Tap to upload (JPG, PNG · Max 5MB)
-              </p>
+              <p className="text-xs text-text-muted">Tap to upload (JPG, PNG · Max 5MB)</p>
             </div>
           )}
           <input
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp"
             className="hidden"
             onChange={(e) => setIdFront(e.target.files?.[0] ?? null)}
           />
@@ -153,9 +203,7 @@ export default function KycUploadPage() {
         <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-brand-gold/20 rounded-xl cursor-pointer hover:border-brand-gold/40 transition-colors bg-surface-card">
           {selfie ? (
             <div className="text-center">
-              <p className="text-brand-green text-sm font-medium">
-                ✓ {selfie.name}
-              </p>
+              <p className="text-brand-green text-sm font-medium">✓ {selfie.name}</p>
               <p className="text-xs text-text-muted mt-1">
                 {(selfie.size / 1024 / 1024).toFixed(2)} MB
               </p>
@@ -163,14 +211,12 @@ export default function KycUploadPage() {
           ) : (
             <div className="text-center">
               <UserCheck className="w-8 h-8 text-text-muted mx-auto mb-1" />
-              <p className="text-xs text-text-muted">
-                Tap to take photo or upload
-              </p>
+              <p className="text-xs text-text-muted">Tap to take photo or upload</p>
             </div>
           )}
           <input
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp"
             capture="user"
             className="hidden"
             onChange={(e) => setSelfie(e.target.files?.[0] ?? null)}
@@ -181,12 +227,65 @@ export default function KycUploadPage() {
       <Button
         variant="primary"
         fullWidth
-        isLoading={isSubmitting}
-        disabled={!idType || !idNumber || !idFront || !selfie}
+        isLoading={submitKyc.isPending}
+        disabled={!idType || !idNumber || !idFront || !selfie || submitKyc.isPending}
         onClick={handleSubmit}
       >
-        <Upload className="w-4 h-4 inline mr-1" /> Submit for Verification
+        <Upload className="w-4 h-4 inline mr-1" />
+        {isResubmit ? "Resubmit Documents" : "Submit for Verification"}
       </Button>
     </div>
   );
+}
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
+
+export default function KycUploadPage() {
+  const user = useAppStore((s) => s.user);
+  const isAuthenticated = useAppStore((s) => s.isAuthenticated);
+  const { data: kyc, isLoading } = useMyKycQuery();
+
+  if (!isAuthenticated || !user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (isLoading) return <KycUploadSkeleton />;
+
+  // Use the full KYC record if loaded, fall back to user store summary
+  const status = kyc?.status ?? user?.kyc?.status ?? null;
+
+  if (status === "PENDING") return <PendingScreen />;
+  if (status === "APPROVED") return <ApprovedScreen />;
+
+  const isResubmit = status === "REJECTED" || status === "REQUIRES_MORE_INFO";
+
+  // Show rejected/requires-more-info notice at the top of form
+  const notes = kyc?.notes ?? null;
+
+  if (isResubmit) {
+    return (
+      <div className="space-y-4">
+        <Card bento delay={50} className="border-brand-red/20">
+          <div className="flex items-start gap-3">
+            {status === "REJECTED" ? (
+              <XCircle className="w-5 h-5 text-brand-red-light shrink-0" />
+            ) : (
+              <AlertCircle className="w-5 h-5 text-orange-400 shrink-0" />
+            )}
+            <div>
+              <p className="text-sm font-semibold text-text-primary">
+                {status === "REJECTED" ? "KYC Rejected" : "More Information Needed"}
+              </p>
+              {notes && (
+                <p className="text-xs text-text-muted mt-0.5">{notes}</p>
+              )}
+            </div>
+          </div>
+        </Card>
+        <UploadForm isResubmit notes={notes} />
+      </div>
+    );
+  }
+
+  return <UploadForm />;
 }
