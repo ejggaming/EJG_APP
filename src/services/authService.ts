@@ -1,6 +1,8 @@
 import apiClient from "./apiClient";
 import type { LoginInput, RegisterInput, VerifyOtpInput } from "../schema/auth.schema";
 
+type RegisterPayload = Omit<RegisterInput, "confirmPassword">;
+
 export interface AuthUser {
   id: string;
   email: string;
@@ -49,7 +51,7 @@ interface ApiSuccess<T> {
 }
 
 export const authService = {
-  register: (data: RegisterInput) =>
+  register: (data: RegisterPayload) =>
     apiClient.post<ApiSuccess<{ user: AuthUser; accessToken: string }>>(
       "/auth/register",
       data,

@@ -13,9 +13,26 @@ import toast from "react-hot-toast";
 
 export const kycKeys = {
   all: ["kyc"] as const,
+  me: ["kyc", "me"] as const,
   list: (params?: Record<string, string>) =>
     ["kyc", "list", params ?? {}] as const,
 };
+
+// ─── Get Current User's KYC (Player) ─────────────────────────────────────────
+
+export function useMyKycQuery() {
+  const user = useAppStore((s) => s.user);
+
+  return useQuery({
+    queryKey: kycKeys.me,
+    queryFn: async () => {
+      const res = await kycService.getMyKyc();
+      return res.data.data?.kyc ?? null;
+    },
+    enabled: !!user,
+    staleTime: 30_000,
+  });
+}
 
 // ─── Submit KYC (Player) ──────────────────────────────────────────────────────
 
@@ -30,8 +47,8 @@ export function useSubmitKycMutation() {
     { idType: string; idFront: File; selfie?: File }
   >({
     mutationFn: async ({ idType, idFront, selfie }) => {
+      // userId comes from JWT on the backend — do not send in body
       const res = await kycService.submit({
-        userId: user!.id,
         documentType: idType,
         documentFile: idFront,
         selfieFile: selfie,
@@ -49,6 +66,7 @@ export function useSubmitKycMutation() {
           },
         });
       }
+      queryClient.invalidateQueries({ queryKey: kycKeys.me });
       queryClient.invalidateQueries({ queryKey: authKeys.me });
       toast.success("KYC documents submitted for review!");
     },
@@ -85,8 +103,18 @@ export function useUpdateKycMutation() {
       const res = await kycService.update(id, { status, notes });
       return res.data.data!;
     },
-    onSuccess: (_, { status }) => {
+    onSuccess: (_, { id, status }) => {
+      // Immediately remove the item from all KYC list caches (optimistic)
+      queryClient.setQueriesData(
+        { queryKey: kycKeys.all },
+        (old: any) => {
+          if (!old?.kycs) return old;
+          return { ...old, kycs: old.kycs.filter((k: any) => k.id !== id) };
+        },
+      );
+      // Then refetch in background to sync canonical data from backend
       queryClient.invalidateQueries({ queryKey: kycKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
       toast.success(status === "APPROVED" ? "KYC approved" : "KYC rejected");
     },
     onError: (err) => {

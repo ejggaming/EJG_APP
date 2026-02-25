@@ -66,7 +66,10 @@ export function useLoginMutation() {
 
 // ─── Register ─────────────────────────────────────────────────────────────────
 
-export function useRegisterMutation(email: () => string) {
+export function useRegisterMutation(
+  email: () => string,
+  opts?: { onSuccess?: () => void }
+) {
   const navigate = useNavigate();
 
   return useMutation<void, AxiosError<{ message: string }>, RegisterInput>({
@@ -74,11 +77,15 @@ export function useRegisterMutation(email: () => string) {
       const { confirmPassword: _, ...payload } = data;
       if (!payload.userName) delete payload.userName;
       if (!payload.phoneNumber) delete payload.phoneNumber;
-      await authService.register(payload as RegisterInput);
+      await authService.register(payload);
     },
     onSuccess: () => {
       toast.success("Account created! Check your email for the OTP.");
-      navigate(`/verify-otp?email=${encodeURIComponent(email())}`);
+      if (opts?.onSuccess) {
+        opts.onSuccess();
+      } else {
+        navigate(`/verify-otp?email=${encodeURIComponent(email())}`);
+      }
     },
     onError: (err) => {
       toast.error(err.response?.data?.message ?? "Registration failed");
