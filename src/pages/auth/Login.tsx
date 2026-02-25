@@ -66,6 +66,11 @@ export default function LoginPage() {
         <Button type="submit" fullWidth size="lg" isLoading={login.isPending}>
           Sign In
         </Button>
+        <Link to="/">
+          <Button type="button" variant="outline" fullWidth>
+            Back to Home
+          </Button>
+        </Link>
       </form>
 
       <p className="text-center text-text-muted text-sm mt-6">

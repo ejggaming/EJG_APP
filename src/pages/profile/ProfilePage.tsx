@@ -83,7 +83,7 @@ const kycStatusMap = {
 };
 
 export default function ProfilePage() {
-  const { user, balance } = useAppStore();
+  const { user, balance, isAuthenticated } = useAppStore();
   const logoutMutation = useLogoutMutation();
 
   const kycStatus = (user?.kyc?.status?.toLowerCase() ?? "none") as keyof typeof kycStatusMap;
@@ -142,7 +142,7 @@ export default function ProfilePage() {
       </div>
 
       {/* KYC Prompt */}
-      {kycStatus !== "approved" && (
+      {isAuthenticated && kycStatus !== "approved" && (
         <Card
           bento
           delay={100}
@@ -190,10 +190,23 @@ export default function ProfilePage() {
         ))}
       </div>
 
-      {/* Logout */}
-      <Button variant="danger" fullWidth onClick={handleLogout} isLoading={logoutMutation.isPending}>
-        Logout
-      </Button>
+      {/* Auth action */}
+      {isAuthenticated ? (
+        <Button
+          variant="danger"
+          fullWidth
+          onClick={handleLogout}
+          isLoading={logoutMutation.isPending}
+        >
+          Logout
+        </Button>
+      ) : (
+        <Link to="/login">
+          <Button variant="primary" fullWidth>
+            Login to Continue
+          </Button>
+        </Link>
+      )}
 
       <p className="text-center text-[10px] text-text-muted">
         JuetengPH v1.0.0 · © 2026

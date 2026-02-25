@@ -31,6 +31,20 @@ export const registerSchema = z
       .regex(/[0-9]/, "Must contain at least one number")
       .regex(/[^A-Za-z0-9]/, "Must contain at least one special character"),
     confirmPassword: z.string(),
+    role: z.enum(["PLAYER", "AGENT"]).default("PLAYER"),
+    dateOfBirth: z
+      .string()
+      .min(1, "Date of birth is required")
+      .refine((val) => {
+        const dob = new Date(val);
+        if (isNaN(dob.getTime())) return false;
+        const today = new Date();
+        const age = today.getFullYear() - dob.getFullYear();
+        const m = today.getMonth() - dob.getMonth();
+        const actualAge =
+          m < 0 || (m === 0 && today.getDate() < dob.getDate()) ? age - 1 : age;
+        return actualAge >= 18;
+      }, "You must be at least 18 years old"),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
