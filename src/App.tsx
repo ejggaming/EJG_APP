@@ -1,7 +1,10 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import AppRouter from "./routes";
 import { useSessionQuery } from "./hooks/useAuth";
 import { useAppStore } from "./store/useAppStore";
+import DragonLoader from "./components/DragonLoader";
+
+const MIN_LOADER_MS = 5000;
 
 function SessionProvider() {
   const setUser = useAppStore((s) => s.setUser);
@@ -21,16 +24,22 @@ function SessionProvider() {
 
 function App() {
   const isInitialized = useAppStore((s) => s.isInitialized);
+  const [minElapsed, setMinElapsed] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setMinElapsed(true), MIN_LOADER_MS);
+    return () => clearTimeout(t);
+  }, []);
+
+  const ready = isInitialized && minElapsed;
 
   return (
     <>
       <SessionProvider />
-      {isInitialized ? (
+      {ready ? (
         <AppRouter />
       ) : (
-        <div className="min-h-screen flex items-center justify-center bg-surface-base">
-          <div className="w-8 h-8 rounded-full border-2 border-brand-gold border-t-transparent animate-spin" />
-        </div>
+        <DragonLoader />
       )}
     </>
   );

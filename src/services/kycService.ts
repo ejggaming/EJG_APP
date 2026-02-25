@@ -31,17 +31,16 @@ interface ApiSuccess<T> {
 
 /**
  * Submit KYC using multipart/form-data.
+ * userId is taken from the JWT on the backend — do NOT send it in the body.
  * Files are uploaded to Cloudinary on the backend.
  */
 export const kycService = {
   submit: (data: {
-    userId: string;
     documentType: string;
     documentFile: File;
     selfieFile?: File;
   }) => {
     const formData = new FormData();
-    formData.append("userId", data.userId);
     formData.append("documentType", data.documentType);
     formData.append("documentFile", data.documentFile);
     if (data.selfieFile) {
@@ -52,6 +51,10 @@ export const kycService = {
       headers: { "Content-Type": "multipart/form-data" },
     });
   },
+
+  /** Get the current authenticated user's own KYC record */
+  getMyKyc: () =>
+    apiClient.get<ApiSuccess<{ kyc: KycRecord | null }>>("/kyc/me"),
 
   list: (params?: Record<string, string>) =>
     apiClient.get<

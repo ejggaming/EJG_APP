@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CardGrid, StatCard, DataTable } from "../../components/bento";
 import type { DataTableColumn } from "../../components/bento";
 import { Input, Modal } from "../../components";
+import { DrawManagementSkeleton } from "../../components/ChineseSkeleton";
 import {
   CheckCircle,
   Clock,
@@ -10,7 +11,6 @@ import {
   CalendarDays,
   Dices,
   Banknote,
-  Loader2,
   BarChart3,
   Plus,
 } from "lucide-react";
@@ -21,6 +21,7 @@ import {
   useUpdateDrawMutation,
   useCreateDrawMutation,
   useDrawSchedulesQuery,
+  useSettleDrawMutation,
   drawTypeLabel,
 } from "../../hooks/useBet";
 import type { JuetengDraw } from "../../services/betService";
@@ -38,6 +39,7 @@ export default function DrawManagement() {
   const [page, setPage] = useState(1);
   const { data, isLoading } = useAdminDrawsQuery({ page, limit: 20 });
   const updateDraw = useUpdateDrawMutation();
+  const settleDraw = useSettleDrawMutation();
   const createDraw = useCreateDrawMutation();
   const { data: schedules = [] } = useDrawSchedulesQuery();
 
@@ -51,11 +53,19 @@ export default function DrawManagement() {
   const [createDate, setCreateDate] = useState(
     () => new Date().toISOString().slice(0, 10),
   );
-  const [createType, setCreateType] = useState<"MORNING" | "AFTERNOON">(
+  const [createType, setCreateType] = useState<"MORNING" | "AFTERNOON" | "EVENING">(
     "MORNING",
   );
 
   const draws = data?.draws ?? [];
+
+  // When schedules load, default createType to the first active schedule
+  useEffect(() => {
+    const firstActive = schedules.find((s) => s.isActive);
+    if (firstActive) setCreateType(firstActive.drawType);
+  }, [schedules]);
+
+  if (isLoading) return <DrawManagementSkeleton />;
 
   const handleCreate = () => {
     const schedule = schedules.find((s) => s.drawType === createType);
@@ -192,12 +202,7 @@ export default function DrawManagement() {
       </CardGrid>
 
       {/* Draws DataTable */}
-      {isLoading ? (
-        <div className="flex justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-brand-gold" />
-        </div>
-      ) : (
-        <DataTable
+      <DataTable
           title="All Draws"
           columns={
             [
@@ -216,7 +221,7 @@ export default function DrawManagement() {
                 key: "drawType",
                 label: "Draw Time",
                 sortable: true,
-                render: (v: "MORNING" | "AFTERNOON") =>
+                render: (v: "MORNING" | "AFTERNOON" | "EVENING") =>
                   `${drawTypeLabel(v)} Draw`,
               },
               {
@@ -405,10 +410,24 @@ export default function DrawManagement() {
                   Encode
                 </button>
               )}
+              {/* DRAWN → Settle (pay winners + commissions) */}
+              {row.status === "DRAWN" && (
+                <button
+                  className="text-xs px-2.5 py-1 bg-brand-green/10 text-brand-green rounded-lg hover:bg-brand-green/15 flex items-center gap-1 transition-colors disabled:opacity-50"
+                  onClick={() =>
+                    settleDraw.mutate(row.id, {
+                      onSuccess: () => toast.success("Draw settled — commissions paid"),
+                    })
+                  }
+                  disabled={settleDraw.isPending}
+                >
+                  <CheckCircle size={14} />
+                  Settle
+                </button>
+              )}
             </>
           )}
         />
-      )}
 
       {/* Pagination */}
       {data?.pagination && data.pagination.totalPages > 1 && (
@@ -454,18 +473,18 @@ export default function DrawManagement() {
                 Draw Type
               </label>
               <div className="flex gap-2">
-                {(["MORNING", "AFTERNOON"] as const).map((type) => (
+                {schedules.filter((s) => s.isActive).map((s) => (
                   <button
-                    key={type}
+                    key={s.drawType}
                     type="button"
-                    onClick={() => setCreateType(type)}
+                    onClick={() => setCreateType(s.drawType)}
                     className={`flex-1 text-xs py-2 px-3 rounded-lg border transition-colors ${
-                      createType === type
+                      createType === s.drawType
                         ? "bg-brand-gold/15 text-brand-gold border-brand-gold/40"
                         : "bg-white/5 text-text-muted border-white/10 hover:bg-white/10"
                     }`}
                   >
-                    {drawTypeLabel(type)}
+                    {drawTypeLabel(s.drawType)}
                   </button>
                 ))}
               </div>

@@ -1,6 +1,7 @@
 import { Card, Badge } from "../../components";
 import { formatCurrency } from "../../utils";
-import { Clock, Trophy, XCircle, PartyPopper, Loader2, Wallet } from "lucide-react";
+import { Clock, Trophy, XCircle, PartyPopper, Wallet } from "lucide-react";
+import { BetHistorySkeleton } from "../../components/ChineseSkeleton";
 import { useBetHistoryQuery, useGameConfigQuery, drawTypeLabel } from "../../hooks/useBet";
 import { useMyWalletQuery } from "../../hooks/useWallet";
 
@@ -20,6 +21,8 @@ export default function BetHistoryPage() {
   const multiplier = gameConfig?.payoutMultiplier ?? 0;
   const balance = walletData?.wallet?.balance ?? 0;
   const bets = data?.bets ?? [];
+
+  if (isLoading) return <BetHistorySkeleton />;
   const totalBets = bets.length;
   const wonBets = bets.filter((b) => b.status === "WON").length;
   const totalWon = bets
@@ -95,11 +98,7 @@ export default function BetHistoryPage() {
       <div className="cloud-divider" />
 
       {/* Bet List */}
-      {isLoading ? (
-        <div className="flex justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-brand-gold" />
-        </div>
-      ) : bets.length === 0 ? (
+      {bets.length === 0 ? (
         <Card bento className="text-center py-8 lantern-card">
           <p className="text-text-muted text-sm">No bets placed yet</p>
         </Card>

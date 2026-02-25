@@ -9,17 +9,15 @@ import {
   CheckCircle,
   ExternalLink,
 } from "lucide-react";
-import Spinner from "../../components/Spinner";
+import { KycManagementSkeleton } from "../../components/ChineseSkeleton";
 import { useKycListQuery, useUpdateKycMutation } from "../../hooks/useKyc";
 import type { KycRecord, KycStatus } from "../../services/kycService";
 
 export default function KycManagement() {
   const [statusFilter, setStatusFilter] = useState<string>("");
 
-  // Build filter param for backend
-  const filterParam = statusFilter
-    ? JSON.stringify([{ status: statusFilter }])
-    : undefined;
+  // Build filter param for backend (key:value format)
+  const filterParam = statusFilter ? `status:${statusFilter}` : undefined;
 
   // Fetch all KYC records (or filtered by status)
   const {
@@ -54,7 +52,7 @@ export default function KycManagement() {
     );
   };
 
-  if (isLoading) return <Spinner />;
+  if (isLoading) return <KycManagementSkeleton />;
 
   // Status badge renderer
   const statusBadge = (status: string) => {

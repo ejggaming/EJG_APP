@@ -20,6 +20,7 @@ export interface GameConfig {
   cobradorRate: number;
   caboRate: number;
   capitalistaRate: number;
+  governmentRate: number;
   isActive: boolean;
 }
 
@@ -28,7 +29,7 @@ export interface JuetengDraw {
   id: string;
   scheduleId: string;
   drawDate: string;
-  drawType: "MORNING" | "AFTERNOON";
+  drawType: "MORNING" | "AFTERNOON" | "EVENING";
   status: "SCHEDULED" | "OPEN" | "CLOSED" | "DRAWN" | "SETTLED" | "CANCELLED";
   scheduledAt: string;
   openedAt?: string | null;
@@ -50,7 +51,7 @@ export interface JuetengDraw {
 // DrawSchedule (recurring template e.g. MORNING at 11:00)
 export interface DrawSchedule {
   id: string;
-  drawType: "MORNING" | "AFTERNOON";
+  drawType: "MORNING" | "AFTERNOON" | "EVENING";
   scheduledTime: string;
   cutoffMinutes: number;
   timeZone: string;
@@ -89,7 +90,7 @@ export const betService = {
       "/juetengConfig",
       {
         params: {
-          filter: JSON.stringify([{ isActive: true }]),
+          filter: "isActive:true",
           document: "true",
         },
       },
@@ -166,11 +167,46 @@ export const betService = {
   createDraw: (data: {
     scheduleId: string;
     drawDate: string;
-    drawType: "MORNING" | "AFTERNOON";
+    drawType: "MORNING" | "AFTERNOON" | "EVENING";
     scheduledAt: string;
   }) =>
     apiClient.post<ApiSuccess<{ juetengDraw: JuetengDraw }>>(
       "/juetengDraw",
       data,
     ),
+
+  /** Create a new draw schedule (admin) */
+  createDrawSchedule: (data: {
+    drawType: "MORNING" | "AFTERNOON" | "EVENING";
+    scheduledTime: string;
+    cutoffMinutes?: number;
+    timeZone?: string;
+    isActive?: boolean;
+  }) =>
+    apiClient.post<ApiSuccess<{ drawSchedule: DrawSchedule }>>(
+      "/drawSchedule",
+      data,
+    ),
+
+  /** Update an existing draw schedule (admin) */
+  updateDrawSchedule: (id: string, data: Partial<Omit<DrawSchedule, "id">>) =>
+    apiClient.patch<ApiSuccess<{ drawSchedule: DrawSchedule }>>(
+      `/drawSchedule/${id}`,
+      data,
+    ),
+
+  /** Delete a draw schedule (admin) */
+  deleteDrawSchedule: (id: string) =>
+    apiClient.delete<ApiSuccess<null>>(`/drawSchedule/${id}`),
+
+  /** Update the active game configuration (admin) */
+  updateGameConfig: (id: string, data: Partial<Omit<GameConfig, "id">>) =>
+    apiClient.patch<ApiSuccess<{ juetengConfig: GameConfig }>>(
+      `/juetengConfig/${id}`,
+      data,
+    ),
+
+  /** Settle a DRAWN draw — pays winners, creates commissions (admin) */
+  settleDraw: (id: string) =>
+    apiClient.post<ApiSuccess<{ draw: JuetengDraw }>>(`/juetengDraw/${id}/settle`),
 };

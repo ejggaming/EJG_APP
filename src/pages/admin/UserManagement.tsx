@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { CardGrid, StatCard, DataTable } from "../../components/bento";
 import type { DataTableColumn } from "../../components/bento";
 import {
@@ -9,18 +10,18 @@ import {
   ShieldAlert,
   Ban,
   CheckCircle,
+  ArrowRight,
 } from "lucide-react";
-import Spinner from "../../components/Spinner";
+import { UserManagementSkeleton } from "../../components/ChineseSkeleton";
 import toast from "react-hot-toast";
-import { useKycListQuery, useUpdateKycMutation } from "../../hooks/useKyc";
 import { useAllUsersQuery } from "../../hooks/useAdmin";
 import type { AdminUser } from "../../hooks/useAdmin";
 
 export default function UserManagement() {
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("");
-  const [hiddenKycIds, setHiddenKycIds] = useState<Set<string>>(new Set());
 
   // Debounce search — only update query after 400ms of no typing
   useEffect(() => {
@@ -29,39 +30,20 @@ export default function UserManagement() {
   }, [search]);
 
   // Real user list
-  const {
-    data: usersData,
-    isLoading,
-    refetch: refetchUsers,
-  } = useAllUsersQuery({
+  const { data: usersData, isLoading } = useAllUsersQuery({
     search: debouncedSearch || undefined,
     role: roleFilter || undefined,
     limit: 100,
   });
 
-  // Real KYC pending submissions
-  const {
-    data: kycData,
-    isLoading: isKycLoading,
-    refetch: refetchKyc,
-  } = useKycListQuery({
-    filter: '[{"status":"PENDING"}]',
-    pagination: "true",
-    document: "true",
-    count: "true",
-  });
-  const updateKyc = useUpdateKycMutation();
-
   const users = usersData?.users ?? [];
   const totalUsers = usersData?.count ?? 0;
   const activeUsers = users.filter((u) => u.status === "active").length;
   const suspendedUsers = users.filter((u) => u.status === "suspended").length;
-  const pendingKycs = (kycData?.kycs ?? []).filter(
-    (k) => !hiddenKycIds.has(k.id),
-  );
-  const kycPending = pendingKycs.length;
+  // Derived from the already-loaded users list — always consistent with the table
+  const kycPending = users.filter((u) => u.kyc?.status === "PENDING").length;
 
-  if (isLoading) return <Spinner />;
+  if (isLoading) return <UserManagementSkeleton />;
 
   return (
     <div className="space-y-6">
@@ -108,122 +90,27 @@ export default function UserManagement() {
         />
       </CardGrid>
 
-      {/* KYC Review Queue — real data */}
-      <div className="bg-surface-card border border-border-default rounded-2xl p-4">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-lg font-semibold text-text-primary">
-              KYC Review Queue
-            </h2>
-            <p className="text-sm text-text-muted">
-              Pending identity verifications
-            </p>
-          </div>
-          {kycPending > 0 && (
-            <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-brand-gold/10 text-brand-gold">
-              {kycPending} pending
+      {/* KYC notification banner — redirect to KYC page */}
+      {kycPending > 0 && (
+        <button
+          onClick={() => navigate("/admin/kyc")}
+          className="w-full flex items-center justify-between px-4 py-3 bg-brand-gold/10 border border-brand-gold/30 rounded-xl hover:bg-brand-gold/15 transition-colors group"
+        >
+          <div className="flex items-center gap-3">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-gold opacity-75" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-brand-gold" />
             </span>
-          )}
-        </div>
-
-        {isKycLoading ? (
-          <div className="flex justify-center py-8">
-            <div className="w-6 h-6 rounded-full border-2 border-brand-gold border-t-transparent animate-spin" />
+            <span className="text-sm font-medium text-brand-gold">
+              {kycPending} KYC submission{kycPending !== 1 ? "s" : ""} pending review
+            </span>
           </div>
-        ) : !pendingKycs.length ? (
-          <p className="text-center text-text-muted text-sm py-8">
-            No pending KYC submissions
-          </p>
-        ) : (
-          <div className="space-y-2">
-            {pendingKycs.map((kyc) => (
-              <div
-                key={kyc.id}
-                className="flex items-center justify-between p-3 bg-surface-elevated rounded-xl"
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-text-primary">
-                    Doc:{" "}
-                    <span className="text-text-muted">
-                      {kyc.documentType.replace(":", " #").replace("_", " ")}
-                    </span>
-                  </p>
-                  <p className="text-xs text-text-muted font-mono mt-0.5">
-                    UID: {kyc.userId} ·{" "}
-                    {kyc.submittedAt
-                      ? new Date(kyc.submittedAt).toLocaleDateString()
-                      : "—"}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 ml-3 shrink-0">
-                  {kyc.documentUrl && (
-                    <a
-                      href={kyc.documentUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs px-2.5 py-1 bg-brand-blue/10 text-brand-blue-light rounded-lg hover:bg-brand-blue/15 transition-colors"
-                    >
-                      View ID
-                    </a>
-                  )}
-                  {kyc.selfieUrl && (
-                    <a
-                      href={kyc.selfieUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs px-2.5 py-1 bg-brand-blue/10 text-brand-blue-light rounded-lg hover:bg-brand-blue/15 transition-colors"
-                    >
-                      Selfie
-                    </a>
-                  )}
-                  <button
-                    className="text-xs px-2.5 py-1 bg-brand-green/10 text-brand-green-light rounded-lg hover:bg-brand-green/15 flex items-center gap-1 transition-colors disabled:opacity-50"
-                    disabled={updateKyc.isPending}
-                    onClick={() =>
-                      updateKyc.mutate(
-                        { id: kyc.id, status: "APPROVED" },
-                        {
-                          onSuccess: () => {
-                            setHiddenKycIds((prev) =>
-                              new Set([...prev, kyc.id]),
-                            );
-                            refetchKyc();
-                            refetchUsers();
-                          },
-                        },
-                      )
-                    }
-                  >
-                    <CheckCircle size={13} />
-                    Approve
-                  </button>
-                  <button
-                    className="text-xs px-2.5 py-1 bg-brand-red/10 text-brand-red-light rounded-lg hover:bg-brand-red/15 flex items-center gap-1 transition-colors disabled:opacity-50"
-                    disabled={updateKyc.isPending}
-                    onClick={() =>
-                      updateKyc.mutate(
-                        { id: kyc.id, status: "REJECTED" },
-                        {
-                          onSuccess: () => {
-                            setHiddenKycIds((prev) =>
-                              new Set([...prev, kyc.id]),
-                            );
-                            refetchKyc();
-                            refetchUsers();
-                          },
-                        },
-                      )
-                    }
-                  >
-                    <ShieldAlert size={13} />
-                    Reject
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+          <span className="flex items-center gap-1 text-xs text-brand-gold/80 group-hover:text-brand-gold transition-colors">
+            Review in KYC Management
+            <ArrowRight size={14} />
+          </span>
+        </button>
+      )}
 
       {/* Search / Filter Bar */}
       <div className="flex items-center gap-3">
@@ -394,50 +281,13 @@ export default function UserManagement() {
         actions={(row: AdminUser) => (
           <>
             {row.kyc?.status === "PENDING" && (
-              <>
-                <button
-                  className="text-xs px-2.5 py-1 bg-brand-green/10 text-brand-green-light rounded-lg hover:bg-brand-green/15 flex items-center gap-1 transition-colors disabled:opacity-50"
-                  disabled={updateKyc.isPending}
-                  onClick={() =>
-                    updateKyc.mutate(
-                      { id: row.kyc!.id, status: "APPROVED" },
-                      {
-                        onSuccess: () => {
-                          setHiddenKycIds((prev) =>
-                            new Set([...prev, row.kyc!.id]),
-                          );
-                          refetchKyc();
-                          refetchUsers();
-                        },
-                      },
-                    )
-                  }
-                >
-                  <CheckCircle size={14} />
-                  Approve KYC
-                </button>
-                <button
-                  className="text-xs px-2.5 py-1 bg-brand-red/10 text-brand-red-light rounded-lg hover:bg-brand-red/15 flex items-center gap-1 transition-colors disabled:opacity-50"
-                  disabled={updateKyc.isPending}
-                  onClick={() =>
-                    updateKyc.mutate(
-                      { id: row.kyc!.id, status: "REJECTED" },
-                      {
-                        onSuccess: () => {
-                          setHiddenKycIds((prev) =>
-                            new Set([...prev, row.kyc!.id]),
-                          );
-                          refetchKyc();
-                          refetchUsers();
-                        },
-                      },
-                    )
-                  }
-                >
-                  <ShieldAlert size={14} />
-                  Reject KYC
-                </button>
-              </>
+              <button
+                onClick={() => navigate("/admin/kyc")}
+                className="text-xs px-2.5 py-1 bg-brand-gold/10 text-brand-gold rounded-lg hover:bg-brand-gold/15 flex items-center gap-1 transition-colors"
+              >
+                <ShieldAlert size={14} />
+                Review KYC
+              </button>
             )}
             <button className="text-xs px-2.5 py-1 bg-brand-blue/10 text-brand-blue-light rounded-lg hover:bg-brand-blue/15 flex items-center gap-1 transition-colors">
               <Edit2 size={14} />

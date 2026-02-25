@@ -14,7 +14,7 @@ import {
   CheckCircle,
   XCircle,
 } from "lucide-react";
-import Spinner from "../../components/Spinner";
+import { FinanceSkeleton } from "../../components/ChineseSkeleton";
 import { Button } from "../../components";
 import { useAdminTransactionsQuery } from "../../hooks/useAdmin";
 import type { AdminTransaction } from "../../hooks/useAdmin";
@@ -58,7 +58,7 @@ export default function FinanceManagement() {
     .reduce((s, t) => s + t.amount, 0);
   const pendingAmount = pendingTx.reduce((s, t) => s + t.amount, 0);
 
-  if (isLoading) return <Spinner />;
+  if (isLoading) return <FinanceSkeleton />;
 
   return (
     <div className="space-y-6">

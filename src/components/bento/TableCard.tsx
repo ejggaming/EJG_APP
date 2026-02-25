@@ -34,15 +34,15 @@ export function TableCard({
       >
         <h3 className="text-sm font-medium text-text-primary">{title}</h3>
       </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto overscroll-x-contain touch-pan-x">
+        <table className="w-full min-w-[760px] text-sm">
           <thead>
             <tr style={{ borderBottom: "1px solid var(--glass-divider)" }}>
               {columns.map((col) => (
                 <th
                   key={col.key}
                   className={cn(
-                    "px-5 py-2.5 text-xs font-medium text-text-muted text-left",
+                    "px-5 py-2.5 text-xs font-medium text-text-muted text-left whitespace-nowrap",
                     col.align === "center" && "text-center",
                     col.align === "right" && "text-right",
                   )}
@@ -64,7 +64,7 @@ export function TableCard({
                   <td
                     key={col.key}
                     className={cn(
-                      "px-5 py-2.5 text-text-secondary",
+                      "px-5 py-2.5 text-text-secondary whitespace-nowrap",
                       col.align === "center" && "text-center",
                       col.align === "right" && "text-right",
                     )}

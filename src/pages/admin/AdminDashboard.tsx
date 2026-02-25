@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   CardGrid,
@@ -20,7 +21,13 @@ import {
   Clock,
   Eye,
 } from "lucide-react";
-import Spinner from "../../components/Spinner";
+import { AdminDashboardSkeleton } from "../../components/ChineseSkeleton";
+import {
+  DateRangeFilter,
+  getInitialDateRange,
+  dateRangeLabel,
+} from "../../components/DateRangeFilter";
+import type { DateRange } from "../../components/DateRangeFilter";
 
 /* ── Donut ring component (pure CSS) ── */
 function DonutChart({
@@ -120,13 +127,18 @@ function TransactionRow({
 }
 
 export default function AdminDashboard() {
+  const [dateRange, setDateRange] = useState<DateRange>(
+    getInitialDateRange("today"),
+  );
+
   const {
     data: dashboardData,
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["admin-dashboard"],
+    queryKey: ["admin-dashboard", dateRange.from, dateRange.to],
     queryFn: async () => {
+      // Fake data — swap for real API using dateRange.from / dateRange.to
       return {
         totalUsers: 12450,
         activeUsers: 3890,
@@ -156,46 +168,11 @@ export default function AdminDashboard() {
           { label: "Other", value: 37000, color: "#16a34a" },
         ],
         recentTransactions: [
-          {
-            id: 1,
-            user: "Maria Santos",
-            type: "deposit",
-            amount: "₱1,000",
-            method: "GCash",
-            time: "2 min ago",
-          },
-          {
-            id: 2,
-            user: "Pedro Reyes",
-            type: "withdrawal",
-            amount: "₱500",
-            method: "Maya",
-            time: "5 min ago",
-          },
-          {
-            id: 3,
-            user: "Anna Cruz",
-            type: "bet",
-            amount: "₱2,500",
-            method: "Wallet",
-            time: "12 min ago",
-          },
-          {
-            id: 4,
-            user: "Jose Garcia",
-            type: "payout",
-            amount: "₱15,000",
-            method: "Auto",
-            time: "30 min ago",
-          },
-          {
-            id: 5,
-            user: "Rosa Bautista",
-            type: "deposit",
-            amount: "₱3,000",
-            method: "Bank",
-            time: "1 hr ago",
-          },
+          { id: 1, user: "Maria Santos", type: "deposit", amount: "₱1,000", method: "GCash", time: "2 min ago" },
+          { id: 2, user: "Pedro Reyes", type: "withdrawal", amount: "₱500", method: "Maya", time: "5 min ago" },
+          { id: 3, user: "Anna Cruz", type: "bet", amount: "₱2,500", method: "Wallet", time: "12 min ago" },
+          { id: 4, user: "Jose Garcia", type: "payout", amount: "₱15,000", method: "Auto", time: "30 min ago" },
+          { id: 5, user: "Rosa Bautista", type: "deposit", amount: "₱3,000", method: "Bank", time: "1 hr ago" },
         ],
         topRegions: [
           { name: "NCR", bets: 145, revenue: 52000, pct: 38 },
@@ -209,7 +186,7 @@ export default function AdminDashboard() {
     staleTime: 5 * 60 * 1000,
   });
 
-  if (isLoading) return <Spinner />;
+  if (isLoading) return <AdminDashboardSkeleton />;
   if (error)
     return <div className="text-brand-red-light">Failed to load data</div>;
 
@@ -231,6 +208,8 @@ export default function AdminDashboard() {
       bg: "bg-brand-blue/15",
     },
   };
+
+  const rangeLabel = dateRangeLabel(dateRange);
 
   return (
     <div className="space-y-5">
@@ -269,22 +248,22 @@ export default function AdminDashboard() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-4">
             {[
               {
-                label: "Today's Deposits",
+                label: "Deposits",
                 value: `₱${(dashboardData?.todayDeposits ?? 0).toLocaleString()}`,
                 positive: true,
               },
               {
-                label: "Today's Withdrawals",
+                label: "Withdrawals",
                 value: `₱${(dashboardData?.todayWithdrawals ?? 0).toLocaleString()}`,
                 positive: false,
               },
               {
-                label: "Today's Bets",
+                label: "Bets",
                 value: `₱${(dashboardData?.todayBets ?? 0).toLocaleString()}`,
                 positive: true,
               },
               {
-                label: "Today's Payouts",
+                label: "Payouts",
                 value: `₱${(dashboardData?.todayPayouts ?? 0).toLocaleString()}`,
                 positive: false,
               },
@@ -321,6 +300,19 @@ export default function AdminDashboard() {
             </p>
           </div>
         </div>
+      </div>
+
+      {/* ── Date Range Filter ── */}
+      <div className="bg-surface-card border border-border-default rounded-2xl px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">
+            Viewing data for
+          </p>
+          <p className="text-sm font-medium text-text-primary mt-0.5">
+            {rangeLabel}
+          </p>
+        </div>
+        <DateRangeFilter value={dateRange} onChange={setDateRange} />
       </div>
 
       {/* ── Key Metrics ── */}
@@ -373,7 +365,7 @@ export default function AdminDashboard() {
         <div className="lg:col-span-2">
           <ChartCard
             title="Revenue Breakdown"
-            subtitle="This month"
+            subtitle={rangeLabel}
             className="h-full"
           >
             <div className="flex items-center justify-center h-full py-2">
@@ -415,7 +407,7 @@ export default function AdminDashboard() {
       <CardGrid columns={2}>
         <ChartCard
           title="Revenue Trend"
-          subtitle="Last 7 days"
+          subtitle={rangeLabel}
           action={<BarChart3 size={18} />}
         >
           <div className="h-full flex items-center justify-center text-text-muted">

@@ -13,6 +13,7 @@ import {
   Loader2,
   type LucideIcon,
 } from "lucide-react";
+import { WalletSkeleton } from "../../components/ChineseSkeleton";
 
 const txTypeStyles: Record<
   string,
@@ -44,6 +45,8 @@ export default function WalletDashboard() {
 
   const stats = data?.stats;
   const transactions: Transaction[] = data?.wallet?.transactions ?? [];
+
+  if (isLoading) return <WalletSkeleton />;
 
   return (
     <div className="space-y-4">

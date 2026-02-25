@@ -51,6 +51,7 @@ import DrawManagement from "../pages/admin/DrawManagement";
 import FinanceManagement from "../pages/admin/FinanceManagement";
 import KycManagement from "../pages/admin/KycManagement";
 import Reports from "../pages/admin/Reports";
+import AuditLog from "../pages/admin/AuditLog";
 import SystemSettings from "../pages/admin/SystemSettings";
 
 const router = createBrowserRouter([
@@ -128,6 +129,7 @@ const router = createBrowserRouter([
       { path: "/admin/draws", element: <DrawManagement /> },
       { path: "/admin/finance", element: <FinanceManagement /> },
       { path: "/admin/reports", element: <Reports /> },
+      { path: "/admin/audit-log", element: <AuditLog /> },
       { path: "/admin/settings", element: <SystemSettings /> },
     ],
   },
