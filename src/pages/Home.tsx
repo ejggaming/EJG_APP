@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Card, Badge, Button } from "../components";
+import { Card, Button } from "../components";
 import { useAppStore } from "../store/useAppStore";
 import { formatCurrency } from "../utils";
 import {
@@ -16,9 +16,7 @@ import {
   useTodaysDrawsQuery,
   useDrawResultsQuery,
   useGameConfigQuery,
-  drawLabel,
   drawTypeLabel,
-  drawUIStatus,
 } from "../hooks/useBet";
 
 export default function HomePage() {
@@ -35,13 +33,13 @@ export default function HomePage() {
 
   const topPrize = gameConfig
     ? formatCurrency(gameConfig.maxBet * gameConfig.payoutMultiplier)
-    : "₱50K";
-  const minBet = gameConfig ? formatCurrency(gameConfig.minBet) : "₱5";
+    : '';
+  const minBet = gameConfig ? formatCurrency(gameConfig.minBet) : '';
   const maxNumber = gameConfig?.maxNumber ?? 37;
 
   return (
     <div className="space-y-6">
-      {/* Welcome & Balance — Auspicious Hero Card */}
+      {/* Welcome & Balance - Auspicious Hero Card */}
       {isAuthenticated ? (
         <div
           className="auspicious-bg chinese-frame rounded-2xl overflow-hidden bento-card"
@@ -60,7 +58,7 @@ export default function HomePage() {
             </h2>
             <div className="mt-4 bg-black/20 rounded-lg p-3">
               <p className="text-brand-gold-light/80 text-[10px] uppercase tracking-widest">
-                ✦ Wallet Balance ✦
+                * Wallet Balance *
               </p>
               <p className="text-3xl font-extrabold gold-shimmer mt-1">
                 {formatCurrency(balance)}
@@ -99,7 +97,7 @@ export default function HomePage() {
             </h2>
             <p className="text-white/80 text-sm mb-4">
               Pick your lucky numbers and win up to{" "}
-              <span className="gold-shimmer font-bold">₱50,000!</span>
+              <span className="gold-shimmer font-bold">PHP 50,000!</span>
             </p>
             <div className="flex justify-center gap-3">
               <Link to="/login">
@@ -117,8 +115,7 @@ export default function HomePage() {
           </div>
         </div>
       )}
-
-      {/* Quick Stats — Bento Fortune tokens */}
+      {/* Quick Stats - Bento Fortune tokens */}
       <div className="grid grid-cols-3 gap-3">
         <Card bento delay={100} className="text-center lantern-card">
           <Trophy className="w-5 h-5 text-brand-gold/60 mx-auto mb-1.5" />
@@ -155,7 +152,7 @@ export default function HomePage() {
             to="/results"
             className="text-brand-gold text-sm hover:underline"
           >
-            View All →
+            View All -&gt;
           </Link>
         </div>
         <div className="space-y-2">
@@ -167,7 +164,16 @@ export default function HomePage() {
             </Card>
           ) : (
             todaysDraws.map((draw, idx) => {
-              const uiStatus = drawUIStatus(draw.status);
+              const isOpen = draw.status === "OPEN";
+              const drawTimeLabel = (() => {
+                const scheduled = new Date(draw.scheduledAt);
+                return Number.isNaN(scheduled.getTime())
+                  ? drawTypeLabel(draw.drawType)
+                  : scheduled.toLocaleTimeString("en-US", {
+                      hour: "numeric",
+                      minute: "2-digit",
+                    });
+              })();
               return (
                 <Card
                   key={draw.id}
@@ -189,7 +195,7 @@ export default function HomePage() {
                     </div>
                     <div>
                       <p className="font-semibold text-text-primary text-sm">
-                        {drawLabel(draw)}
+                        {`${drawTimeLabel} Draw`}
                       </p>
                       <p className="text-text-muted text-xs">
                         {new Date(draw.drawDate).toLocaleDateString("en-US", {
@@ -200,22 +206,15 @@ export default function HomePage() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={uiStatus === "open" ? "green" : "gold"}>
-                      {uiStatus === "open"
-                        ? "Open"
-                        : uiStatus === "upcoming"
-                          ? "Upcoming"
-                          : "Closed"}
-                    </Badge>
-                    {uiStatus === "open" && (
+                  {isOpen && (
+                    <div className="flex items-center">
                       <Link to="/bet">
                         <Button size="sm" variant="primary">
                           Bet Now
                         </Button>
                       </Link>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </Card>
               );
             })
@@ -236,14 +235,14 @@ export default function HomePage() {
             to="/results"
             className="text-brand-gold text-sm hover:underline"
           >
-            See All →
+            See All -&gt;
           </Link>
         </div>
         <div className="space-y-2">
           {recentResults.length === 0 ? (
             <Card className="text-center py-6 lantern-card">
               <p className="text-text-muted text-sm">
-                No results yet — stay tuned!
+                No results yet - stay tuned!
               </p>
             </Card>
           ) : (
@@ -289,8 +288,7 @@ export default function HomePage() {
           )}
         </div>
       </section>
-
-      {/* How to Play — Scroll style */}
+      {/* How to Play - Scroll style */}
       <section className="bento-section" style={{ animationDelay: "450ms" }}>
         <h3 className="font-bold text-text-primary mb-3 chinese-header">
           How to Play
@@ -319,7 +317,7 @@ export default function HomePage() {
               {
                 step: 4,
                 title: "Win Prizes!",
-                desc: "Match both numbers to win up to ₱50,000",
+                desc: "Match both numbers to win up to PHP 50,000",
                 Icon: Trophy,
               },
             ].map((item) => (
