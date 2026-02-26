@@ -61,7 +61,9 @@ const ACTION_OPTIONS = [
 ];
 
 export default function AuditLog() {
-  const [dateRange, setDateRange] = useState<DateRange>(getInitialDateRange("month"));
+  const [dateRange, setDateRange] = useState<DateRange>(
+    getInitialDateRange("month"),
+  );
   const [actionFilter, setActionFilter] = useState("");
   const [verifyResult, setVerifyResult] = useState<VerifyResult | null>(null);
   const [verifying, setVerifying] = useState(false);
@@ -107,7 +109,11 @@ export default function AuditLog() {
       render: (v: string) => (
         <span className="text-xs text-text-muted font-mono whitespace-nowrap">
           {new Date(v).toLocaleString("en-US", {
-            month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit",
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
           })}
         </span>
       ),
@@ -117,10 +123,13 @@ export default function AuditLog() {
       label: "Action",
       sortable: true,
       render: (v: string) => {
-        const color = ACTION_COLORS[v] ?? "text-text-secondary bg-surface-elevated";
+        const color =
+          ACTION_COLORS[v] ?? "text-text-secondary bg-surface-elevated";
         const label = ACTION_LABELS[v] ?? v.replace(/_/g, " ");
         return (
-          <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ${color}`}>
+          <span
+            className={`text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ${color}`}
+          >
             {label}
           </span>
         );
@@ -137,20 +146,29 @@ export default function AuditLog() {
         return (
           <div className="flex items-center gap-2 flex-wrap">
             {severity && (
-              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${SEVERITY_COLORS[severity] ?? "text-text-muted"}`}>
+              <span
+                className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${SEVERITY_COLORS[severity] ?? "text-text-muted"}`}
+              >
                 {severity}
               </span>
             )}
             {amount != null && (
-              <span className="text-xs text-text-secondary font-mono">₱{Number(amount).toLocaleString()}</span>
+              <span className="text-xs text-text-secondary font-mono">
+                ₱{Number(amount).toLocaleString()}
+              </span>
             )}
             {v.reasons?.[0] && (
-              <span className="text-[11px] text-text-muted truncate max-w-[180px]" title={v.reasons.join("; ")}>
+              <span
+                className="text-[11px] text-text-muted truncate max-w-[180px]"
+                title={v.reasons.join("; ")}
+              >
                 {v.reasons[0]}
               </span>
             )}
             {row.action === "TRANSACTION_APPROVED" && (
-              <span className="text-[11px] text-brand-green">Balance → ₱{Number(v.newBalance ?? 0).toLocaleString()}</span>
+              <span className="text-[11px] text-brand-green">
+                Balance → ₱{Number(v.newBalance ?? 0).toLocaleString()}
+              </span>
             )}
             {row.action === "TRANSACTION_REJECTED" && v.reason && (
               <span className="text-[11px] text-brand-gold">{v.reason}</span>
@@ -172,7 +190,9 @@ export default function AuditLog() {
       label: "Actor",
       sortable: true,
       render: (v: string) => (
-        <span className="text-xs text-text-secondary truncate max-w-[140px] block">{v}</span>
+        <span className="text-xs text-text-secondary truncate max-w-[140px] block">
+          {v}
+        </span>
       ),
     },
     {
@@ -210,16 +230,28 @@ export default function AuditLog() {
           </Button>
           <Button
             size="sm"
-            variant={verifyResult === null ? "outline" : verifyResult.valid ? "green" : "danger"}
+            variant={
+              verifyResult === null
+                ? "outline"
+                : verifyResult.valid
+                  ? "green"
+                  : "danger"
+            }
             onClick={handleVerify}
             isLoading={verifying}
           >
             {verifyResult?.valid ? (
-              <><ShieldCheck size={13} className="mr-1" /> Chain Valid</>
+              <>
+                <ShieldCheck size={13} className="mr-1" /> Chain Valid
+              </>
             ) : verifyResult && !verifyResult.valid ? (
-              <><ShieldAlert size={13} className="mr-1" /> Chain Broken</>
+              <>
+                <ShieldAlert size={13} className="mr-1" /> Chain Broken
+              </>
             ) : (
-              <><Shield size={13} className="mr-1" /> Verify Chain</>
+              <>
+                <Shield size={13} className="mr-1" /> Verify Chain
+              </>
             )}
           </Button>
         </div>
@@ -246,7 +278,9 @@ export default function AuditLog() {
                 : "Audit chain integrity violation detected"}
             </p>
             {!verifyResult.valid && (
-              <p className="text-xs mt-0.5 opacity-80">{verifyResult.brokenReason}</p>
+              <p className="text-xs mt-0.5 opacity-80">
+                {verifyResult.brokenReason}
+              </p>
             )}
           </div>
         </div>
@@ -264,7 +298,9 @@ export default function AuditLog() {
             className="text-sm bg-surface-elevated border border-border-default rounded-lg px-3 py-1.5 text-text-primary focus:outline-none focus:border-brand-gold"
           >
             {ACTION_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
             ))}
           </select>
         </div>
@@ -280,7 +316,10 @@ export default function AuditLog() {
           },
           {
             label: "Suspicious Alerts",
-            value: data?.logs.filter((l) => l.action === "SUSPICIOUS_TRANSACTION_ALERT").length ?? 0,
+            value:
+              data?.logs.filter(
+                (l) => l.action === "SUSPICIOUS_TRANSACTION_ALERT",
+              ).length ?? 0,
             color: "text-brand-red",
           },
           {
@@ -289,9 +328,14 @@ export default function AuditLog() {
             color: "text-brand-green",
           },
         ].map((stat) => (
-          <div key={stat.label} className="bg-surface-card border border-border-default rounded-xl p-4">
+          <div
+            key={stat.label}
+            className="bg-surface-card border border-border-default rounded-xl p-4"
+          >
             <p className="text-xs text-text-muted mb-1">{stat.label}</p>
-            <p className={`text-2xl font-bold ${stat.color}`}>{stat.value.toLocaleString()}</p>
+            <p className={`text-2xl font-bold ${stat.color}`}>
+              {stat.value.toLocaleString()}
+            </p>
           </div>
         ))}
       </div>

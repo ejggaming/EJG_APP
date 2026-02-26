@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { CardGrid, StatCard, DataTable } from "../../components/bento";
-import type { DataTableColumn } from "../../components/bento";
+import type { DataTableColumn, MenuAction } from "../../components/bento";
 import {
   ShieldCheck,
   ShieldAlert,
@@ -8,13 +8,16 @@ import {
   FileWarning,
   CheckCircle,
   ExternalLink,
+  Eye,
 } from "lucide-react";
 import { KycManagementSkeleton } from "../../components/ChineseSkeleton";
+import { DetailModal } from "../../components/DetailModal";
 import { useKycListQuery, useUpdateKycMutation } from "../../hooks/useKyc";
 import type { KycRecord, KycStatus } from "../../services/kycService";
 
 export default function KycManagement() {
   const [statusFilter, setStatusFilter] = useState<string>("");
+  const [viewRecord, setViewRecord] = useState<KycRecord | null>(null);
 
   // Build filter param for backend (key:value format)
   const filterParam = statusFilter ? `status:${statusFilter}` : undefined;
@@ -248,70 +251,135 @@ export default function KycManagement() {
         data={records}
         pageSize={10}
         exportable
-        actions={(row: KycRecord) => (
-          <>
-            {row.status === "PENDING" && (
-              <>
-                <button
-                  className="text-xs px-2.5 py-1 bg-brand-green/10 text-brand-green-light rounded-lg hover:bg-brand-green/15 flex items-center gap-1 transition-colors disabled:opacity-50"
-                  disabled={updateKyc.isPending}
-                  onClick={() => handleAction(row.id, "APPROVED")}
-                >
-                  <CheckCircle size={14} />
-                  Approve
-                </button>
-                <button
-                  className="text-xs px-2.5 py-1 bg-brand-red/10 text-brand-red-light rounded-lg hover:bg-brand-red/15 flex items-center gap-1 transition-colors disabled:opacity-50"
-                  disabled={updateKyc.isPending}
-                  onClick={() => handleAction(row.id, "REJECTED")}
-                >
-                  <ShieldAlert size={14} />
-                  Reject
-                </button>
-                <button
-                  className="text-xs px-2.5 py-1 bg-orange-500/10 text-orange-400 rounded-lg hover:bg-orange-500/15 flex items-center gap-1 transition-colors disabled:opacity-50"
-                  disabled={updateKyc.isPending}
-                  onClick={() => handleAction(row.id, "REQUIRES_MORE_INFO")}
-                >
-                  <FileWarning size={14} />
-                  More Info
-                </button>
-              </>
-            )}
-            {row.status === "REQUIRES_MORE_INFO" && (
-              <>
-                <button
-                  className="text-xs px-2.5 py-1 bg-brand-green/10 text-brand-green-light rounded-lg hover:bg-brand-green/15 flex items-center gap-1 transition-colors disabled:opacity-50"
-                  disabled={updateKyc.isPending}
-                  onClick={() => handleAction(row.id, "APPROVED")}
-                >
-                  <CheckCircle size={14} />
-                  Approve
-                </button>
-                <button
-                  className="text-xs px-2.5 py-1 bg-brand-red/10 text-brand-red-light rounded-lg hover:bg-brand-red/15 flex items-center gap-1 transition-colors disabled:opacity-50"
-                  disabled={updateKyc.isPending}
-                  onClick={() => handleAction(row.id, "REJECTED")}
-                >
-                  <ShieldAlert size={14} />
-                  Reject
-                </button>
-              </>
-            )}
-            {row.documentUrl && (
-              <a
-                href={row.documentUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs px-2.5 py-1 bg-brand-blue/10 text-brand-blue-light rounded-lg hover:bg-brand-blue/15 flex items-center gap-1 transition-colors"
-              >
-                <ExternalLink size={14} />
-                View Doc
-              </a>
-            )}
-          </>
-        )}
+        actions={(row: KycRecord): MenuAction[] | null => {
+          const items: MenuAction[] = [
+            {
+              label: "View Details",
+              icon: <Eye size={14} />,
+              variant: "default",
+              onClick: () => setViewRecord(row),
+            },
+          ];
+          if (row.documentUrl) {
+            items.push({
+              label: "View Document",
+              icon: <ExternalLink size={14} />,
+              variant: "default",
+              onClick: () => window.open(row.documentUrl!, "_blank", "noopener,noreferrer"),
+            });
+          }
+          if (row.status === "PENDING" || row.status === "REQUIRES_MORE_INFO") {
+            items.push({
+              label: "Approve",
+              icon: <CheckCircle size={14} />,
+              variant: "success",
+              separator: !!row.documentUrl,
+              disabled: updateKyc.isPending,
+              onClick: () => handleAction(row.id, "APPROVED"),
+            });
+            items.push({
+              label: "Reject",
+              icon: <ShieldAlert size={14} />,
+              variant: "danger",
+              disabled: updateKyc.isPending,
+              onClick: () => handleAction(row.id, "REJECTED"),
+            });
+          }
+          if (row.status === "PENDING") {
+            items.push({
+              label: "Request More Info",
+              icon: <FileWarning size={14} />,
+              variant: "warning",
+              disabled: updateKyc.isPending,
+              onClick: () => handleAction(row.id, "REQUIRES_MORE_INFO"),
+            });
+          }
+          return items.length > 0 ? items : null;
+        }}
       />
+
+      {/* KYC Detail Modal */}
+      {viewRecord && (
+        <DetailModal
+          isOpen={!!viewRecord}
+          onClose={() => setViewRecord(null)}
+          title="KYC Submission Details"
+          sections={[
+            {
+              title: "Application",
+              fields: [
+                {
+                  label: "User ID",
+                  value: (
+                    <span className="font-mono text-xs">{viewRecord.userId}</span>
+                  ),
+                  wide: true,
+                },
+                {
+                  label: "Document Type",
+                  value: viewRecord.documentType
+                    .replace(/_/g, " ")
+                    .replace(":", " #"),
+                },
+                { label: "Status", value: viewRecord.status },
+              ],
+            },
+            {
+              title: "Documents",
+              fields: [
+                {
+                  label: "ID Document",
+                  value: viewRecord.documentUrl ? (
+                    <a
+                      href={viewRecord.documentUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-brand-blue-light underline underline-offset-2 flex items-center gap-1"
+                    >
+                      <ExternalLink size={11} /> View
+                    </a>
+                  ) : null,
+                },
+                {
+                  label: "Selfie",
+                  value: viewRecord.selfieUrl ? (
+                    <a
+                      href={viewRecord.selfieUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-brand-blue-light underline underline-offset-2 flex items-center gap-1"
+                    >
+                      <ExternalLink size={11} /> View
+                    </a>
+                  ) : null,
+                },
+                {
+                  label: "Notes",
+                  value: viewRecord.notes,
+                  wide: true,
+                },
+              ],
+            },
+            {
+              title: "Timeline",
+              fields: [
+                {
+                  label: "Submitted",
+                  value: viewRecord.submittedAt
+                    ? new Date(viewRecord.submittedAt).toLocaleString()
+                    : null,
+                },
+                {
+                  label: "Reviewed",
+                  value: viewRecord.reviewedAt
+                    ? new Date(viewRecord.reviewedAt).toLocaleString()
+                    : null,
+                },
+              ],
+            },
+          ]}
+        />
+      )}
     </div>
   );
 }

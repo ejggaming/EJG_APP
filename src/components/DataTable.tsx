@@ -1,4 +1,5 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { cn } from "../utils/cn";
 import {
   ChevronUp,
@@ -9,6 +10,7 @@ import {
   Upload,
   ChevronLeft,
   ChevronRight,
+  MoreVertical,
 } from "lucide-react";
 
 /* ── Types ── */
@@ -21,11 +23,20 @@ export interface DataTableColumn<T = any> {
   render?: (value: any, row: T) => React.ReactNode;
 }
 
+export interface MenuAction {
+  label: string;
+  icon?: React.ReactNode;
+  onClick: () => void;
+  variant?: "default" | "success" | "danger" | "warning";
+  disabled?: boolean;
+  separator?: boolean;
+}
+
 interface DataTableProps<T = any> {
   title?: string;
   columns: DataTableColumn<T>[];
   data: T[];
-  actions?: (row: T) => React.ReactNode;
+  actions?: (row: T) => MenuAction[] | null | undefined;
   pageSize?: number;
   exportable?: boolean;
   importable?: boolean;
@@ -34,6 +45,106 @@ interface DataTableProps<T = any> {
 }
 
 type SortDir = "asc" | "desc" | null;
+
+/* ── Row Kebab Menu ── */
+function RowMenu({ items }: { items: MenuAction[] }) {
+  const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState({ top: 0, right: 0 });
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  const handleToggle = () => {
+    if (!open && btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect();
+      setPos({ top: r.bottom + 6, right: window.innerWidth - r.right });
+    }
+    setOpen((v) => !v);
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (
+        !btnRef.current?.contains(e.target as Node) &&
+        !panelRef.current?.contains(e.target as Node)
+      ) {
+        setOpen(false);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  const variantClass = (v: MenuAction["variant"]) => {
+    if (v === "success") return "text-brand-green hover:bg-brand-green/10";
+    if (v === "danger") return "text-brand-red-light hover:bg-brand-red/10";
+    if (v === "warning") return "text-brand-gold hover:bg-brand-gold/10";
+    return "text-text-secondary hover:text-text-primary hover:bg-white/5";
+  };
+
+  return (
+    <>
+      <button
+        ref={btnRef}
+        onClick={handleToggle}
+        className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-white/5 transition-colors"
+        aria-label="Row actions"
+      >
+        <MoreVertical size={15} />
+      </button>
+
+      {open &&
+        createPortal(
+          <div
+            ref={panelRef}
+            style={{
+              position: "fixed",
+              top: pos.top,
+              right: pos.right,
+              zIndex: 9999,
+            }}
+            className="min-w-44 py-1 px-1 rounded-xl shadow-2xl border border-border-default bg-surface-card"
+          >
+            {items.map((item, i) => (
+              <div key={i}>
+                {item.separator && (
+                  <div className="h-px bg-border-default mx-1 my-1" />
+                )}
+                <button
+                  className={cn(
+                    "w-full px-3 py-2 text-[13px] text-left flex items-center gap-2.5 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed",
+                    variantClass(item.variant),
+                  )}
+                  onClick={() => {
+                    if (!item.disabled) {
+                      item.onClick();
+                      setOpen(false);
+                    }
+                  }}
+                  disabled={item.disabled}
+                >
+                  {item.icon && (
+                    <span className="w-4 h-4 flex items-center justify-center shrink-0">
+                      {item.icon}
+                    </span>
+                  )}
+                  {item.label}
+                </button>
+              </div>
+            ))}
+          </div>,
+          document.body,
+        )}
+    </>
+  );
+}
 
 /* ── Component ── */
 export function DataTable<T extends Record<string, any>>({
@@ -77,7 +188,6 @@ export function DataTable<T extends Record<string, any>>({
   const processed = useMemo(() => {
     let rows = [...data];
 
-    // global search
     if (globalSearch.trim()) {
       const q = globalSearch.toLowerCase();
       rows = rows.filter((row) =>
@@ -89,7 +199,6 @@ export function DataTable<T extends Record<string, any>>({
       );
     }
 
-    // per-column filters
     Object.entries(columnFilters).forEach(([key, value]) => {
       if (value.trim()) {
         const q = value.toLowerCase();
@@ -101,7 +210,6 @@ export function DataTable<T extends Record<string, any>>({
       }
     });
 
-    // sort
     if (sortKey && sortDir) {
       rows.sort((a, b) => {
         const av = a[sortKey] ?? "";
@@ -167,7 +275,6 @@ export function DataTable<T extends Record<string, any>>({
           <h3 className="text-sm font-semibold text-text-primary">{title}</h3>
         )}
         <div className="flex items-center gap-2 flex-wrap ml-auto">
-          {/* Global search */}
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted" />
             <input
@@ -213,9 +320,8 @@ export function DataTable<T extends Record<string, any>>({
         className="overflow-x-auto overscroll-x-contain rounded-lg touch-pan-x"
         style={{ border: "1px solid var(--glass-divider)" }}
       >
-        <table className="w-full min-w-[860px] text-sm">
+        <table className="w-full min-w-215 text-sm">
           <thead>
-            {/* Column headers */}
             <tr style={{ borderBottom: "1px solid var(--glass-divider)" }}>
               {columns.map((col) => {
                 const isSorted = sortKey === col.key;
@@ -250,13 +356,10 @@ export function DataTable<T extends Record<string, any>>({
                 );
               })}
               {actions && (
-                <th className="px-4 py-2.5 text-xs font-medium text-text-muted text-right">
-                  Actions
-                </th>
+                <th className="px-4 py-2.5 text-xs font-medium text-text-muted text-right w-12" />
               )}
             </tr>
 
-            {/* Per-column search */}
             {columns.some((c) => c.searchable !== false) && (
               <tr style={{ borderBottom: "1px solid var(--glass-row-border)" }}>
                 {columns.map((col) => (
@@ -296,34 +399,37 @@ export function DataTable<T extends Record<string, any>>({
                 </td>
               </tr>
             ) : (
-              paginated.map((row, idx) => (
-                <tr
-                  key={idx}
-                  className="last:border-0 transition-colors glass-row"
-                >
-                  {columns.map((col) => (
-                    <td
-                      key={col.key}
-                      className={cn(
-                        "px-4 py-2.5 text-text-secondary whitespace-nowrap",
-                        col.align === "center" && "text-center",
-                        col.align === "right" && "text-right",
-                      )}
-                    >
-                      {col.render
-                        ? col.render(row[col.key], row)
-                        : row[col.key]}
-                    </td>
-                  ))}
-                  {actions && (
-                    <td className="px-4 py-2.5 text-right">
-                      <div className="flex justify-end gap-2">
-                        {actions(row)}
-                      </div>
-                    </td>
-                  )}
-                </tr>
-              ))
+              paginated.map((row, idx) => {
+                const menuItems = actions ? actions(row) : null;
+                return (
+                  <tr
+                    key={idx}
+                    className="last:border-0 transition-colors glass-row"
+                  >
+                    {columns.map((col) => (
+                      <td
+                        key={col.key}
+                        className={cn(
+                          "px-4 py-2.5 text-text-secondary whitespace-nowrap",
+                          col.align === "center" && "text-center",
+                          col.align === "right" && "text-right",
+                        )}
+                      >
+                        {col.render
+                          ? col.render(row[col.key], row)
+                          : row[col.key]}
+                      </td>
+                    ))}
+                    {actions && (
+                      <td className="px-3 py-2.5 text-right w-12">
+                        {menuItems && menuItems.length > 0 ? (
+                          <RowMenu items={menuItems} />
+                        ) : null}
+                      </td>
+                    )}
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>

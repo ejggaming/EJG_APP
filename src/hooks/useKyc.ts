@@ -105,13 +105,10 @@ export function useUpdateKycMutation() {
     },
     onSuccess: (_, { id, status }) => {
       // Immediately remove the item from all KYC list caches (optimistic)
-      queryClient.setQueriesData(
-        { queryKey: kycKeys.all },
-        (old: any) => {
-          if (!old?.kycs) return old;
-          return { ...old, kycs: old.kycs.filter((k: any) => k.id !== id) };
-        },
-      );
+      queryClient.setQueriesData({ queryKey: kycKeys.all }, (old: any) => {
+        if (!old?.kycs) return old;
+        return { ...old, kycs: old.kycs.filter((k: any) => k.id !== id) };
+      });
       // Then refetch in background to sync canonical data from backend
       queryClient.invalidateQueries({ queryKey: kycKeys.all });
       queryClient.invalidateQueries({ queryKey: ["admin", "users"] });

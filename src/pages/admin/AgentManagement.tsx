@@ -1,5 +1,5 @@
 import { CardGrid, StatCard, DataTable } from "../../components/bento";
-import type { DataTableColumn } from "../../components/bento";
+import type { DataTableColumn, MenuAction } from "../../components/bento";
 import {
   Users,
   UserPlus,
@@ -398,34 +398,29 @@ export default function AgentManagement() {
         data={MOCK_AGENTS}
         pageSize={10}
         exportable
-        actions={(row: AgentRow) => (
-          <>
-            <button
-              className="text-xs px-2.5 py-1 bg-brand-blue/10 text-brand-blue-light rounded-lg hover:bg-brand-blue/15 flex items-center gap-1 transition-colors"
-              onClick={() => toast.success("Details opened")}
-            >
-              <Edit2 size={14} />
-              Edit
-            </button>
-            {row.status === "ACTIVE" ? (
-              <button
-                className="text-xs px-2.5 py-1 bg-brand-red/10 text-brand-red-light rounded-lg hover:bg-brand-red/15 flex items-center gap-1 transition-colors"
-                onClick={() => toast.success("Agent suspended")}
-              >
-                <Ban size={14} />
-                Suspend
-              </button>
-            ) : (
-              <button
-                className="text-xs px-2.5 py-1 bg-brand-green/10 text-brand-green-light rounded-lg hover:bg-brand-green/15 flex items-center gap-1 transition-colors"
-                onClick={() => toast.success("Agent activated")}
-              >
-                <CheckCircle size={14} />
-                Activate
-              </button>
-            )}
-          </>
-        )}
+        actions={(row: AgentRow): MenuAction[] => [
+          {
+            label: "Edit",
+            icon: <Edit2 size={14} />,
+            variant: "default",
+            onClick: () => toast.success("Details opened"),
+          },
+          row.status === "ACTIVE"
+            ? {
+                label: "Suspend",
+                icon: <Ban size={14} />,
+                variant: "danger",
+                separator: true,
+                onClick: () => toast.success("Agent suspended"),
+              }
+            : {
+                label: "Activate",
+                icon: <CheckCircle size={14} />,
+                variant: "success",
+                separator: true,
+                onClick: () => toast.success("Agent activated"),
+              },
+        ]}
       />
     </div>
   );

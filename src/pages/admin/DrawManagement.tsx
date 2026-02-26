@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { CardGrid, StatCard, DataTable } from "../../components/bento";
-import type { DataTableColumn } from "../../components/bento";
+import type { DataTableColumn, MenuAction } from "../../components/bento";
 import { Input, Modal } from "../../components";
 import { DrawManagementSkeleton } from "../../components/ChineseSkeleton";
 import {
@@ -25,6 +25,12 @@ import {
   drawTypeLabel,
 } from "../../hooks/useBet";
 import type { JuetengDraw } from "../../services/betService";
+import {
+  DateRangeFilter,
+  getInitialDateRange,
+  dateRangeLabel,
+} from "../../components/DateRangeFilter";
+import type { DateRange } from "../../components/DateRangeFilter";
 
 const STATUS_COLORS: Record<string, string> = {
   SETTLED: "text-brand-green bg-brand-green/10",
@@ -37,7 +43,10 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function DrawManagement() {
   const [page, setPage] = useState(1);
-  const { data, isLoading } = useAdminDrawsQuery({ page, limit: 20 });
+  const [dateRange, setDateRange] = useState<DateRange>(
+    getInitialDateRange("week"),
+  );
+  const { data, isLoading } = useAdminDrawsQuery({ page, limit: 100 });
   const updateDraw = useUpdateDrawMutation();
   const settleDraw = useSettleDrawMutation();
   const createDraw = useCreateDrawMutation();
@@ -57,32 +66,41 @@ export default function DrawManagement() {
     "MORNING",
   );
 
-  const draws = data?.draws ?? [];
+  const allDraws = data?.draws ?? [];
 
-  // When schedules load, default createType to the first active schedule
-  useEffect(() => {
-    const firstActive = schedules.find((s) => s.isActive);
-    if (firstActive) setCreateType(firstActive.drawType);
-  }, [schedules]);
+  // Filter draws by the selected date range
+  const draws = allDraws.filter((d) => {
+    const date = new Date(d.drawDate);
+    return (
+      date >= new Date(dateRange.from) &&
+      date <= new Date(dateRange.to + "T23:59:59.999")
+    );
+  });
+
+  // Effective draw type: user selection if it's active, else fall back to first active schedule
+  const effectiveCreateType = useMemo(() => {
+    const active = schedules.filter((s) => s.isActive);
+    if (active.some((s) => s.drawType === createType)) return createType;
+    return active[0]?.drawType ?? createType;
+  }, [schedules, createType]);
 
   if (isLoading) return <DrawManagementSkeleton />;
 
   const handleCreate = () => {
-    const schedule = schedules.find((s) => s.drawType === createType);
+    const schedule = schedules.find((s) => s.drawType === effectiveCreateType);
     if (!schedule) {
       toast.error("No active schedule found for the selected draw type");
       return;
     }
-    // Combine selected date + schedule time → ISO string
     const scheduledAt = new Date(
       `${createDate}T${schedule.scheduledTime}:00`,
     ).toISOString();
 
     createDraw.mutate(
-      { scheduleId: schedule.id, drawDate: createDate, drawType: createType, scheduledAt },
+      { scheduleId: schedule.id, drawDate: createDate, drawType: effectiveCreateType, scheduledAt },
       {
         onSuccess: () => {
-          toast.success(`${drawTypeLabel(createType)} draw created for ${createDate}`);
+          toast.success(`${drawTypeLabel(effectiveCreateType)} draw created for ${createDate}`);
           setShowCreate(false);
         },
       },
@@ -159,6 +177,19 @@ export default function DrawManagement() {
           <Plus size={15} />
           Create Draw
         </Button>
+      </div>
+
+      {/* Date Range Filter */}
+      <div className="bg-surface-card border border-border-default rounded-2xl px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">
+            Viewing draws for
+          </p>
+          <p className="text-sm font-medium text-text-primary mt-0.5">
+            {dateRangeLabel(dateRange)}
+          </p>
+        </div>
+        <DateRangeFilter value={dateRange} onChange={(r) => { setDateRange(r); setPage(1); }} />
       </div>
 
       {/* Summary Stats */}
@@ -331,102 +362,70 @@ export default function DrawManagement() {
           data={draws}
           pageSize={20}
           exportable
-          actions={(row: JuetengDraw) => (
-            <>
-              {/* SCHEDULED → Open for bets */}
-              {row.status === "SCHEDULED" && (
-                <button
-                  className="text-xs px-2.5 py-1 bg-brand-green/10 text-brand-green rounded-lg hover:bg-brand-green/15 flex items-center gap-1 transition-colors"
-                  onClick={() =>
-                    updateDraw.mutate(
-                      {
-                        id: row.id,
-                        data: {
-                          status: "OPEN",
-                          openedAt: new Date().toISOString(),
-                        } as Partial<JuetengDraw>,
-                      },
-                      { onSuccess: () => toast.success("Draw opened for bets") },
-                    )
-                  }
-                  disabled={updateDraw.isPending}
-                >
-                  <Dices size={14} />
-                  Open
-                </button>
-              )}
-              {/* OPEN → Close (lock bets) */}
-              {row.status === "OPEN" && (
-                <button
-                  className="text-xs px-2.5 py-1 bg-brand-red/10 text-brand-red-light rounded-lg hover:bg-brand-red/15 flex items-center gap-1 transition-colors"
-                  onClick={() =>
-                    updateDraw.mutate(
-                      {
-                        id: row.id,
-                        data: {
-                          status: "CLOSED",
-                          closedAt: new Date().toISOString(),
-                        } as Partial<JuetengDraw>,
-                      },
-                      { onSuccess: () => toast.success("Draw closed — bets locked") },
-                    )
-                  }
-                  disabled={updateDraw.isPending}
-                >
-                  <Lock size={14} />
-                  Close
-                </button>
-              )}
-              {/* CLOSED → Re-open */}
-              {row.status === "CLOSED" && (
-                <button
-                  className="text-xs px-2.5 py-1 bg-brand-green/10 text-brand-green rounded-lg hover:bg-brand-green/15 flex items-center gap-1 transition-colors"
-                  onClick={() =>
-                    updateDraw.mutate(
-                      {
-                        id: row.id,
-                        data: {
-                          status: "OPEN",
-                          openedAt: new Date().toISOString(),
-                          closedAt: null,
-                        } as Partial<JuetengDraw>,
-                      },
-                      { onSuccess: () => toast.success("Draw re-opened for bets") },
-                    )
-                  }
-                  disabled={updateDraw.isPending}
-                >
-                  <LockOpen size={14} />
-                  Open
-                </button>
-              )}
-              {/* OPEN or CLOSED → Encode result */}
-              {(row.status === "OPEN" || row.status === "CLOSED") && (
-                <button
-                  className="text-xs px-2.5 py-1 bg-brand-gold/10 text-brand-gold-light rounded-lg hover:bg-brand-gold/15 flex items-center gap-1 transition-colors"
-                  onClick={() => handleEncode(row)}
-                >
-                  <Dices size={14} />
-                  Encode
-                </button>
-              )}
-              {/* DRAWN → Settle (pay winners + commissions) */}
-              {row.status === "DRAWN" && (
-                <button
-                  className="text-xs px-2.5 py-1 bg-brand-green/10 text-brand-green rounded-lg hover:bg-brand-green/15 flex items-center gap-1 transition-colors disabled:opacity-50"
-                  onClick={() =>
-                    settleDraw.mutate(row.id, {
-                      onSuccess: () => toast.success("Draw settled — commissions paid"),
-                    })
-                  }
-                  disabled={settleDraw.isPending}
-                >
-                  <CheckCircle size={14} />
-                  Settle
-                </button>
-              )}
-            </>
-          )}
+          actions={(row: JuetengDraw): MenuAction[] | null => {
+            const items: MenuAction[] = [];
+            if (row.status === "SCHEDULED") {
+              items.push({
+                label: "Open for Bets",
+                icon: <Dices size={14} />,
+                variant: "success",
+                disabled: updateDraw.isPending,
+                onClick: () =>
+                  updateDraw.mutate(
+                    { id: row.id, data: { status: "OPEN", openedAt: new Date().toISOString() } as Partial<JuetengDraw> },
+                    { onSuccess: () => toast.success("Draw opened for bets") },
+                  ),
+              });
+            }
+            if (row.status === "OPEN") {
+              items.push({
+                label: "Close Bets",
+                icon: <Lock size={14} />,
+                variant: "danger",
+                disabled: updateDraw.isPending,
+                onClick: () =>
+                  updateDraw.mutate(
+                    { id: row.id, data: { status: "CLOSED", closedAt: new Date().toISOString() } as Partial<JuetengDraw> },
+                    { onSuccess: () => toast.success("Draw closed — bets locked") },
+                  ),
+              });
+            }
+            if (row.status === "CLOSED") {
+              items.push({
+                label: "Re-open Bets",
+                icon: <LockOpen size={14} />,
+                variant: "success",
+                disabled: updateDraw.isPending,
+                onClick: () =>
+                  updateDraw.mutate(
+                    { id: row.id, data: { status: "OPEN", openedAt: new Date().toISOString(), closedAt: null } as Partial<JuetengDraw> },
+                    { onSuccess: () => toast.success("Draw re-opened for bets") },
+                  ),
+              });
+            }
+            if (row.status === "OPEN" || row.status === "CLOSED") {
+              items.push({
+                label: "Encode Result",
+                icon: <Dices size={14} />,
+                variant: "warning",
+                separator: row.status === "OPEN",
+                onClick: () => handleEncode(row),
+              });
+            }
+            if (row.status === "DRAWN") {
+              items.push({
+                label: "Settle Draw",
+                icon: <CheckCircle size={14} />,
+                variant: "success",
+                disabled: settleDraw.isPending,
+                onClick: () =>
+                  settleDraw.mutate(row.id, {
+                    onSuccess: () => toast.success("Draw settled — commissions paid"),
+                  }),
+              });
+            }
+            return items.length > 0 ? items : null;
+          }}
         />
 
       {/* Pagination */}
@@ -479,7 +478,7 @@ export default function DrawManagement() {
                     type="button"
                     onClick={() => setCreateType(s.drawType)}
                     className={`flex-1 text-xs py-2 px-3 rounded-lg border transition-colors ${
-                      createType === s.drawType
+                      effectiveCreateType === s.drawType
                         ? "bg-brand-gold/15 text-brand-gold border-brand-gold/40"
                         : "bg-white/5 text-text-muted border-white/10 hover:bg-white/10"
                     }`}
@@ -491,12 +490,12 @@ export default function DrawManagement() {
             </div>
           </div>
 
-          {schedules.find((s) => s.drawType === createType) && (
+          {schedules.find((s) => s.drawType === effectiveCreateType) && (
             <div className="card-3d p-3 text-center">
               <p className="text-xs text-text-muted">
                 Scheduled at{" "}
                 <span className="text-brand-gold font-medium">
-                  {drawTypeLabel(createType)}
+                  {drawTypeLabel(effectiveCreateType)}
                 </span>{" "}
                 on{" "}
                 <span className="text-text-primary font-medium">

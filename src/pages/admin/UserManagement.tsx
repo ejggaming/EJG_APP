@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { CardGrid, StatCard, DataTable } from "../../components/bento";
-import type { DataTableColumn } from "../../components/bento";
+import type { DataTableColumn, MenuAction } from "../../components/bento";
 import {
   Users,
   UserPlus,
@@ -11,8 +11,10 @@ import {
   Ban,
   CheckCircle,
   ArrowRight,
+  Eye,
 } from "lucide-react";
 import { UserManagementSkeleton } from "../../components/ChineseSkeleton";
+import { DetailModal } from "../../components/DetailModal";
 import toast from "react-hot-toast";
 import { useAllUsersQuery } from "../../hooks/useAdmin";
 import type { AdminUser } from "../../hooks/useAdmin";
@@ -22,6 +24,7 @@ export default function UserManagement() {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("");
+  const [viewUser, setViewUser] = useState<AdminUser | null>(null);
 
   // Debounce search — only update query after 400ms of no typing
   useEffect(() => {
@@ -278,41 +281,109 @@ export default function UserManagement() {
         data={users}
         pageSize={10}
         exportable
-        actions={(row: AdminUser) => (
-          <>
-            {row.kyc?.status === "PENDING" && (
-              <button
-                onClick={() => navigate("/admin/kyc")}
-                className="text-xs px-2.5 py-1 bg-brand-gold/10 text-brand-gold rounded-lg hover:bg-brand-gold/15 flex items-center gap-1 transition-colors"
-              >
-                <ShieldAlert size={14} />
-                Review KYC
-              </button>
-            )}
-            <button className="text-xs px-2.5 py-1 bg-brand-blue/10 text-brand-blue-light rounded-lg hover:bg-brand-blue/15 flex items-center gap-1 transition-colors">
-              <Edit2 size={14} />
-              Edit
-            </button>
-            {row.status === "active" ? (
-              <button
-                className="text-xs px-2.5 py-1 bg-brand-red/10 text-brand-red-light rounded-lg hover:bg-brand-red/15 flex items-center gap-1 transition-colors"
-                onClick={() => toast.success(`User suspended`)}
-              >
-                <Ban size={14} />
-                Suspend
-              </button>
-            ) : row.status === "suspended" ? (
-              <button
-                className="text-xs px-2.5 py-1 bg-brand-green/10 text-brand-green-light rounded-lg hover:bg-brand-green/15 flex items-center gap-1 transition-colors"
-                onClick={() => toast.success(`User activated`)}
-              >
-                <CheckCircle size={14} />
-                Activate
-              </button>
-            ) : null}
-          </>
-        )}
+        actions={(row: AdminUser): MenuAction[] => {
+          const items: MenuAction[] = [
+            {
+              label: "View Details",
+              icon: <Eye size={14} />,
+              variant: "default",
+              onClick: () => setViewUser(row),
+            },
+            {
+              label: "Edit",
+              icon: <Edit2 size={14} />,
+              variant: "default",
+              onClick: () => {},
+            },
+          ];
+          if (row.kyc?.status === "PENDING") {
+            items.push({
+              label: "Review KYC",
+              icon: <ShieldAlert size={14} />,
+              variant: "warning",
+              separator: true,
+              onClick: () => navigate("/admin/kyc"),
+            });
+          }
+          if (row.status === "active") {
+            items.push({
+              label: "Suspend",
+              icon: <Ban size={14} />,
+              variant: "danger",
+              separator: !row.kyc?.status || row.kyc.status !== "PENDING",
+              onClick: () => toast.success("User suspended"),
+            });
+          } else if (row.status === "suspended") {
+            items.push({
+              label: "Activate",
+              icon: <CheckCircle size={14} />,
+              variant: "success",
+              separator: true,
+              onClick: () => toast.success("User activated"),
+            });
+          }
+          return items;
+        }}
       />
+
+      {/* User Detail Modal */}
+      {viewUser && (
+        <DetailModal
+          isOpen={!!viewUser}
+          onClose={() => setViewUser(null)}
+          title="User Details"
+          sections={[
+            {
+              title: "Profile",
+              fields: [
+                {
+                  label: "Full Name",
+                  value: viewUser.person
+                    ? `${viewUser.person.firstName} ${viewUser.person.lastName}`
+                    : viewUser.userName ?? "—",
+                },
+                { label: "Username", value: viewUser.userName },
+                { label: "Email", wide: true, value: viewUser.email },
+                { label: "Phone", value: viewUser.phoneNumber },
+                {
+                  label: "Email Verified",
+                  value: viewUser.isEmailVerified ? "Yes" : "No",
+                },
+              ],
+            },
+            {
+              title: "Account",
+              fields: [
+                { label: "Role", value: viewUser.role },
+                { label: "Status", value: viewUser.status },
+                {
+                  label: "KYC Status",
+                  value: viewUser.kyc?.status ?? "None",
+                },
+                {
+                  label: "Wallet Balance",
+                  value: `₱${(viewUser.wallet?.balance ?? 0).toLocaleString()}`,
+                },
+              ],
+            },
+            {
+              title: "Dates",
+              fields: [
+                {
+                  label: "Last Login",
+                  value: viewUser.lastLogin
+                    ? new Date(viewUser.lastLogin).toLocaleString()
+                    : "Never",
+                },
+                {
+                  label: "Joined",
+                  value: new Date(viewUser.createdAt).toLocaleDateString(),
+                },
+              ],
+            },
+          ]}
+        />
+      )}
     </div>
   );
 }

@@ -5,7 +5,7 @@ import {
   ChartCard,
   DataTable,
 } from "../../components/bento";
-import type { DataTableColumn } from "../../components/bento";
+import type { DataTableColumn, MenuAction } from "../../components/bento";
 import {
   TrendingUp,
   DollarSign,
@@ -22,16 +22,25 @@ import {
   useApproveTransactionMutation,
   useRejectTransactionMutation,
 } from "../../hooks/useWallet";
+import {
+  DateRangeFilter,
+  getInitialDateRange,
+  dateRangeLabel,
+} from "../../components/DateRangeFilter";
+import type { DateRange } from "../../components/DateRangeFilter";
 
 export default function FinanceManagement() {
   const [typeFilter, setTypeFilter] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("");
+  const [dateRange, setDateRange] = useState<DateRange>(
+    getInitialDateRange("week"),
+  );
 
   // All transactions
   const { data: txData, isLoading } = useAdminTransactionsQuery({
     type: typeFilter || undefined,
     status: statusFilter || undefined,
-    limit: 100,
+    limit: 500,
   });
 
   // Pending transactions only (for the approval queue)
@@ -41,11 +50,20 @@ export default function FinanceManagement() {
   const approveMutation = useApproveTransactionMutation();
   const rejectMutation = useRejectTransactionMutation();
 
-  const allTx = txData?.transactions ?? [];
+  const rawTx = txData?.transactions ?? [];
   const pendingTx = pendingData?.transactions ?? [];
   const totalCount = txData?.count ?? 0;
 
-  // Compute stats from all transactions
+  // Filter transactions by selected date range
+  const allTx = rawTx.filter((t) => {
+    const d = new Date(t.createdAt);
+    return (
+      d >= new Date(dateRange.from) &&
+      d <= new Date(dateRange.to + "T23:59:59.999")
+    );
+  });
+
+  // Compute stats from date-filtered transactions
   const completedTx = allTx.filter((t) => t.status === "COMPLETED");
   const totalDeposits = completedTx
     .filter((t) => t.type === "DEPOSIT")
@@ -69,6 +87,19 @@ export default function FinanceManagement() {
         <p className="text-text-muted mt-1">
           Manage deposits, withdrawals, and settlements
         </p>
+      </div>
+
+      {/* Date Range Filter */}
+      <div className="bg-surface-card border border-border-default rounded-2xl px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">
+            Viewing transactions for
+          </p>
+          <p className="text-sm font-medium text-text-primary mt-0.5">
+            {dateRangeLabel(dateRange)}
+          </p>
+        </div>
+        <DateRangeFilter value={dateRange} onChange={setDateRange} />
       </div>
 
       {/* Financial Metrics */}
@@ -405,32 +436,27 @@ export default function FinanceManagement() {
         data={allTx}
         pageSize={10}
         exportable
-        actions={(row: AdminTransaction) =>
-          row.status === "PENDING" ? (
-            <>
-              <button
-                className="text-xs px-2.5 py-1 bg-brand-green/10 text-brand-green-light rounded-lg hover:bg-brand-green/15 flex items-center gap-1 transition-colors disabled:opacity-50"
-                disabled={approveMutation.isPending || rejectMutation.isPending}
-                onClick={() => approveMutation.mutate(row.id)}
-              >
-                <CheckCircle size={14} />
-                Approve
-              </button>
-              <button
-                className="text-xs px-2.5 py-1 bg-brand-red/10 text-brand-red-light rounded-lg hover:bg-brand-red/15 flex items-center gap-1 transition-colors disabled:opacity-50"
-                disabled={approveMutation.isPending || rejectMutation.isPending}
-                onClick={() =>
-                  rejectMutation.mutate({
-                    id: row.id,
-                    reason: "Rejected by admin",
-                  })
-                }
-              >
-                <XCircle size={14} />
-                Reject
-              </button>
-            </>
-          ) : null
+        actions={(row: AdminTransaction): MenuAction[] | null =>
+          row.status === "PENDING"
+            ? [
+                {
+                  label: "Approve",
+                  icon: <CheckCircle size={14} />,
+                  variant: "success",
+                  disabled: approveMutation.isPending || rejectMutation.isPending,
+                  onClick: () => approveMutation.mutate(row.id),
+                },
+                {
+                  label: "Reject",
+                  icon: <XCircle size={14} />,
+                  variant: "danger",
+                  separator: true,
+                  disabled: approveMutation.isPending || rejectMutation.isPending,
+                  onClick: () =>
+                    rejectMutation.mutate({ id: row.id, reason: "Rejected by admin" }),
+                },
+              ]
+            : null
         }
       />
     </div>

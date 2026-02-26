@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import apiClient from "../../services/apiClient";
 import {
   CardGrid,
   StatCard,
   ChartCard,
   DataTable,
 } from "../../components/bento";
-import type { DataTableColumn } from "../../components/bento";
+import type { DataTableColumn, MenuAction } from "../../components/bento";
 import {
   TrendingUp,
   Users,
@@ -36,15 +37,17 @@ function DonutChart({
   segments: { label: string; value: number; color: string }[];
 }) {
   const total = segments.reduce((s, seg) => s + seg.value, 0);
-  let cumulative = 0;
   const gradientStops = segments
-    .map((seg) => {
-      const start = (cumulative / total) * 100;
-      cumulative += seg.value;
-      const end = (cumulative / total) * 100;
-      return `${seg.color} ${start}% ${end}%`;
-    })
-    .join(", ");
+    .reduce<{ stops: string[]; cum: number }>(
+      ({ stops, cum }, seg) => {
+        const start = total > 0 ? (cum / total) * 100 : 0;
+        const next = cum + seg.value;
+        const end = total > 0 ? (next / total) * 100 : 0;
+        return { stops: [...stops, `${seg.color} ${start}% ${end}%`], cum: next };
+      },
+      { stops: [], cum: 0 },
+    )
+    .stops.join(", ");
 
   return (
     <div className="flex items-center gap-6">
@@ -57,7 +60,11 @@ function DonutChart({
         />
         <div className="absolute inset-3 rounded-full bg-surface-card flex items-center justify-center flex-col">
           <span className="text-xl font-bold text-text-primary">
-            ₱{(total / 1000).toFixed(0)}K
+            {total >= 1_000_000
+              ? `₱${(total / 1_000_000).toFixed(1)}M`
+              : total >= 1_000
+                ? `₱${(total / 1_000).toFixed(1)}K`
+                : `₱${total.toLocaleString()}`}
           </span>
           <span className="text-[10px] text-text-muted">Total</span>
         </div>
@@ -138,52 +145,133 @@ export default function AdminDashboard() {
   } = useQuery({
     queryKey: ["admin-dashboard", dateRange.from, dateRange.to],
     queryFn: async () => {
-      // Fake data — swap for real API using dateRange.from / dateRange.to
+      const typeMap: Record<string, string> = {
+        DEPOSIT: "deposit",
+        WITHDRAWAL: "withdrawal",
+        JUETENG_BET: "bet",
+        JUETENG_PAYOUT: "payout",
+      };
+      const relTime = (d: string) => {
+        const mins = Math.floor((Date.now() - new Date(d).getTime()) / 60000);
+        if (mins < 1) return "just now";
+        if (mins < 60) return `${mins} min ago`;
+        if (mins < 1440) return `${Math.floor(mins / 60)} hr ago`;
+        return `${Math.floor(mins / 1440)} day ago`;
+      };
+      const [summaryRes, txRes, betsRes, schedulesRes] = await Promise.all([
+        apiClient.get("/reports/summary", {
+          params: { from: dateRange.from, to: dateRange.to },
+        }),
+        apiClient.get("/wallet/admin/transactions", { params: { limit: 10 } }),
+        apiClient.get("/juetengBet", {
+          params: {
+            count: "true",
+            filter: "status:PENDING",
+          },
+        }),
+        apiClient.get("/juetengDraw", {
+          params: {
+            document: "true",
+            filter: "status:SCHEDULED,status:OPEN",
+            sort: "scheduledAt",
+            order: "asc",
+            limit: "5",
+          },
+        }),
+      ]);
+
+      const s = summaryRes.data.data;
+      const txData = txRes.data.data;
+      const pendingBets: number = betsRes.data.data?.count ?? 0;
+      const upcomingDraws: { drawType: string; scheduledAt: string; status: string }[] =
+        schedulesRes.data.data?.juetengDraws ?? [];
+
+      const nextDraw = (() => {
+        const now = Date.now();
+        // Pick the earliest draw that hasn't passed yet
+        const next = upcomingDraws.find(
+          (d) => new Date(d.scheduledAt).getTime() > now,
+        ) ?? upcomingDraws[0];
+
+        if (!next) {
+          return { time: "--", schedule: "No upcoming draw", countdown: "--" };
+        }
+
+        const scheduledMs = new Date(next.scheduledAt).getTime();
+        const diffMs = Math.max(0, scheduledMs - now);
+        const diffMin = Math.floor(diffMs / 60000);
+        const h = Math.floor(diffMin / 60);
+        const mn = diffMin % 60;
+
+        const label =
+          next.drawType === "MORNING"
+            ? "Morning Draw"
+            : next.drawType === "AFTERNOON"
+              ? "Afternoon Draw"
+              : "Evening Draw";
+
+        const d = new Date(next.scheduledAt);
+        const timeLabel = d.toLocaleTimeString("en-PH", {
+          timeZone: "Asia/Manila",
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        });
+
+        return {
+          time: timeLabel,
+          schedule: label,
+          countdown: diffMin === 0 ? "now" : h > 0 ? `${h}h ${mn}m` : `${mn}m`,
+        };
+      })();
+
       return {
-        totalUsers: 12450,
-        activeUsers: 3890,
-        onlineNow: 482,
-        totalRevenue: 548290,
-        pendingBets: 234,
-        pendingWithdrawals: 18,
-        todayWinners: 42,
-        todayGovShare: 14445,
-        kycPending: 67,
-        suspiciousBets: 5,
-        todayDeposits: 45230,
-        todayWithdrawals: 18900,
-        todayBets: 32100,
-        todayPayouts: 12500,
-        platformBalance: 1248500,
-        operatorMargin: 55,
-        nextDraw: {
-          time: "4:00 PM",
-          schedule: "Afternoon Draw",
-          countdown: "2h 15m",
-        },
+        totalUsers: s.totalUsers,
+        activeUsers: 0,
+        onlineNow: 0,
+        totalRevenue: s.net,
+        pendingBets,
+        pendingWithdrawals: 0,
+        todayWinners: 0,
+        todayGovShare: s.govShare,
+        kycPending: 0,
+        suspiciousBets: (s.complianceLogs as unknown[]).length,
+        todayDeposits: s.totalDeposits,
+        todayWithdrawals: s.totalWithdrawals,
+        todayBets: s.revenue,
+        todayPayouts: s.payouts,
+        platformBalance: s.net,
+        operatorMargin: s.profitMargin,
+        nextDraw,
         revenueBreakdown: [
-          { label: "Betting Revenue", value: 325000, color: "#dc2626" },
-          { label: "Deposits", value: 128000, color: "#d97706" },
-          { label: "Commissions", value: 58290, color: "#2563eb" },
-          { label: "Other", value: 37000, color: "#16a34a" },
+          { label: "Betting Revenue", value: s.revenue, color: "#dc2626" },
+          { label: "Deposits", value: s.totalDeposits, color: "#d97706" },
+          { label: "Commissions", value: s.totalCommissions, color: "#2563eb" },
+          { label: "Payouts", value: s.payouts, color: "#16a34a" },
         ],
-        recentTransactions: [
-          { id: 1, user: "Maria Santos", type: "deposit", amount: "₱1,000", method: "GCash", time: "2 min ago" },
-          { id: 2, user: "Pedro Reyes", type: "withdrawal", amount: "₱500", method: "Maya", time: "5 min ago" },
-          { id: 3, user: "Anna Cruz", type: "bet", amount: "₱2,500", method: "Wallet", time: "12 min ago" },
-          { id: 4, user: "Jose Garcia", type: "payout", amount: "₱15,000", method: "Auto", time: "30 min ago" },
-          { id: 5, user: "Rosa Bautista", type: "deposit", amount: "₱3,000", method: "Bank", time: "1 hr ago" },
-        ],
-        topRegions: [
-          { name: "NCR", bets: 145, revenue: 52000, pct: 38 },
-          { name: "Region III", bets: 98, revenue: 31200, pct: 24 },
-          { name: "Region IV-A", bets: 72, revenue: 24800, pct: 18 },
-          { name: "Region VII", bets: 65, revenue: 22100, pct: 13 },
-          { name: "Others", bets: 42, revenue: 12990, pct: 7 },
-        ],
+        recentTransactions: (
+          txData.transactions as {
+            id: string;
+            type: string;
+            amount: number;
+            metadata: Record<string, string> | null;
+            userName: string;
+            createdAt: string;
+          }[]
+        ).map((tx) => ({
+          id: tx.id,
+          user: tx.userName,
+          type: typeMap[tx.type] ?? tx.type.toLowerCase(),
+          amount: `₱${tx.amount.toLocaleString()}`,
+          method:
+            tx.metadata?.paymentMethod ??
+            (tx.type === "JUETENG_PAYOUT" ? "Auto" : "Wallet"),
+          time: relTime(tx.createdAt),
+        })),
+        topRegions: [] as { name: string; bets: number; revenue: number; pct: number }[],
       };
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 2 * 60 * 1000,
   });
 
   if (isLoading) return <AdminDashboardSkeleton />;
@@ -523,11 +611,9 @@ export default function AdminDashboard() {
         data={dashboardData?.recentTransactions ?? []}
         pageSize={10}
         exportable
-        actions={() => (
-          <button className="text-xs px-2.5 py-1 bg-brand-blue/10 text-brand-blue-light rounded-lg hover:bg-brand-blue/15 transition-colors">
-            View
-          </button>
-        )}
+        actions={(): MenuAction[] => [
+          { label: "View", variant: "default", onClick: () => {} },
+        ]}
       />
     </div>
   );

@@ -116,7 +116,7 @@ export default function HomePage() {
         </div>
       )}
       {/* Quick Stats - Bento Fortune tokens */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <Card bento delay={100} className="text-center lantern-card">
           <Trophy className="w-5 h-5 text-brand-gold/60 mx-auto mb-1.5" />
           <p className="text-brand-gold text-xl font-extrabold">{topPrize}</p>
