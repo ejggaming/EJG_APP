@@ -374,7 +374,6 @@ export default function BetHistoryPage({ hideBalance = false }: { hideBalance?: 
   const futureTotalCount = futureSlots.length + scheduledManualBets.length;
 
   // ── Summary stats ──────────────────────────────────────────────────────────
-  const wonBets = pastBets.filter((b) => b.status === "WON").length;
   const totalWon = pastBets
     .filter((b) => b.status === "WON")
     .reduce((sum, b) => sum + (b.payoutAmount ?? 0), 0);
