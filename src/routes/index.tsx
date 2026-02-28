@@ -20,7 +20,6 @@ import VerifyOtpPage from "../pages/auth/VerifyOtp";
 // Player - Betting
 import BetPage from "../pages/betting/BetPage";
 import BetHistoryPage from "../pages/betting/BetHistory";
-import AutoBetPage from "../pages/betting/AutoBetPage";
 
 // Player - Results
 import ResultsPage from "../pages/results/ResultsPage";
@@ -74,7 +73,7 @@ const router = createBrowserRouter([
 
       // Betting
       { path: "/bet", element: <BetPage /> },
-      { path: "/bet/auto", element: <AutoBetPage /> },
+      { path: "/bet/auto", element: <Navigate to="/bet" replace /> },
       { path: "/bet-history", element: <BetHistoryPage /> },
 
       // Results

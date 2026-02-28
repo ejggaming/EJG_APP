@@ -70,7 +70,7 @@ export default function ResultsPage() {
               } as React.CSSProperties
             }
           >
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
               <span className="fortune-badge">
                 <Flame className="w-3 h-3 inline mr-1" />
                 Latest Draw
@@ -84,15 +84,15 @@ export default function ResultsPage() {
                 · {drawTypeLabel(results[0].drawType)}
               </span>
             </div>
-            <div className="flex items-center justify-center gap-6 py-5">
-              <div className="lottery-ball lottery-ball-selected w-16 h-16 text-2xl">
+            <div className="flex items-center justify-center gap-4 min-[380px]:gap-6 py-5">
+              <div className="lottery-ball lottery-ball-selected w-14 h-14 text-xl min-[380px]:w-16 min-[380px]:h-16 min-[380px]:text-2xl">
                 {results[0].number1}
               </div>
-              <div className="lottery-ball lottery-ball-selected w-16 h-16 text-2xl">
+              <div className="lottery-ball lottery-ball-selected w-14 h-14 text-xl min-[380px]:w-16 min-[380px]:h-16 min-[380px]:text-2xl">
                 {results[0].number2}
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-2 text-center text-xs mt-2 border-t border-brand-gold/15 pt-3">
+            <div className="grid grid-cols-2 min-[380px]:grid-cols-3 gap-2 text-center text-xs mt-2 border-t border-brand-gold/15 pt-3">
               <div>
                 <p className="text-brand-gold font-extrabold">
                   {formatCurrency(results[0].totalPayout ?? 0)}
@@ -107,6 +107,14 @@ export default function ResultsPage() {
                 </p>
                 <p className="text-text-muted text-[10px] uppercase tracking-wider">
                   Total Bets
+                </p>
+              </div>
+              <div>
+                <p className="text-brand-green font-bold">
+                  {results[0]._count?.payouts?.toLocaleString() ?? "0"}
+                </p>
+                <p className="text-text-muted text-[10px] uppercase tracking-wider">
+                  Winners
                 </p>
               </div>
             </div>
@@ -155,6 +163,10 @@ export default function ResultsPage() {
                     <p className="text-[10px] text-text-muted">
                       {result.totalBets ?? 0} bet
                       {(result.totalBets ?? 0) !== 1 ? "s" : ""}
+                    </p>
+                    <p className="text-[10px] text-brand-green">
+                      {result._count?.payouts ?? 0} winner
+                      {(result._count?.payouts ?? 0) !== 1 ? "s" : ""}
                     </p>
                   </div>
                 </Card>

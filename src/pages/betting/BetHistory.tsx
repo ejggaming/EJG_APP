@@ -175,8 +175,8 @@ function BetCard({ bet, multiplier }: { bet: JuetengBet; multiplier: number }) {
 
   return (
     <Card bento className="lantern-card">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
+        <div className="flex items-center gap-2 flex-wrap min-w-0 flex-1">
           <div className="flex gap-1">
             <span className="lottery-ball w-9 h-9 text-sm">{bet.number1}</span>
             <span className="lottery-ball w-9 h-9 text-sm">{bet.number2}</span>
@@ -199,9 +199,9 @@ function BetCard({ bet, multiplier }: { bet: JuetengBet; multiplier: number }) {
             </span>
           )}
         </div>
-        <span className="text-brand-gold font-bold">{formatCurrency(bet.amount)}</span>
+        <span className="text-brand-gold font-bold shrink-0">{formatCurrency(bet.amount)}</span>
       </div>
-      <div className="flex items-center justify-between text-xs text-text-muted">
+      <div className="flex flex-wrap items-center justify-between gap-1 text-xs text-text-muted">
         <span>{drawTime} Draw</span>
         <span>{dateLabel}</span>
       </div>
@@ -258,8 +258,8 @@ function FutureSlotCard({
       bento
       className={`lantern-card ${isScheduled ? "border border-dashed border-white/10" : "border border-dashed border-white/5 opacity-70"}`}
     >
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
+        <div className="flex items-center gap-2 flex-wrap min-w-0 flex-1">
           <div className="flex gap-1">
             <span className="lottery-ball w-9 h-9 text-sm">{config.number1}</span>
             <span className="lottery-ball w-9 h-9 text-sm">{config.number2}</span>
@@ -280,12 +280,12 @@ function FutureSlotCard({
             Auto
           </span>
         </div>
-        <span className="text-brand-gold font-bold">
+        <span className="text-brand-gold font-bold shrink-0">
           {formatCurrency(config.amountPerBet)}
         </span>
       </div>
 
-      <div className="flex items-center justify-between text-xs text-text-muted">
+      <div className="flex flex-wrap items-center justify-between gap-1 text-xs text-text-muted">
         <span>{drawTime} Draw</span>
         <span>{fmtScheduled(scheduledAt)}</span>
       </div>
@@ -320,7 +320,7 @@ function FutureSlotCard({
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default function BetHistoryPage() {
+export default function BetHistoryPage({ hideBalance = false }: { hideBalance?: boolean }) {
   const [activeTab, setActiveTab] = useState<Tab>("active");
   const navigate = useNavigate();
 
@@ -405,47 +405,34 @@ export default function BetHistoryPage() {
         <p className="text-text-muted text-sm mt-1">Your bets across all draws</p>
       </div>
 
-      {/* Balance */}
-      <Card bento delay={50} className="lantern-card">
-        <div className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-full bg-brand-gold/15 flex items-center justify-center">
-            <Wallet className="w-5 h-5 text-brand-gold" />
+      {/* Balance — hidden when embedded (e.g. My Bets tab in BetPage) */}
+      {!hideBalance && (
+        <Card bento delay={50} className="lantern-card">
+          <div className="flex items-center gap-2">
+            <div className="w-9 h-9 rounded-full bg-brand-gold/15 flex items-center justify-center">
+              <Wallet className="w-5 h-5 text-brand-gold" />
+            </div>
+            <div>
+              <p className="text-[10px] text-text-muted uppercase tracking-wider">
+                Current Balance
+              </p>
+              <p className="text-xl font-extrabold gold-shimmer">{formatCurrency(balance)}</p>
+            </div>
           </div>
-          <div>
-            <p className="text-[10px] text-text-muted uppercase tracking-wider">
-              Current Balance
-            </p>
-            <p className="text-xl font-extrabold gold-shimmer">{formatCurrency(balance)}</p>
-          </div>
-        </div>
-      </Card>
-
-      {/* Summary */}
-      <div className="grid grid-cols-3 gap-2">
-        <Card bento delay={100} className="text-center lantern-card">
-          <p className="text-lg font-extrabold text-text-primary">{bets.length}</p>
-          <p className="text-[10px] text-text-muted uppercase tracking-wider">Total</p>
-        </Card>
-        <Card bento delay={200} className="text-center lantern-card">
-          <p className="text-lg font-extrabold text-brand-green">{wonBets}</p>
-          <p className="text-[10px] text-text-muted uppercase tracking-wider">Won</p>
-        </Card>
-        <Card bento delay={300} className="text-center lantern-card">
-          <p className="text-lg font-extrabold gold-shimmer">{formatCurrency(totalWon)}</p>
-          <p className="text-[10px] text-text-muted uppercase tracking-wider">Total Won</p>
-        </Card>
-      </div>
-
-      {multiplier > 0 && pendingPotential > 0 && (
-        <Card bento delay={350} className="text-center lantern-card">
-          <p className="text-lg font-extrabold text-brand-gold">
-            {formatCurrency(pendingPotential)}
-          </p>
-          <p className="text-[10px] text-text-muted uppercase tracking-wider">
-            Pending Potential
-          </p>
         </Card>
       )}
+
+      {/* Summary */}
+      <div className="grid grid-cols-2 gap-2">
+        <Card bento delay={100} className="text-center lantern-card">
+          <p className="text-lg font-extrabold text-brand-green">{formatCurrency(totalWon)}</p>
+          <p className="text-[10px] text-text-muted uppercase tracking-wider">Total Winnings</p>
+        </Card>
+        <Card bento delay={200} className="text-center lantern-card">
+          <p className="text-lg font-extrabold text-brand-gold">{formatCurrency(pendingPotential)}</p>
+          <p className="text-[10px] text-text-muted uppercase tracking-wider">Potential Winnings</p>
+        </Card>
+      </div>
 
       <div className="cloud-divider" />
 

@@ -363,6 +363,56 @@
   }
 }
 
+/* 3-D rotating lottery ball — shadow orbits to fake a spinning sphere */
+@keyframes ball-rotate-3d {
+  0%   { box-shadow: -5px -3px 10px rgba(0,0,0,0.45), inset 0 -3px 6px rgba(0,0,0,0.35), 0   0   14px rgba(220,38,38,0.35); }
+  25%  { box-shadow:  5px -3px 10px rgba(0,0,0,0.45), inset 0 -3px 6px rgba(0,0,0,0.35), 6px 0   14px rgba(220,38,38,0.35); }
+  50%  { box-shadow:  5px  4px 10px rgba(0,0,0,0.45), inset 0 -3px 6px rgba(0,0,0,0.35), 0   6px 14px rgba(220,38,38,0.35); }
+  75%  { box-shadow: -5px  4px 10px rgba(0,0,0,0.45), inset 0 -3px 6px rgba(0,0,0,0.35),-6px 0   14px rgba(220,38,38,0.35); }
+  100% { box-shadow: -5px -3px 10px rgba(0,0,0,0.45), inset 0 -3px 6px rgba(0,0,0,0.35), 0   0   14px rgba(220,38,38,0.35); }
+}
+/* ::before highlight sweeps across the ball face to complete the 3-D illusion */
+@keyframes ball-highlight-sweep {
+  0%,100% { left: 18%; top: 14%; opacity: 0.45; }
+  40%     { left: 48%; top: 14%; opacity: 0.20; }
+  60%     { left: 48%; top: 14%; opacity: 0.20; }
+}
+.lottery-ball-3d {
+  animation: ball-rotate-3d 4s ease-in-out infinite;
+}
+.lottery-ball-3d::before {
+  animation: ball-highlight-sweep 4s ease-in-out infinite;
+}
+
+/* Clock ticking — one full revolution every 10 s */
+@keyframes clock-tick {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.clock-ticking {
+  animation: clock-tick 10s linear infinite;
+  transform-origin: center;
+}
+/* Subtle pulse on the clock circle border */
+@keyframes clock-ring-pulse {
+  0%,100% { opacity: 1; transform: scale(1); }
+  50%     { opacity: 0.65; transform: scale(1.06); }
+}
+.clock-ring-pulse {
+  animation: clock-ring-pulse 2s ease-in-out infinite;
+}
+
+/* Gold coin burst — scale + golden glow when draw is settled */
+@keyframes coin-burst {
+  0%,100% { transform: scale(1)   rotateY(0deg);   filter: brightness(1)   drop-shadow(0 0 4px rgba(245,158,11,0.55)); }
+  35%     { transform: scale(1.15) rotateY(90deg);  filter: brightness(1.4) drop-shadow(0 0 10px rgba(245,158,11,0.9)); }
+  70%     { transform: scale(1.05) rotateY(180deg); filter: brightness(1.2) drop-shadow(0 0 7px rgba(245,158,11,0.7)); }
+}
+.coin-burst {
+  animation: coin-burst 2.4s ease-in-out infinite;
+  transform-style: preserve-3d;
+}
+
 /* Gold shimmer text */
 .gold-shimmer {
   background: linear-gradient(

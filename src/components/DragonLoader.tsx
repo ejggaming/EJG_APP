@@ -4,7 +4,7 @@ export default function DragonLoader() {
       <style>{`
         @keyframes horseFloat {
           0%, 100% { transform: translateY(0px) scale(1); }
-          50% { transform: translateY(-14px) scale(1.03); }
+          50% { transform: translateY(-16px) translateX(6px) scale(1.04); }
         }
         @keyframes horseGlow {
           0%, 100% { filter: drop-shadow(0 0 10px #f59e0b) drop-shadow(0 0 25px #dc262660); }
@@ -281,7 +281,7 @@ export default function DragonLoader() {
               viewBox="0 0 585.07 585.07"
               width={230}
               height={230}
-              style={{ position: "relative", zIndex: 1, filter: "drop-shadow(0 0 12px #f59e0b88)" }}
+              style={{ position: "relative", zIndex: 1, filter: "drop-shadow(0 0 12px #f59e0b88)", transform: "scaleX(-1) rotate(-14deg)", transformOrigin: "center" }}
             >
               <defs>
                 <radialGradient id="horseBody" cx="45%" cy="38%">
@@ -344,14 +344,7 @@ export default function DragonLoader() {
           ))}
         </div>
 
-        {/* ── Bottom decoration ── */}
-        <div style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 16, opacity: 0.4 }}>
-          <div style={{ height: 1, width: 60, background: "linear-gradient(to right, transparent, #f59e0b)" }} />
-          <span style={{ color: "#f59e0b", fontSize: 16, fontFamily: "serif" }}>卐</span>
-          <span style={{ color: "#dc2626", fontSize: 12, letterSpacing: "0.2em" }}>福</span>
-          <span style={{ color: "#f59e0b", fontSize: 16, fontFamily: "serif" }}>卐</span>
-          <div style={{ height: 1, width: 60, background: "linear-gradient(to left, transparent, #f59e0b)" }} />
-        </div>
+
       </div>
     </>
   );

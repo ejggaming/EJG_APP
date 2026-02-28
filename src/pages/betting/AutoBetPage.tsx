@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button, Card, NumberBall } from "../../components";
 import { useAppStore } from "../../store/useAppStore";
+import { useThemeStore } from "../../store/useThemeStore";
 import { formatCurrency } from "../../utils";
 import toast from "react-hot-toast";
 import {
@@ -8,6 +9,7 @@ import {
   CircleDot,
   Coins,
   Dices,
+  Loader2,
   Pause,
   Play,
   Sparkles,
@@ -39,8 +41,32 @@ export default function AutoBetPage() {
   const balance = useAppStore((s) => s.balance);
   const isAuthenticated = useAppStore((s) => s.isAuthenticated);
 
+  const { theme } = useThemeStore();
+  const isDark = theme === "dark";
+  const machine = {
+    bg: isDark
+      ? "linear-gradient(160deg, #160800 0%, #2d1200 50%, #160800 100%)"
+      : "#ffffff",
+    border: isDark ? "2px solid rgba(245,158,11,0.22)" : "2px solid rgba(220,38,38,0.18)",
+    shadow: isDark
+      ? "0 4px 16px rgba(0,0,0,0.5), inset 0 1px 0 rgba(245,158,11,0.12)"
+      : "0 2px 10px rgba(0,0,0,0.06)",
+    viewportBg: isDark ? "rgba(0,0,0,0.55)" : "rgba(0,0,0,0.04)",
+    viewportBorder: isDark ? "1px solid rgba(245,158,11,0.12)" : "1px solid rgba(220,38,38,0.12)",
+    viewportShadow: isDark
+      ? "inset 0 4px 18px rgba(0,0,0,0.85)"
+      : "inset 0 2px 8px rgba(0,0,0,0.06)",
+    headerBorder: isDark ? "rgba(245,158,11,0.18)" : "rgba(220,38,38,0.12)",
+    ballLabel: isDark ? "rgba(245,158,11,0.45)" : "rgba(180,30,30,0.6)",
+    separator: isDark ? "rgba(245,158,11,0.6)" : "rgba(180,30,30,0.5)",
+    labelColor: isDark ? "rgba(245,158,11,0.85)" : "rgba(180,30,30,0.85)",
+    counterColor: isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.35)",
+  };
+
   // Form state
   const [selectedNumbers, setSelectedNumbers] = useState<number[]>([]);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [rollingNums, setRollingNums] = useState<[number, number]>([1, 1]);
   const [amountPerBet, setAmountPerBet] = useState(5);
   const [customAmount, setCustomAmount] = useState("");
   const [durationDays, setDurationDays] = useState(7);
@@ -77,14 +103,37 @@ export default function AutoBetPage() {
   };
 
   const handleQuickPick = () => {
-    const pool = NUMBERS.filter((n) => !selectedNumbers.includes(n));
-    const needed = 2 - selectedNumbers.length;
-    const picks: number[] = [];
-    for (let i = 0; i < needed; i++) {
-      const idx = Math.floor(Math.random() * (pool.length - i));
-      picks.push(pool.splice(idx, 1)[0]);
+    if (isDrawing) return;
+    const nums: number[] = [];
+    while (nums.length < 2) {
+      const rand = Math.floor(Math.random() * maxNumber) + 1;
+      if (!nums.includes(rand)) nums.push(rand);
     }
-    setSelectedNumbers((prev) => [...prev, ...picks]);
+    const finalNums = nums.sort((a, b) => a - b) as [number, number];
+    setIsDrawing(true);
+    setSelectedNumbers([]);
+    const startTime = Date.now();
+    const fastEnd = 1000;
+    const totalEnd = 1700;
+    const tick = () => {
+      const elapsed = Date.now() - startTime;
+      if (elapsed >= totalEnd) {
+        setSelectedNumbers(finalNums);
+        setIsDrawing(false);
+        return;
+      }
+      if (elapsed < fastEnd) {
+        setRollingNums([
+          Math.floor(Math.random() * maxNumber) + 1,
+          Math.floor(Math.random() * maxNumber) + 1,
+        ]);
+        setTimeout(tick, 60 + (elapsed / fastEnd) * 50);
+      } else {
+        setRollingNums([finalNums[0], Math.floor(Math.random() * maxNumber) + 1]);
+        setTimeout(tick, 110 + ((elapsed - fastEnd) / (totalEnd - fastEnd)) * 180);
+      }
+    };
+    tick();
   };
 
   const handleCreate = async () => {
@@ -128,20 +177,10 @@ export default function AutoBetPage() {
   const configs = myConfigsData?.configs ?? [];
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-6 space-y-6">
-      {/* Page Header */}
-      <div>
-        <h1 className="text-xl font-extrabold gold-shimmer flex items-center gap-2">
-          <CalendarDays className="w-5 h-5" /> Auto Bet
-        </h1>
-        <p className="text-text-muted text-sm mt-1">
-          <CircleDot className="w-3.5 h-3.5 inline mr-1" />
-          Set once, bet every draw automatically for multiple days
-        </p>
-      </div>
+    <div className="space-y-5">
 
       {/* Balance Bar */}
-      <Card bento className="flex items-center justify-between lantern-card">
+      <Card bento className="flex flex-wrap items-center justify-between gap-2 lantern-card">
         <div>
           <p className="text-[10px] text-text-muted uppercase tracking-wider">Available Balance</p>
           <p className="text-lg font-extrabold gold-shimmer">{formatCurrency(balance)}</p>
@@ -158,37 +197,80 @@ export default function AutoBetPage() {
           ✦ Configure Auto Bet
         </h2>
 
-        {/* Number Selection */}
+        {/* Number Selection — Draw Machine */}
         <section>
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-semibold text-text-secondary">
-              <CircleDot className="w-3.5 h-3.5 inline mr-1" />
-              Pick 2 Numbers{" "}
-              <span className="text-brand-red">({selectedNumbers.length}/2)</span>
-            </p>
-            <Button size="sm" variant="secondary" onClick={handleQuickPick}>
-              <Dices className="w-3.5 h-3.5 inline mr-1" /> Quick Pick
-            </Button>
-          </div>
-
-          {/* Selected display */}
-          <div className="flex gap-3 justify-center my-3">
-            {[0, 1].map((i) => (
-              <div
-                key={i}
-                className={`w-14 h-14 rounded-full flex items-center justify-center text-xl font-black border-2 transition-all ${
-                  selectedNumbers[i] != null
-                    ? "border-brand-gold text-brand-gold bg-brand-gold/10 shadow-[0_0_18px_rgba(217,119,6,0.25)]"
-                    : "border-brand-gold/20 text-text-muted bg-surface-card"
-                }`}
-              >
-                {selectedNumbers[i] ?? "?"}
-              </div>
+          <div
+            className="relative rounded-2xl overflow-hidden select-none mb-3"
+            style={{ background: machine.bg, border: machine.border, boxShadow: machine.shadow }}
+          >
+            {/* Corner rivets */}
+            {["top-2 left-2", "top-2 right-2", "bottom-2 left-2", "bottom-2 right-2"].map((pos) => (
+              <div key={pos} className={`absolute ${pos} w-2 h-2 rounded-full`}
+                style={{ background: "radial-gradient(circle, #b8860b, #5a3e00)", border: "1px solid rgba(245,158,11,0.3)" }} />
             ))}
+            {/* Machine header */}
+            <div className="flex items-center justify-between px-5 pt-3 pb-2 border-b"
+              style={{ borderColor: machine.headerBorder }}>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full" style={{
+                  background: isDrawing ? "#ef4444" : "#22c55e",
+                  boxShadow: isDrawing ? "0 0 8px #ef4444" : "0 0 8px #22c55e",
+                  transition: "all 0.3s ease",
+                }} />
+                <span className="text-[10px] uppercase tracking-[0.25em] font-bold"
+                  style={{ color: machine.labelColor }}>Lucky Draw Machine</span>
+              </div>
+              <span className="text-[10px] font-mono" style={{ color: machine.counterColor }}>
+                <CircleDot className="w-3 h-3 inline mr-1" />{selectedNumbers.length}/2
+              </span>
+            </div>
+            {/* Ball viewport */}
+            <div className="mx-4 my-3 rounded-xl py-5 relative"
+              style={{ background: machine.viewportBg, border: machine.viewportBorder, boxShadow: machine.viewportShadow }}>
+              <div className="absolute top-0 left-10 right-10 h-px"
+                style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent)" }} />
+              <div className="flex items-center justify-center gap-8">
+                {/* Ball 1 */}
+                <div className="flex flex-col items-center gap-1.5">
+                  <div className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl font-extrabold ${
+                    isDrawing ? "lottery-ball" : selectedNumbers[0] ? "lottery-ball lottery-ball-selected" : "bg-surface-elevated border-2 border-dashed border-brand-gold/30 text-text-muted"
+                  }`} style={{ filter: isDrawing ? "blur(0.7px)" : "none", transition: "filter 0.2s" }}>
+                    {isDrawing ? rollingNums[0] : selectedNumbers[0] || "?"}
+                  </div>
+                  <span className="text-[9px] uppercase tracking-wider font-bold" style={{ color: machine.ballLabel }}>Ball 1</span>
+                </div>
+                <span className="text-2xl font-extrabold pb-5" style={{ color: machine.separator }}>×</span>
+                {/* Ball 2 */}
+                <div className="flex flex-col items-center gap-1.5">
+                  <div className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl font-extrabold ${
+                    isDrawing ? "lottery-ball" : selectedNumbers[1] ? "lottery-ball lottery-ball-selected" : "bg-surface-elevated border-2 border-dashed border-brand-gold/30 text-text-muted"
+                  }`} style={{ filter: isDrawing ? "blur(0.7px)" : "none", transition: "filter 0.2s" }}>
+                    {isDrawing ? rollingNums[1] : selectedNumbers[1] || "?"}
+                  </div>
+                  <span className="text-[9px] uppercase tracking-wider font-bold" style={{ color: machine.ballLabel }}>Ball 2</span>
+                </div>
+              </div>
+            </div>
+            {/* Draw button */}
+            <div className="px-4 pb-4">
+              <button onClick={handleQuickPick} disabled={isDrawing}
+                className="w-full py-3.5 rounded-xl font-bold text-sm tracking-[0.18em] uppercase flex items-center justify-center gap-2 cursor-pointer"
+                style={{
+                  background: isDrawing ? "linear-gradient(180deg, #4a0808 0%, #300505 100%)" : "linear-gradient(180deg, #ef4444 0%, #b91c1c 60%, #991b1b 100%)",
+                  boxShadow: isDrawing ? "inset 0 3px 10px rgba(0,0,0,0.6)" : "0 5px 0 #7f1d1d, 0 8px 24px rgba(220,38,38,0.4), inset 0 1px 0 rgba(255,255,255,0.12)",
+                  color: isDrawing ? "rgba(255,255,255,0.35)" : "#fff",
+                  transform: isDrawing ? "translateY(4px)" : "translateY(0)",
+                  border: "1px solid rgba(0,0,0,0.3)",
+                  transition: "transform 0.1s, box-shadow 0.1s, background 0.2s",
+                }}>
+                {isDrawing ? <><Loader2 className="w-4 h-4 animate-spin" /> Drawing Numbers...</> : <><Dices className="w-4 h-4" /> Quick Draw!</>}
+              </button>
+            </div>
           </div>
 
-          {/* Number grid */}
-          <div className="grid grid-cols-7 gap-1.5">
+          {/* Manual pick */}
+          <p className="text-[10px] uppercase tracking-wider text-text-muted text-center mb-2">— or pick manually —</p>
+          <div className="grid grid-cols-6 min-[375px]:grid-cols-7 gap-1">
             {NUMBERS.map((num) => (
               <NumberBall
                 key={num}
@@ -244,7 +326,7 @@ export default function AutoBetPage() {
             <CalendarDays className="w-3.5 h-3.5 inline mr-1" />
             Duration (days)
           </p>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <input
               type="number"
               min={1}
@@ -375,9 +457,9 @@ function AutoBetCard({
   return (
     <Card bento className="space-y-3">
       {/* Header row */}
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-3">
-          <div className="flex gap-1.5">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          <div className="flex gap-1.5 shrink-0">
             <span className="w-8 h-8 rounded-full bg-brand-gold/10 border border-brand-gold/30 flex items-center justify-center text-sm font-black text-brand-gold">
               {config.number1}
             </span>
@@ -385,12 +467,12 @@ function AutoBetCard({
               {config.number2}
             </span>
           </div>
-          <div>
-            <p className="text-xs font-bold text-text-primary">{formatCurrency(config.amountPerBet)}/bet</p>
-            <p className="text-[10px] text-text-muted">{config.durationDays}d · {startDate}–{endDate}</p>
+          <div className="min-w-0">
+            <p className="text-xs font-bold text-text-primary truncate">{formatCurrency(config.amountPerBet)}/bet</p>
+            <p className="text-[10px] text-text-muted truncate">{config.durationDays}d · {startDate}–{endDate}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${STATUS_BADGE[config.status as AutoBetStatus]}`}>
             {config.status}
           </span>
@@ -466,3 +548,4 @@ function AutoBetCard({
     </Card>
   );
 }
+

@@ -1,7 +1,9 @@
 import { z } from "zod";
 
 export const loginSchema = z.object({
-  email: z.email("Enter a valid email address"),
+  phoneNumber: z
+    .string()
+    .regex(/^09\d{9}$/, "Enter a valid Philippine mobile number (09xxxxxxxxx)"),
   password: z.string().min(1, "Password is required"),
 });
 

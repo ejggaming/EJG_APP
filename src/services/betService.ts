@@ -43,6 +43,7 @@ export interface JuetengDraw {
   totalStake: number;
   totalPayout: number;
   grossProfit: number;
+  _count?: { payouts: number };
   schedule?: DrawSchedule;
   createdAt: string;
   updatedAt: string;

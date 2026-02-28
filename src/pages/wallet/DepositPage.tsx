@@ -114,7 +114,7 @@ export default function DepositPage() {
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
         />
-        <div className="grid grid-cols-3 gap-2 mt-2">
+        <div className="grid grid-cols-2 min-[360px]:grid-cols-3 gap-2 mt-2">
           {QUICK_AMOUNTS.map((a) => (
             <button
               key={a}

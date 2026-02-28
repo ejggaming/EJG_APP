@@ -116,11 +116,11 @@ export default function ProfilePage() {
             >
               {user?.person?.firstName?.[0]?.toUpperCase() ?? "U"}
             </div>
-            <div className="flex-1">
-              <h2 className="text-lg font-extrabold text-white">
+            <div className="flex-1 min-w-0">
+              <h2 className="text-lg font-extrabold text-white truncate">
                 {[user?.person?.firstName, user?.person?.lastName].filter(Boolean).join(" ") || "Guest User"}
               </h2>
-              <p className="text-sm text-white/70">
+              <p className="text-sm text-white/70 truncate">
                 {user?.phoneNumber ?? "No phone number"}
               </p>
               <div className="mt-1">

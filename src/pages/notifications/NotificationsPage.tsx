@@ -61,7 +61,7 @@ export default function NotificationsPage() {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <Bell className="w-5 h-5 text-brand-gold" />
           <h1 className="text-lg font-bold text-on-surface">Notifications</h1>
@@ -73,7 +73,7 @@ export default function NotificationsPage() {
             variant="outline"
             onClick={() => markAll.mutate()}
             disabled={markAll.isPending}
-            className="text-brand-gold text-xs gap-1"
+            className="inline-flex items-center justify-center gap-1 text-brand-gold text-xs w-full min-[360px]:w-auto"
           >
             <CheckCheck className="w-4 h-4" />
             Mark all read

@@ -5,7 +5,7 @@ import { loginSchema, type LoginInput } from "../../schema";
 import { useLoginMutation } from "../../hooks/useAuth";
 
 export default function LoginPage() {
-  const [form, setForm] = useState<LoginInput>({ email: "", password: "" });
+  const [form, setForm] = useState<LoginInput>({ phoneNumber: "", password: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const login = useLoginMutation();
 
@@ -36,12 +36,12 @@ export default function LoginPage() {
 
       <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-4">
         <Input
-          label="Email"
-          type="email"
-          placeholder="juan@example.com"
-          value={form.email}
-          onChange={handleChange("email")}
-          error={errors.email}
+          label="Contact Number"
+          type="tel"
+          placeholder="09xxxxxxxxx"
+          value={form.phoneNumber}
+          onChange={handleChange("phoneNumber")}
+          error={errors.phoneNumber}
         />
 
         <Input
