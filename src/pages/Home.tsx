@@ -5,12 +5,10 @@ import { useAppStore } from "../store/useAppStore";
 import { useThemeStore } from "../store/useThemeStore";
 import { formatCurrency } from "../utils";
 import {
-  Flame,
   Target,
   Trophy,
   Coins,
   Clock,
-  Dices,
   ArrowDownToLine,
   ArrowUpFromLine,
 } from "lucide-react";
@@ -21,6 +19,7 @@ import {
   drawTypeLabel,
 } from "../hooks/useBet";
 import appLogo from "../assets/logo.png";
+import liraSingko from "../assets/kalye-singko.png";
 
 // ── Slot rolling ball — cycles random numbers before landing on final value ──
 function SlotBall({
@@ -96,6 +95,118 @@ function RollingBalance({ value }: { value: number }) {
     <p className={`text-[clamp(20px,6vw,28px)] font-extrabold gold-shimmer leading-tight text-right transition-all duration-75 ${settled ? "opacity-100" : "opacity-60"}`}>
       {formatCurrency(display)}
     </p>
+  );
+}
+
+// ── Guest promotional landing ──────────────────────────────────────────────────
+function GuestPromo() {
+  const { theme } = useThemeStore();
+  const isDark = theme === "dark";
+
+  const heroBg = isDark
+    ? "linear-gradient(135deg, #1a0000 0%, #3d0505 35%, #6b0f0f 65%, #1a0000 100%)"
+    : "linear-gradient(135deg, #7f1d1d 0%, #991b1b 35%, #b91c1c 65%, #7f1d1d 100%)";
+  const heroShadow = isDark
+    ? "0 20px 56px rgba(140,0,0,0.5), inset 0 1px 0 rgba(245,158,11,0.18)"
+    : "0 12px 40px rgba(185,28,28,0.45), inset 0 1px 0 rgba(245,158,11,0.22)";
+  const blendLeft = isDark ? "#1a0000" : "#7f1d1d";
+  const blendMid = isDark ? "rgba(61,5,5,0.88)" : "rgba(153,27,27,0.88)";
+
+  return (
+    <div className="space-y-4">
+      {/* ── Hero banner ── */}
+      <div
+        className="relative rounded-2xl overflow-hidden"
+        style={{
+          background: heroBg,
+          border: "1px solid rgba(245,158,11,0.28)",
+          boxShadow: heroShadow,
+          minHeight: 290,
+        }}
+      >
+        {/* Fine grid overlay */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage: `repeating-linear-gradient(60deg, rgba(245,158,11,0.035) 0, rgba(245,158,11,0.035) 1px, transparent 0, transparent 50%)`,
+            backgroundSize: "18px 18px",
+          }}
+        />
+
+        {/* Radial glow behind character */}
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            right: 0,
+            top: 0,
+            bottom: 0,
+            width: "60%",
+            background: "radial-gradient(ellipse at 75% 40%, rgba(220,38,38,0.28) 0%, transparent 70%)",
+          }}
+        />
+
+        {/* Character image — full-height, right side, bleeds to edge */}
+        <div
+          className="absolute right-0 bottom-0 top-0 pointer-events-none select-none"
+          style={{ width: "52%", maxWidth: 210 }}
+        >
+          {/* Left-side gradient blend so character merges into background */}
+          <div
+            className="absolute inset-y-0 left-0 z-10"
+            style={{
+              width: "55%",
+              background: `linear-gradient(to right, ${blendLeft} 0%, ${blendMid} 40%, transparent 100%)`,
+            }}
+          />
+          <img
+            src={liraSingko}
+            alt="Lira Singko"
+            className="w-full h-full"
+            style={{
+              objectFit: "cover",
+              objectPosition: "top center",
+              filter: "drop-shadow(-8px 0 24px rgba(220,38,38,0.5))",
+            }}
+          />
+        </div>
+
+        {/* Text + CTAs */}
+        <div
+          className="relative z-20 flex flex-col px-5 py-6"
+          style={{ minHeight: 290, maxWidth: "54%", justifyContent: "center", gap: 20 }}
+        >
+          <div>
+            <h2 className="text-[clamp(18px,5vw,24px)] font-extrabold text-white leading-tight mb-2">
+              Swerte Ka Ba<br />
+              <span className="gold-shimmer">Today?</span>
+            </h2>
+            <p className="text-[10px] text-white/45 uppercase tracking-widest">Prize Pool</p>
+            <p className="text-[clamp(22px,6.5vw,30px)] font-extrabold gold-shimmer leading-tight">₱50,000</p>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Link to="/register">
+              <Button variant="gold" size="sm" className="w-full font-bold text-sm">
+                Sign Up
+              </Button>
+            </Link>
+            <Link to="/login">
+              <button
+                className="w-full py-1.5 rounded-xl text-sm font-semibold transition-all"
+                style={{
+                  border: "1px solid rgba(255,255,255,0.22)",
+                  color: "rgba(255,255,255,0.75)",
+                  background: "rgba(255,255,255,0.07)",
+                }}
+              >
+                Sign In
+              </button>
+            </Link>
+          </div>
+        </div>
+      </div>
+
+    </div>
   );
 }
 
@@ -255,57 +366,7 @@ export default function HomePage() {
           </div>
         </div>
       ) : (
-        <div
-          className="relative rounded-2xl overflow-hidden text-center"
-          style={{
-            background: card.bg,
-            boxShadow: card.shadow,
-            border: card.border,
-          }}
-        >
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              opacity: 0.04,
-              backgroundImage: `repeating-linear-gradient(45deg,${card.stripe} 0,${card.stripe} 1px,transparent 0,transparent 50%)`,
-              backgroundSize: "12px 12px",
-            }}
-          />
-          <div className="relative p-6">
-            <p className="text-brand-gold text-3xl mb-3">
-              <Flame className="w-7 h-7 inline text-brand-red" />
-              <Dices className="w-7 h-7 inline text-brand-gold mx-2" />
-              <Flame className="w-7 h-7 inline text-brand-red" />
-            </p>
-            <h2
-              className="text-2xl font-extrabold mb-1"
-              style={{ color: card.heroHeading }}
-            >
-              Swerte Ka Ba Today?
-            </h2>
-            <p className="text-sm mb-5" style={{ color: card.heroBody }}>
-              Pick your lucky numbers and win up to{" "}
-              <span className="gold-shimmer font-bold">PHP 50,000!</span>
-            </p>
-            <div className="flex justify-center gap-3">
-              <Link to="/login">
-                <Button variant="gold">Sign In</Button>
-              </Link>
-              <Link to="/register">
-                <Button
-                  variant="outline"
-                  style={{
-                    borderColor: card.cashOutBorder,
-                    color: card.cashOutColor,
-                  }}
-                >
-                  Register
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
+        <GuestPromo />
       )}
 
       {/* Today's Draws  */}

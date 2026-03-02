@@ -1,7 +1,7 @@
 import { cn } from "../utils";
 
 interface CardProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   className?: string;
   hover?: boolean;
   ornate?: boolean;

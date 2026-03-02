@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useNavigate, Link, Navigate } from "react-router-dom";
+import { useNavigate, useParams, Link, Navigate } from "react-router-dom";
+import { useAppStore } from "../../store/useAppStore";
 import { Card, Button, Input } from "../../components";
 import {
   Info,
@@ -13,7 +14,6 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { useSubmitKycMutation, useMyKycQuery } from "../../hooks/useKyc";
-import { useAppStore } from "../../store/useAppStore";
 import { KycUploadSkeleton } from "../../components/ChineseSkeleton";
 import toast from "react-hot-toast";
 
@@ -28,7 +28,7 @@ const ID_TYPES = [
 
 // ─── Status Screens ───────────────────────────────────────────────────────────
 
-function PendingScreen() {
+function PendingScreen({ profileId }: { profileId: string }) {
   return (
     <div className="space-y-4">
       <div className="chinese-header">
@@ -44,7 +44,7 @@ function PendingScreen() {
           </p>
         </div>
       </Card>
-      <Link to="/profile">
+      <Link to={`/profile/${profileId}`}>
         <Button variant="outline" fullWidth>
           <ArrowLeft className="w-4 h-4 inline mr-1" /> Back to Profile
         </Button>
@@ -53,7 +53,7 @@ function PendingScreen() {
   );
 }
 
-function ApprovedScreen() {
+function ApprovedScreen({ profileId }: { profileId: string }) {
   return (
     <div className="space-y-4">
       <div className="chinese-header">
@@ -68,7 +68,7 @@ function ApprovedScreen() {
           </p>
         </div>
       </Card>
-      <Link to="/profile">
+      <Link to={`/profile/${profileId}`}>
         <Button variant="outline" fullWidth>
           <ArrowLeft className="w-4 h-4 inline mr-1" /> Back to Profile
         </Button>
@@ -79,7 +79,7 @@ function ApprovedScreen() {
 
 // ─── Upload Form ──────────────────────────────────────────────────────────────
 
-function UploadForm({ isResubmit, notes }: { isResubmit?: boolean; notes?: string | null }) {
+function UploadForm({ isResubmit, notes, profileId }: { isResubmit?: boolean; notes?: string | null; profileId: string }) {
   const navigate = useNavigate();
   const [idType, setIdType] = useState("");
   const [idNumber, setIdNumber] = useState("");
@@ -95,7 +95,7 @@ function UploadForm({ isResubmit, notes }: { isResubmit?: boolean; notes?: strin
 
     submitKyc.mutate(
       { idType: `${idType}:${idNumber}`, idFront, selfie },
-      { onSuccess: () => navigate("/profile") },
+      { onSuccess: () => navigate(`/profile/${profileId}`) },
     );
   };
 
@@ -241,8 +241,10 @@ function UploadForm({ isResubmit, notes }: { isResubmit?: boolean; notes?: strin
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function KycUploadPage() {
+  const { id: paramId } = useParams<{ id: string }>();
   const user = useAppStore((s) => s.user);
   const isAuthenticated = useAppStore((s) => s.isAuthenticated);
+  const profileId = paramId ?? user?.id ?? "me";
   const { data: kyc, isLoading } = useMyKycQuery();
 
   if (!isAuthenticated || !user) {
@@ -254,8 +256,8 @@ export default function KycUploadPage() {
   // Use the full KYC record if loaded, fall back to user store summary
   const status = kyc?.status ?? user?.kyc?.status ?? null;
 
-  if (status === "PENDING") return <PendingScreen />;
-  if (status === "APPROVED") return <ApprovedScreen />;
+  if (status === "PENDING") return <PendingScreen profileId={profileId} />;
+  if (status === "APPROVED") return <ApprovedScreen profileId={profileId} />;
 
   const isResubmit = status === "REJECTED" || status === "REQUIRES_MORE_INFO";
 
@@ -282,10 +284,10 @@ export default function KycUploadPage() {
             </div>
           </div>
         </Card>
-        <UploadForm isResubmit notes={notes} />
+        <UploadForm isResubmit notes={notes} profileId={profileId} />
       </div>
     );
   }
 
-  return <UploadForm />;
+  return <UploadForm profileId={profileId} />;
 }

@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { Card, Badge, Button } from "../../components";
 import { useAppStore } from "../../store/useAppStore";
 import { formatCurrency } from "../../utils";
@@ -15,49 +15,46 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-const MENU_ITEMS: {
-  Icon: LucideIcon;
-  label: string;
-  path: string;
-  description: string;
-}[] = [
-  {
-    Icon: BadgeCheck,
-    label: "KYC Verification",
-    path: "/profile/kyc",
-    description: "Verify your identity",
-  },
-  {
-    Icon: ScrollText,
-    label: "Bet History",
-    path: "/bet-history",
-    description: "View past bets",
-  },
-  {
-    Icon: Bell,
-    label: "Notifications",
-    path: "/notifications",
-    description: "Manage alerts",
-  },
-  {
-    Icon: Lock,
-    label: "Security",
-    path: "/profile/security",
-    description: "Password & 2FA",
-  },
-  {
-    Icon: HelpCircle,
-    label: "Help & Support",
-    path: "/help",
-    description: "FAQ & contact us",
-  },
-  {
-    Icon: FileText,
-    label: "Terms & Conditions",
-    path: "/terms",
-    description: "Legal information",
-  },
-];
+function buildMenuItems(userId: string) {
+  return [
+    {
+      Icon: BadgeCheck,
+      label: "KYC Verification",
+      path: `/profile/${userId}/kyc`,
+      description: "Verify your identity",
+    },
+    {
+      Icon: ScrollText,
+      label: "Bet History",
+      path: "/bet?tab=me",
+      description: "View past bets",
+    },
+    {
+      Icon: Bell,
+      label: "Notifications",
+      path: `/profile/${userId}/notifications`,
+      description: "Manage alerts",
+    },
+    {
+      Icon: Lock,
+      label: "Security",
+      path: `/profile/${userId}/security`,
+      description: "Password & 2FA",
+    },
+    {
+      Icon: HelpCircle,
+      label: "Help & Support",
+      path: "/support",
+      description: "FAQ & contact us",
+    },
+    {
+      Icon: FileText,
+      label: "Terms & Legal",
+      path: "/legal",
+      description: "Terms & privacy policy",
+    },
+  ] as { Icon: LucideIcon; label: string; path: string; description: string }[];
+}
 
 const kycStatusMap = {
   none: {
@@ -83,8 +80,11 @@ const kycStatusMap = {
 };
 
 export default function ProfilePage() {
+  const { id: paramId } = useParams<{ id: string }>();
   const { user, balance, isAuthenticated } = useAppStore();
   const logoutMutation = useLogoutMutation();
+  const userId = paramId ?? user?.id ?? "me";
+  const menuItems = buildMenuItems(userId);
 
   const kycStatus = (user?.kyc?.status?.toLowerCase() ?? "none") as keyof typeof kycStatusMap;
   const kyc = kycStatusMap[kycStatus] ?? kycStatusMap.none;
@@ -159,7 +159,7 @@ export default function ProfilePage() {
                 Required to place bets and withdraw
               </p>
             </div>
-            <Link to="/profile/kyc">
+            <Link to={`/profile/${userId}/kyc`}>
               <Button variant="gold" size="sm">
                 {kycStatus === "rejected" ? "Resubmit" : "Verify"}
               </Button>
@@ -170,7 +170,7 @@ export default function ProfilePage() {
 
       {/* Menu Items */}
       <div className="space-y-1.5">
-        {MENU_ITEMS.map((item, index) => (
+        {menuItems.map((item, index) => (
           <Link key={item.path} to={item.path}>
             <Card
               bento

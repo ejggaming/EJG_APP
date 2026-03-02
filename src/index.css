@@ -201,6 +201,11 @@
 }
 
 /* ── Fade-slide-up animation for hero stat cards ── */
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(-4deg); }
+  50%       { transform: translateY(-10px) rotate(4deg); }
+}
+
 @keyframes fadeSlideUp {
   from {
     opacity: 0;

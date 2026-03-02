@@ -19,6 +19,7 @@ import VerifyOtpPage from "../pages/auth/VerifyOtp";
 
 // Player - Betting
 import BetPage from "../pages/betting/BetPage";
+import BetDetailPage from "../pages/betting/BetDetailPage";
 import BetHistoryPage from "../pages/betting/BetHistory";
 
 // Player - Results
@@ -28,13 +29,19 @@ import ResultsPage from "../pages/results/ResultsPage";
 import WalletDashboard from "../pages/wallet/WalletDashboard";
 import DepositPage from "../pages/wallet/DepositPage";
 import WithdrawPage from "../pages/wallet/WithdrawPage";
+import TransactionDetailPage from "../pages/wallet/TransactionDetailPage";
 
 // Player - Profile
 import ProfilePage from "../pages/profile/ProfilePage";
 import KycUploadPage from "../pages/profile/KycUploadPage";
+import SecurityPage from "../pages/profile/SecurityPage";
 
 // Player - Notifications
 import NotificationsPage from "../pages/notifications/NotificationsPage";
+
+// Player - Support & Legal
+import SupportPage from "../pages/support/SupportPage";
+import LegalPage from "../pages/legal/LegalPage";
 
 // Agent Portal
 import AgentDashboard from "../pages/agent/AgentDashboard";
@@ -71,31 +78,37 @@ const router = createBrowserRouter([
     children: [
       { path: "/", element: <HomePage /> },
 
-      // Betting
+      // Betting — ?tab=all|me|auto + deep-link /bet/:id
       { path: "/bet", element: <BetPage /> },
-      { path: "/bet/auto", element: <Navigate to="/bet" replace /> },
+      { path: "/bet/:id", element: <BetDetailPage /> },
       { path: "/bet-history", element: <BetHistoryPage /> },
 
-      // Results
+      // Results — ?date=YYYY-MM-DD + deep-link /results/:id
       { path: "/results", element: <ResultsPage /> },
 
-      // Wallet
+      // Wallet — /wallet/:id for transaction detail
       { path: "/wallet", element: <WalletDashboard /> },
       { path: "/wallet/deposit", element: <DepositPage /> },
       { path: "/wallet/withdraw", element: <WithdrawPage /> },
+      { path: "/wallet/:id", element: <TransactionDetailPage /> },
 
-      // Profile
-      { path: "/profile", element: <ProfilePage /> },
-      { path: "/profile/kyc", element: <KycUploadPage /> },
+      // Profile — all sub-routes scoped to /profile/:id
+      { path: "/profile/:id", element: <ProfilePage /> },
+      { path: "/profile/:id/kyc", element: <KycUploadPage /> },
+      { path: "/profile/:id/notifications", element: <NotificationsPage /> },
+      { path: "/profile/:id/security", element: <SecurityPage /> },
 
-      // Redirects
-      { path: "/notifications", element: <NotificationsPage /> },
-      { path: "/help", element: <Navigate to="/" replace /> },
-      { path: "/terms", element: <Navigate to="/" replace /> },
-      {
-        path: "/profile/security",
-        element: <Navigate to="/profile" replace />,
-      },
+      // Support & Legal
+      { path: "/support", element: <SupportPage /> },
+      { path: "/legal", element: <LegalPage /> },
+
+      // Legacy redirects (keep old URLs working)
+      { path: "/profile", element: <Navigate to="/profile/me" replace /> },
+      { path: "/notifications", element: <Navigate to="/profile/me/notifications" replace /> },
+      { path: "/help", element: <Navigate to="/support" replace /> },
+      { path: "/terms", element: <Navigate to="/legal" replace /> },
+      { path: "/profile/kyc", element: <Navigate to="/profile/me/kyc" replace /> },
+      { path: "/profile/security", element: <Navigate to="/profile/me/security" replace /> },
     ],
   },
 

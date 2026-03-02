@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button, NumberBall, Modal } from "../../components";
 import { useAppStore } from "../../store/useAppStore";
 import { useThemeStore } from "../../store/useThemeStore";
@@ -49,7 +49,23 @@ export default function BetPage() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
   const [rollingNums, setRollingNums] = useState<[number, number]>([1, 1]);
-  const [activeTab, setActiveTab] = useState<"manual" | "auto" | "myBets">("manual");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const tabFromUrl: "manual" | "auto" | "myBets" =
+    tabParam === "auto" ? "auto" : tabParam === "me" ? "myBets" : "manual";
+  const [activeTab, setActiveTab] = useState<"manual" | "auto" | "myBets">(tabFromUrl);
+
+  // Sync activeTab when URL param changes (deep link / back-forward)
+  useEffect(() => {
+    setActiveTab(tabFromUrl);
+  }, [tabParam]);
+
+  const handleTabChange = (tab: "manual" | "auto" | "myBets") => {
+    setActiveTab(tab);
+    const param = tab === "auto" ? "auto" : tab === "myBets" ? "me" : "all";
+    setSearchParams({ tab: param }, { replace: true });
+  };
+
   const { theme } = useThemeStore();
   const isDark = theme === "dark";
 
@@ -228,7 +244,7 @@ export default function BetPage() {
       setShowConfirm(false);
       refetchWallet();
       toast.success("Bets placed! Good luck! 🎉");
-      setActiveTab("myBets");
+      handleTabChange("myBets");
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch {
       toast.error("Failed to place bets");
@@ -359,7 +375,7 @@ export default function BetPage() {
       <div className="flex bg-surface-card border border-brand-gold/15 rounded-xl p-1 gap-1">
         <button
           type="button"
-          onClick={() => setActiveTab("manual")}
+          onClick={() => handleTabChange("manual")}
           className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-1.5 ${
             activeTab === "manual" ? "bg-brand-red text-white shadow" : "text-text-muted"
           }`}
@@ -368,7 +384,7 @@ export default function BetPage() {
         </button>
         <button
           type="button"
-          onClick={() => setActiveTab("auto")}
+          onClick={() => handleTabChange("auto")}
           className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-1.5 ${
             activeTab === "auto" ? "bg-brand-red text-white shadow" : "text-text-muted"
           }`}
@@ -377,7 +393,7 @@ export default function BetPage() {
         </button>
         <button
           type="button"
-          onClick={() => setActiveTab("myBets")}
+          onClick={() => handleTabChange("myBets")}
           className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-1.5 ${
             activeTab === "myBets" ? "bg-brand-red text-white shadow" : "text-text-muted"
           }`}
