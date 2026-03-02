@@ -470,7 +470,7 @@ export default function AdminDashboard() {
                 Latest Transactions
               </h3>
             </div>
-            <div>
+            <div style={{ overflowY: "auto", maxHeight: "240px", scrollbarWidth: "thin", scrollbarColor: "#8b0000 transparent" }}>
               {dashboardData?.recentTransactions.map((tx: any) => {
                 const style = txIcons[tx.type] ?? txIcons.deposit;
                 return (
