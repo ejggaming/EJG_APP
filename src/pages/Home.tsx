@@ -170,10 +170,10 @@ function GuestPromo() {
           />
         </div>
 
-        {/* Text + CTAs */}
+        {/* Text + CTAs — strict 48% width so buttons never reach the character */}
         <div
-          className="relative z-20 flex flex-col px-5 py-6"
-          style={{ minHeight: 290, maxWidth: "54%", justifyContent: "center", gap: 20 }}
+          className="relative z-20 flex flex-col px-4 py-6"
+          style={{ width: "48%", minHeight: 290, justifyContent: "center", gap: 16 }}
         >
           <div>
             <h2 className="text-[clamp(18px,5vw,24px)] font-extrabold text-white leading-tight mb-2">
@@ -185,18 +185,18 @@ function GuestPromo() {
           </div>
 
           <div className="flex flex-col gap-2">
-            <Link to="/register">
-              <Button variant="gold" size="sm" className="w-full font-bold text-sm">
+            <Link to="/register" className="block">
+              <Button variant="gold" size="sm" className="w-full font-bold text-xs">
                 Sign Up
               </Button>
             </Link>
-            <Link to="/login">
+            <Link to="/login" className="block">
               <button
-                className="w-full py-1.5 rounded-xl text-sm font-semibold transition-all"
+                className="w-full py-1.5 rounded-xl text-xs font-semibold transition-all active:scale-95"
                 style={{
-                  border: "1px solid rgba(255,255,255,0.22)",
-                  color: "rgba(255,255,255,0.75)",
-                  background: "rgba(255,255,255,0.07)",
+                  border: "1px solid rgba(255,255,255,0.25)",
+                  color: "rgba(255,255,255,0.80)",
+                  background: "rgba(255,255,255,0.08)",
                 }}
               >
                 Sign In
