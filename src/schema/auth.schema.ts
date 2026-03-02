@@ -21,9 +21,8 @@ export const registerSchema = z
       .or(z.literal("")),
     phoneNumber: z
       .string()
-      .regex(/^\+?[1-9]\d{7,14}$/, "Invalid phone number")
-      .optional()
-      .or(z.literal("")),
+      .min(1, "Phone number is required")
+      .regex(/^09\d{9}$/, "Enter a valid Philippine mobile number (09xxxxxxxxx)"),
     password: z
       .string()
       .min(8, "Password must be at least 8 characters")

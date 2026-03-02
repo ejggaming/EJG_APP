@@ -29,9 +29,8 @@ const step1Schema = z.object({
   userName: z.string().min(3, "Username must be at least 3 characters").optional().or(z.literal("")),
   phoneNumber: z
     .string()
-    .regex(/^\+?[1-9]\d{7,14}$/, "Invalid phone number")
-    .optional()
-    .or(z.literal("")),
+    .min(1, "Phone number is required")
+    .regex(/^09\d{9}$/, "Enter a valid Philippine mobile number (09xxxxxxxxx)"),
 });
 
 const step2Schema = z
@@ -294,7 +293,7 @@ export default function RegisterPage() {
             <Input
               label="Phone Number"
               type="tel"
-              placeholder="+639171234567 (optional)"
+              placeholder="09xxxxxxxxx"
               value={form.phoneNumber ?? ""}
               onChange={handleChange("phoneNumber")}
               error={errors.phoneNumber}
