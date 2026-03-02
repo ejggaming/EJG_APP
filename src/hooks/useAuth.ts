@@ -76,7 +76,6 @@ export function useRegisterMutation(
     mutationFn: async (data) => {
       const { confirmPassword: _, ...payload } = data;
       if (!payload.userName) delete payload.userName;
-      if (!payload.phoneNumber) delete payload.phoneNumber;
       await authService.register(payload);
     },
     onSuccess: () => {
