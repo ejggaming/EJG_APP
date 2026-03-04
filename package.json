@@ -4,12 +4,14 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "dev:develop": "vite --mode develop",
-    "build": "tsc -b && vite build",
-    "build:develop": "tsc -b && vite build --mode develop",
+    "dev": "node init && vite",
+    "dev:develop": "node init && vite --mode develop",
+    "dev:test:e2e": "node init && vite --mode e2e",
+    "build": "node init && tsc -b && vite build",
+    "build:develop": "node init && tsc -b && vite build --mode develop",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:qa:unit": "vitest run --config vitest.config.ts"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.21",
@@ -39,6 +41,7 @@
     "tailwindcss": "^4.1.18",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.48.0",
-    "vite": "^7.3.1"
+    "vite": "^7.3.1",
+    "vitest": "^3.2.4"
   }
 }
