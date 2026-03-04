@@ -4,7 +4,7 @@ import { useSessionQuery } from "./hooks/useAuth";
 import { useAppStore } from "./store/useAppStore";
 import DragonLoader from "./components/DragonLoader";
 
-const MIN_LOADER_MS = 5000;
+const MIN_LOADER_MS = Number(import.meta.env.VITE_MIN_LOADER_MS ?? "5000");
 
 function SessionProvider() {
   const setUser = useAppStore((s) => s.setUser);

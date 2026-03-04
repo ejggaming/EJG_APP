@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# QA artifacts
+qa-client-unit.log
+playwright-report/
+test-results/
+config.bat
